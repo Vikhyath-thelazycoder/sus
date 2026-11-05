@@ -57,6 +57,6 @@ describe("LLM provider + fallback chain (PROJECT_PLAN §6.6)", () => {
   it("reads provider settings from config, so switching to OpenAI needs no code change", () => {
     const cfg = llmConfigFromEnv(env);
     expect(cfg.baseURL).toBe("https://api.groq.com/openai/v1");
-    expect(cfg.models).toEqual(["llama-3.3-70b-versatile", "openai/gpt-oss-120b", "llama-3.1-8b-instant"]);
+    expect(cfg.models).toEqual(["openai/gpt-oss-120b", "qwen/qwen3.8-27b", "openai/gpt-oss-20b"]);
   });
 });

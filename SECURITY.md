@@ -3,7 +3,7 @@
 The security rules for SustainIQ, an AI research assistant over sustainable-materials papers.
 Every rule below must be in place before the matching feature ships. This file is the checklist for code review.
 
-**Stack this applies to:** Cloudflare Workers (Hono API + React/Vite static assets) · D1 (SQLite + FTS5) · Vectorize · Workers AI (`bge-m3`, `bge-reranker-base`, `toMarkdown`) · Groq (Llama 3.3 70B) now, OpenAI later · in-browser PDF parsing (pdf.js) · no login in the demo, real login in the MVP.
+**Stack this applies to:** Cloudflare Workers (Hono API + React/Vite static assets) · D1 (SQLite + FTS5) · Vectorize · Workers AI (`bge-m3`, `bge-reranker-base`, `toMarkdown`) · Groq (gpt-oss-120b) now, OpenAI later · in-browser PDF parsing (pdf.js) · no login in the demo, real login in the MVP.
 
 **Labels:** **[DEMO]** = required before the demo link is shared. **[MVP]** = required before paying users. Items marked *verify* depend on a Cloudflare or provider feature whose current behaviour must be confirmed on our account before we rely on it.
 

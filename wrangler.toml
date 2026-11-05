@@ -14,8 +14,8 @@ enabled = true
 
 [vars]
 LLM_BASE_URL = "https://api.groq.com/openai/v1"
-LLM_MODELS = "llama-3.3-70b-versatile,openai/gpt-oss-120b,llama-3.1-8b-instant"
-LLM_SMALL_MODEL = "llama-3.1-8b-instant"
+LLM_MODELS = "openai/gpt-oss-120b,qwen/qwen3.8-27b,openai/gpt-oss-20b"
+LLM_SMALL_MODEL = "openai/gpt-oss-20b"
 UPLOADS_ENABLED = "true"
 
 [[d1_databases]]
@@ -43,8 +43,8 @@ name = "sustainiq"
 
 [env.production.vars]
 LLM_BASE_URL = "https://api.groq.com/openai/v1"
-LLM_MODELS = "llama-3.3-70b-versatile,openai/gpt-oss-120b,llama-3.1-8b-instant"
-LLM_SMALL_MODEL = "llama-3.1-8b-instant"
+LLM_MODELS = "openai/gpt-oss-120b,qwen/qwen3.8-27b,openai/gpt-oss-20b"
+LLM_SMALL_MODEL = "openai/gpt-oss-20b"
 UPLOADS_ENABLED = "true"
 
 [[env.production.d1_databases]]

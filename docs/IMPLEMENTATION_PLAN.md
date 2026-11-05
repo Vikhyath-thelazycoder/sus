@@ -18,7 +18,7 @@ INTENTIONALLY_DEFERRED. `agylite plan index` keeps a compact index in `.agylite/
 ---
 
 ## P1 · Foundations and platform check
-Status: PARTIALLY_COMPLETE · Depends: — · Paths: package.json, wrangler.toml, src/worker/**, src/web/**, migrations/**, test/** · Flags: security, testing · Evidence: —
+Status: VERIFIED · Depends: — · Paths: package.json, wrangler.toml, src/worker/**, src/web/**, migrations/**, test/** · Flags: security, testing · Evidence: docs/evidence/P1.md
 Objective: An empty but secure app shell deployed to workers.dev, with every Cloudflare binding wired up, and a measurement of whether LangGraph fits the free plan (3 MB compressed / 10 ms CPU).
 
 | ID | Task | Status | Depends | Capabilities | Security | Design | Testing | Acceptance |
@@ -30,7 +30,7 @@ Objective: An empty but secure app shell deployed to workers.dev, with every Clo
 | T-1.5 | Signed anonymous identity cookie (HMAC, `crypto.subtle.verify`, two-secret rotation) | VERIFIED | T-1.4 | engineering/security | SEC §3.2, §12 #6 | — | Forged and tampered cookie tests (SEC §13 #2) | Tampered cookie gets a new ID and no data |
 | T-1.6 | LLM provider module: OpenAI SDK pointed at Groq (`baseURL` + key from secret); fallback chain config (PP §6.6) | VERIFIED | T-1.1 | engineering/ai-systems | Key only in `wrangler secret` (SEC §2) | — | Unit test with a mocked provider, incl. 429 → fallback | One config value switches provider |
 | T-1.7 | **Platform check:** a minimal LangGraph graph (2 nodes) + Hono; measure the bundle with `wrangler deploy --dry-run --outdir` and the CPU per request on workers.dev | VERIFIED | T-1.6 | engineering/architecture, engineering/performance | — | — | Measurements recorded in `docs/evidence/P1.md` | Report: bundle size vs 3 MB, CPU ms vs 10 ms, recommendation. **Owner decides the demo fallback if it doesn't fit.** |
-| T-1.8 | First deploy to `*.workers.dev`; secrets set (`LLM_API_KEY`, `ANON_ID_SECRET`, `ADMIN_INGEST_TOKEN`); verify the free-tier figures on our account (PP §3) | PARTIALLY_COMPLETE | T-1.7 | engineering/release | Secret scan (SEC §13 #16) | — | Live smoke: `/api/health`, headers | Live URL serves the shell; free-tier limits confirmed and noted |
+| T-1.8 | First deploy to `*.workers.dev`; secrets set (`LLM_API_KEY`, `ANON_ID_SECRET`, `ADMIN_INGEST_TOKEN`); verify the free-tier figures on our account (PP §3) | VERIFIED | T-1.7 | engineering/release | Secret scan (SEC §13 #16) | — | Live smoke: `/api/health`, headers | Live URL serves the shell; free-tier limits confirmed and noted |
 
 ## P2 · Paper ingestion
 Status: PLANNED · Depends: P1 · Paths: src/shared/chunker.ts, scripts/ingest.ts, src/worker/routes/admin.ts, data/papers/** · Flags: security, testing · Evidence: —
@@ -195,3 +195,9 @@ P1 ──► P2 ──► P3 ──► P4 ──┐
 | 2026-11-05 | T-1.7: BLOCKED → IN_PROGRESS |
 | 2026-11-05 | T-1.7: IN_PROGRESS → READY_FOR_VERIFICATION |
 | 2026-11-05 | T-1.7: READY_FOR_VERIFICATION → VERIFIED (evidence: docs/evidence/P1.md) |
+| 2026-11-05 | T-1.8: PARTIALLY_COMPLETE → READY_FOR_VERIFICATION |
+| 2026-11-05 | T-1.8: READY_FOR_VERIFICATION → VERIFIED (evidence: docs/evidence/P1.md) |
+| 2026-11-05 | P1: PARTIALLY_COMPLETE → VERIFIED (roll-up from T-1.8) |
+| 2026-11-05 | P1: VERIFIED → IN_PROGRESS |
+| 2026-11-05 | P1: IN_PROGRESS → READY_FOR_VERIFICATION |
+| 2026-11-05 | P1: READY_FOR_VERIFICATION → VERIFIED (evidence: docs/evidence/P1.md) |

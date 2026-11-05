@@ -50,7 +50,7 @@ External: Groq (OpenAI-compatible Chat Completions), Crossref (metadata, from th
 
 | Service | Data sent | Failure handling |
 |---|---|---|
-| Groq | Question + top passages | Fallback chain 70B → gpt-oss-120b → 8B → "busy" message |
+| Groq | Question + top passages | Fallback chain gpt-oss-120b → qwen3.8-27b → gpt-oss-20b → "busy" message |
 | Workers AI | Chunk/query text (embeddings, rerank) | Retry once; rerank failure → RRF order |
 | Crossref | DOI | Script-only; manual metadata if it fails |
 | Turnstile | Token | Fail closed on uploads; retry prompt on chat |
@@ -59,7 +59,7 @@ External: Groq (OpenAI-compatible Chat Completions), Crossref (metadata, from th
 
 - **Embeddings:** `@cf/baai/bge-m3` (1024 dims), the same model for chunks and queries (RAG §4.5).
 - **Reranker:** `@cf/baai/bge-reranker-base`.
-- **Generation:** Groq `llama-3.3-70b-versatile`; rewrite/guard on `llama-3.1-8b-instant`. Temperature 0.2, max 800 output tokens, ~3,000 tokens of sources.
+- **Generation:** Groq `openai/gpt-oss-120b` (fallbacks `qwen/qwen3.8-27b`, `openai/gpt-oss-20b`); rewrite/guard on `openai/gpt-oss-20b`. gpt-oss models reason before answering, so P4 sets low reasoning effort and counts reasoning tokens in the budget. Temperature 0.2, max 800 output tokens, ~3,000 tokens of sources.
 - **Data sent:** questions and retrieved passages only; no identifiers.
 - **Evaluation:** golden set (30 + 5), recall@6, MRR, faithfulness, decline accuracy (`npm run eval`).
 - **Cost limits:** free tiers; a global daily budget guard stops before the Groq and Workers AI quotas are exhausted.

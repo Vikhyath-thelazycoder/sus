@@ -20,7 +20,7 @@ Read: `messages` (last 10 turns, by `chatId` + `ownerId`) → Vectorize + `chunk
 Write: `chats` (new chat), `messages` (user turn, then assistant turn with `citations_json`), `usage` counters, KV cache (public-only answers).
 
 ### AI flow
-`guard` (keywords → 8B model when unsure) → decline **or** `rewrite` (8B, only if history) → `embed` (bge-m3) → hybrid search → RRF → `rerank` (bge-reranker-base) → `generate` (70B, streamed; fallback chain) → `validate` citations (retry once on failure) → `save`.
+`guard` (keywords → small model when unsure) → decline **or** `rewrite` (small model, only if history) → `embed` (bge-m3) → hybrid search → RRF → `rerank` (bge-reranker-base) → `generate` (70B, streamed; fallback chain) → `validate` citations (retry once on failure) → `save`.
 
 ### External API flow
 Groq streaming call (timeout ≈ 30 s; abort on client disconnect). Turnstile verify. No retries on Groq except the fallback chain; no retries on a user-visible stream once it has started.

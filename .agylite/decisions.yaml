@@ -46,7 +46,7 @@ decisions:
   - Gemini free, Workers AI, OpenRouter
   impact: ~25-30 full answers/day on the 70B free tier; fallback chain
   supersedes: null
-  status: ACTIVE
+  status: SUPERSEDED
   tags: []
 - decision_id: D-005
   date: '2026-11-05'
@@ -119,5 +119,18 @@ decisions:
   - Workers Paid now (A); Render demo (C)
   impact: Bundle 21 KiB gzip; same steps; agents need LangGraph later
   supersedes: D-003
+  status: ACTIVE
+  tags: []
+- decision_id: D-011
+  date: '2026-11-05'
+  kind: architecture
+  topic: LLM provider
+  decision: Groq openai/gpt-oss-120b -> qwen/qwen3.8-27b -> openai/gpt-oss-20b (small model gpt-oss-20b) for the demo; OpenAI
+    in the MVP
+  reason: 'P1 check: Groq retired llama-3.3-70b-versatile and llama-3.1-8b-instant (404); the three listed models return 200
+    with 1,000 req/day and 8,000 tokens/min each'
+  alternatives: []
+  impact: ''
+  supersedes: D-004
   status: ACTIVE
   tags: []

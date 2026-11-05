@@ -6,6 +6,7 @@ import { requestGuard } from "./security/request-guard";
 import { identity } from "./security/identity";
 import { requireAdmin } from "./security/admin";
 import { errorHandler } from "./security/errors";
+import { llmConfigFromEnv } from "./llm";
 
 export const app = new Hono<AppEnv>();
 
@@ -31,6 +32,29 @@ const admin = new Hono<AppEnv>();
 admin.use("*", requireAdmin);
 /** Lets the local ingest script check its token before uploading anything. */
 admin.get("/ping", (c) => c.json({ ok: true }));
+
+/** Provider health: a 1-token call per model, returning only status and the provider's rate-limit headers. */
+admin.get("/llm-check", async (c) => {
+  const { apiKey, baseURL, models } = llmConfigFromEnv(c.env);
+  const results = await Promise.all(
+    models.map(async (model) => {
+      const res = await fetch(`${baseURL}/chat/completions`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ model, max_tokens: 1, messages: [{ role: "user", content: "ok" }] }),
+      });
+      const limits = Object.fromEntries([...res.headers].filter(([k]) => k.startsWith("x-ratelimit-")));
+      return { model, status: res.status, limits };
+    }),
+  );
+  const listed = await fetch(`${baseURL}/models`, { headers: { Authorization: `Bearer ${apiKey}` } });
+  const available = listed.ok
+    ? ((await listed.json()) as { data: { id: string; active?: boolean; context_window?: number }[] }).data
+        .filter((m) => m.active !== false)
+        .map((m) => ({ id: m.id, context: m.context_window }))
+    : [];
+  return c.json({ results, available });
+});
 app.route("/api/admin", admin);
 
 app.notFound((c) => c.json({ error: "Not found" }, 404));

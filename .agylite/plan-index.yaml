@@ -1,18 +1,17 @@
 schema_version: 1
 plan_path: docs/IMPLEMENTATION_PLAN.md
-plan_sha256: 80b035d3ebe941ec6ab6201c5b75ad0fb22b0878ecfe69ae3cdf07f63ea4f1fd
-plan_size: 23840
-plan_mtime_ns: 1793895617246064654
-built: '2026-11-05T16:20:17+00:00'
-current_phase: P1
+plan_sha256: 650dc52dbe54b1b94c0e4d3623c6071b92e75a9abe9728badf8823b1486bb5bf
+plan_size: 24267
+plan_mtime_ns: 1793896296188489487
+built: '2026-11-05T16:31:36+00:00'
+current_phase: P2
 phases:
 - phase_id: P1
   phase_name: Foundations and platform check
-  status: PARTIALLY_COMPLETE
+  status: VERIFIED
   objective: An empty but secure app shell deployed to workers.dev, with every Cloudflare binding wired up, and a measurement
     of whether LangGraph fits the free plan (3 MB compressed / 10 ms CPU).
-  active_tasks:
-  - T-1.8
+  active_tasks: []
   tasks:
   - id: T-1.1
     title: 'Scaffold: TypeScript, Vite + React (`src/web`), Hono Worker (`src/worker`), shared code (`src/shared`), ESLint,
@@ -42,7 +41,7 @@ phases:
   - id: T-1.8
     title: First deploy to `*.workers.dev`; secrets set (`LLM_API_KEY`, `ANON_ID_SECRET`, `ADMIN_INGEST_TOKEN`); verify the
       free-tier figures on our account (PP §3)
-    status: PARTIALLY_COMPLETE
+    status: VERIFIED
   dependencies: []
   affected_paths:
   - package.json
@@ -55,10 +54,10 @@ phases:
   design_flags: false
   testing_flags: true
   last_updated: null
-  evidence_pointer: null
+  evidence_pointer: docs/evidence/P1.md
   section:
     start: 1295
-    end: 4399
+    end: 4397
 - phase_id: P2
   phase_name: Paper ingestion
   status: PLANNED
@@ -105,8 +104,8 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 4399
-    end: 7049
+    start: 4397
+    end: 7047
 - phase_id: P3
   phase_name: Retrieval and evaluation
   status: PLANNED
@@ -148,8 +147,8 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 7049
-    end: 9265
+    start: 7047
+    end: 9263
 - phase_id: P4
   phase_name: Answer generation
   status: PLANNED
@@ -195,8 +194,8 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 9265
-    end: 11850
+    start: 9263
+    end: 11848
 - phase_id: P5
   phase_name: UI foundation and chat
   status: PLANNED
@@ -234,8 +233,8 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 11850
-    end: 13900
+    start: 11848
+    end: 13898
 - phase_id: P6
   phase_name: Library and chat history
   status: PLANNED
@@ -267,8 +266,8 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 13900
-    end: 15156
+    start: 13898
+    end: 15154
 - phase_id: P7
   phase_name: PDF uploads
   status: PLANNED
@@ -307,8 +306,8 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 15156
-    end: 16879
+    start: 15154
+    end: 16877
 - phase_id: P8
   phase_name: Hardening and demo launch
   status: PLANNED
@@ -351,8 +350,8 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 16879
-    end: 18856
+    start: 16877
+    end: 18854
 - phase_id: P9
   phase_name: Paid MVP (after the deal)
   status: INTENTIONALLY_DEFERRED
@@ -390,5 +389,5 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 18856
-    end: 20673
+    start: 18854
+    end: 20671

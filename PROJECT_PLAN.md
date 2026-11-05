@@ -25,7 +25,7 @@ Related docs: [RAG_PRODUCTION_GUIDE.md](RAG_PRODUCTION_GUIDE.md) (RAG theory and
 | Big PDFs | Demo: parsed in the browser. Production: processed on the server with **Cloudflare Queues** (handles 300–400 page PDFs). |
 | PDF parsing | Start with **pdf.js**. Add a small **Python parsing service** (Docling/GROBID) only if tests in Phase 2 show tables come out badly. |
 | Database | **D1 (SQLite + FTS5) + Vectorize**: all-Cloudflare, cheapest, never pauses. Supabase was considered and not chosen (see docs/PROJECT_DECISIONS.md). |
-| Answer AI | **Groq**: Llama 3.3 70B, with fallbacks (§6.6). Provider is one config value, so OpenAI later is a one-line change. |
+| Answer AI | **Groq**: `openai/gpt-oss-120b`, with fallbacks (§6.6). Provider is one config value, so OpenAI later is a one-line change. |
 | Orchestration | **Demo: plain TypeScript functions** run the answer pipeline (§6). LangGraph was measured in Phase 1: it fits on size but not on the free plan's 10 ms CPU limit (p50 14 ms, p90 82 ms), so the owner chose to leave it out of the demo. **MVP: LangGraph returns** on the paid plan for agents. |
 | RAG engine | Built ourselves: Workers AI `bge-m3` embeddings → **Vectorize** (meaning search) + **D1 FTS5** (keyword/BM25) → **RRF** merge → Workers AI `bge-reranker-base`. |
 | Papers | 15–25 curated **open-access** papers preloaded, **plus** user uploads. |
@@ -70,9 +70,9 @@ Related docs: [RAG_PRODUCTION_GUIDE.md](RAG_PRODUCTION_GUIDE.md) (RAG theory and
 | Workers | 100k requests/day, **10 ms CPU** per request | Fine for the demo; heavy work moved to the browser and the local script |
 | Workers AI | 10,000 neurons/day | Embeddings plus reranking per question; uploads use the most |
 | Vectorize | ~5M stored dimensions (≈ **4,800 chunks** at 1024 dims) | ≈ 25 preloaded papers + a few users' uploads; hence the 7-day expiry |
-| Groq Llama 3.3 70B | ~1,000 requests/day, **~12k tokens/min, ~100k tokens/day** | **Only ~25–30 full answers per day** at ~3.5k tokens each, which is the real bottleneck (§6.6) |
+| Groq (gpt-oss-120b, qwen3.8-27b, gpt-oss-20b) | **Measured in P1:** 1,000 requests/day and **8,000 tokens/min per model** (daily token cap not reported in headers) | About **2 full answers/min per model** at ~3.5–4k tokens each (~6/min across the chain), which is the real bottleneck (§6.6) |
 
-> **Honest note:** Groq's free 70B daily *token* limit is tight. That's fine for showing one client, not for public traffic. The fallback chain (§6.6) keeps the demo working when it runs out.
+> **Honest note:** Groq's free *tokens-per-minute* limit is tight. That's fine for showing one client, not for public traffic. The fallback chain (§6.6) keeps the demo working when it runs out.
 
 ---
 
@@ -94,8 +94,8 @@ Related docs: [RAG_PRODUCTION_GUIDE.md](RAG_PRODUCTION_GUIDE.md) (RAG theory and
                         │              │               │             │
                  ┌──────▼─────┐ ┌──────▼──────┐ ┌──────▼──────┐ ┌────▼─────┐
                  │ D1 (SQLite)│ │  Vectorize  │ │ Workers AI  │ │  Groq    │
-                 │ papers,    │ │ child-chunk │ │ bge-m3      │ │ Llama 3.3│
-                 │ chunks,FTS5│ │ vectors     │ │ reranker    │ │ 70B      │
+                 │ papers,    │ │ child-chunk │ │ bge-m3      │ │ gpt-oss  │
+                 │ chunks,FTS5│ │ vectors     │ │ reranker    │ │ 120B     │
                  │ chats, quota│ └────────────┘ └─────────────┘ └──────────┘
                  └────────────┘
    Local Mac: scripts/ingest.ts → parse demo PDFs → chunk → upload chunks via the admin endpoint
@@ -160,7 +160,7 @@ Each step is a plain TypeScript function with its own tests; a small runner call
 
 1. **Check:** cookie identity → rate limit → Turnstile (first question) → validate → strip invisible characters.
 2. **Topic and safety gate:** a cheap check (keywords plus a small model when unsure) catches off-topic and hazardous-chemistry questions and returns the polite decline (SECURITY §12 #11).
-3. **Rewrite (only if the chat has earlier turns):** a small, fast model (`llama-3.1-8b-instant`) turns "what about its cost?" into a standalone question. History comes from D1, never from the client.
+3. **Rewrite (only if the chat has earlier turns):** a small, fast model (`openai/gpt-oss-20b`) turns "what about its cost?" into a standalone question. History comes from D1, never from the client.
 4. **Hybrid search, in parallel:**
    - **Meaning:** embed the query with `bge-m3` → Vectorize top **30**, filtered to `owner_id ∈ {public, me}`.
    - **Keyword:** D1 FTS5 BM25 top **30** with the escaped query (SECURITY §4.2), same owner filter. This is what catches exact terms like **PLA, PHA, PBAT, ASTM D6400, CAS numbers**.
@@ -185,7 +185,7 @@ Each step is a plain TypeScript function with its own tests; a small runner call
 11. **Save** the message plus citations (chunk IDs) in D1. The citation panel loads the **stored** passage from D1, never text written by the AI.
 
 ### 6.6 LLM fallback chain (free-tier reality)
-`llama-3.3-70b-versatile` → on 429 or quota hit → `openai/gpt-oss-120b` (Groq) → `llama-3.1-8b-instant` → friendly "busy, try again later". Each answer records which model wrote it. Later, OpenAI simply becomes the first entry.
+`openai/gpt-oss-120b` → on 429 or quota hit → `qwen/qwen3.8-27b` → `openai/gpt-oss-20b` → friendly "busy, try again later". (Groq retired the Llama 3.x models; checked in P1.) Each answer records which model wrote it. Later, OpenAI simply becomes the first entry.
 
 ### 6.7 Measuring accuracy (not "zero errors": measured, minimized, cited)
 - **Golden set:** 30 questions on the demo papers, each with the correct paper and page, plus 5 questions the papers **can't** answer.
@@ -308,7 +308,7 @@ npm run eval -- --remote                # confirm scores on the live system
 
 | Risk | Plan |
 |---|---|
-| Groq free token limit (~25–30 full answers/day on 70B) | Fallback chain, short source budget, cache repeated questions; tell the client it's a demo limit |
+| Groq free limit (8,000 tokens/min per model ≈ 2 answers/min) | Fallback chain, short source budget, cache repeated questions; tell the client it's a demo limit |
 | pdf.js loses tables and equations in some papers | Pick demo papers that parse cleanly; test `toMarkdown` and Docling for the MVP |
 | Free-tier figures are partly from third-party sites | Verify on our accounts in Phase 1 before relying on them |
 | Rate-limiting binding or WAF rule may not be on the free plan | D1-counter fallback (SECURITY §8) |
