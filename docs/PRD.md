@@ -60,7 +60,7 @@ System behaviour: [SYSTEM_WORKFLOW.md](SYSTEM_WORKFLOW.md).
 
 - Free-tier limits (Groq, Workers AI, Vectorize) are as researched (to be verified in T-1.8).
 - pdf.js extracts the chosen papers well enough (checked in T-2.5).
-- LangGraph fits the free Worker limits (checked in T-1.7).
+- ~~LangGraph fits the free Worker limits~~ Checked in T-1.7: it doesn't fit the free CPU limit, so the demo uses plain functions (owner decision).
 - The client's users mostly read English-language papers.
 
 ## Open questions

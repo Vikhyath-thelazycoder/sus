@@ -11,11 +11,12 @@ The table below is regenerated between the markers; edit text outside them freel
 |---|---|---|---|---|---|---|---|
 | D-001 | 2026-11-05 | architecture | Hosting | Demo on Cloudflare Workers Free; production on Cloudflare Workers Paid only | All needed services in one free account; owner rule: production stays on Cloudflare | — | ACTIVE |
 | D-002 | 2026-11-05 | architecture | Database | D1 (SQLite+FTS5) + Vectorize | All-Cloudflare, cheapest (~$10-15/mo est. at 100k chunks), never pauses | — | ACTIVE |
-| D-003 | 2026-11-05 | architecture | Orchestration | Hono + LangGraph.js with own retrieval code; no full LangChain | Owner wants LangGraph; nodes as plain functions keep it removable; security-critical retrieval is custom anyway | — | ACTIVE |
+| D-003 | 2026-11-05 | architecture | Orchestration | Hono + LangGraph.js with own retrieval code; no full LangChain | Owner wants LangGraph; nodes as plain functions keep it removable; security-critical retrieval is custom anyway | — | SUPERSEDED |
 | D-004 | 2026-11-05 | architecture | LLM provider | Groq (Llama 3.3 70B) for the demo via the OpenAI SDK; OpenAI in the MVP | No OpenAI key yet; Groq is free and OpenAI-compatible | — | ACTIVE |
 | D-005 | 2026-11-05 | architecture | Caching and counters | Workers KV for the answer cache; Rate Limiting binding / Durable Objects for counters; no Redis on Cloudflare | Built in and included; KV is eventually consistent so not used for counters | — | ACTIVE |
 | D-006 | 2026-11-05 | architecture | PDF parsing | pdf.js first; optional Python parser (Docling/GROBID) only if T-2.5 shows bad tables | Free and runs in browser and Node; Python can't run in Workers | — | ACTIVE |
 | D-007 | 2026-11-05 | architecture | Big PDFs | Demo: browser-side parsing (5 x 100 pages). Production: server-side via Cloudflare Queues | Avoids the free 10 ms CPU limit; Queues need the paid plan | — | ACTIVE |
 | D-008 | 2026-11-05 | security | Identity in demo | No login; server-issued HMAC-signed anonymous cookie; owner_id on every query; uploads private to the uploader | Frictionless client demo without cross-user leaks | — | ACTIVE |
 | D-009 | 2026-11-05 | design | Visual direction | Calm minimal: warm off-white + sage green, dark mode toggle, desktop-first, citation side panel / mobile bottom sheet | Owner choice; long technical answers need low visual noise | — | ACTIVE |
+| D-010 | 2026-11-05 | architecture | Orchestration | Demo: Hono + plain-function pipeline with own retrieval code; LangGraph returns in the MVP on Workers Paid | T-1.7: LangGraph fit on size (502 KiB gzip) but used p50 14 ms / p90 82 ms CPU vs the free 10 ms limit; owner chose option B | D-003 | ACTIVE |
 <!-- agylite:decisions:end -->

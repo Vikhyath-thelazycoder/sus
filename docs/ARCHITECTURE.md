@@ -9,7 +9,7 @@ Components, boundaries and data flow (spec §20.3).
 | **Web app** | Chat, citation panel, library, upload, history; renders AI output safely | `src/web` |
 | **Upload parser** | pdf.js in a Web Worker: PDF → pages → sections → chunks | `src/web/upload` + `src/shared/chunker.ts` |
 | **API** | Routes, validation, identity, rate limits, headers | `src/worker/routes`, `src/worker/security` |
-| **RAG graph** | LangGraph: guard → rewrite → retrieve → rerank → generate → validate → save | `src/worker/rag` |
+| **RAG pipeline** | Plain functions run in order: guard → rewrite → retrieve → rerank → generate → validate → save (LangGraph in the MVP) | `src/worker/rag` |
 | **Retrieval** | Vectorize search, FTS5 search, RRF, rerank, owner checks | `src/worker/rag/search.ts` etc. |
 | **LLM adapter** | Groq/OpenAI client, fallback chain, streaming | `src/worker/llm.ts` |
 | **Platform adapter** | All D1 / Vectorize / Workers AI / KV calls in one module, so the demo can move hosts | `src/worker/platform.ts` |
@@ -20,7 +20,7 @@ Components, boundaries and data flow (spec §20.3).
 ## Boundaries
 
 - **Web ↔ API:** JSON over HTTPS, same origin; contracts defined as zod schemas in `src/shared/schemas.ts`, used by both sides.
-- **API ↔ RAG graph:** `runGraph({ ownerId, chatId, question }) → AsyncIterable<event>`. The graph never touches HTTP.
+- **API ↔ RAG pipeline:** `runPipeline({ ownerId, chatId, question }) → AsyncIterable<event>`. The pipeline never touches HTTP.
 - **RAG ↔ platform:** only through `platform.ts` (`searchVectors`, `searchKeywords`, `embed`, `rerank`, `getChunks`, `cache`).
 - **RAG ↔ LLM:** only through `llm.ts` (`complete`, `stream`), so the provider is swappable.
 - **Shared chunker:** one module used by the browser and the ingest script; same input → same chunks.

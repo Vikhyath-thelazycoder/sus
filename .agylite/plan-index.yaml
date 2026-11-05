@@ -1,9 +1,9 @@
 schema_version: 1
 plan_path: docs/IMPLEMENTATION_PLAN.md
-plan_sha256: 1a1217db0865c46fc94b3a50a1fe9eda77f2c805a37f0748be8e5291a53333a0
-plan_size: 23464
-plan_mtime_ns: 1793894575298595265
-built: '2026-11-05T16:02:55+00:00'
+plan_sha256: 80b035d3ebe941ec6ab6201c5b75ad0fb22b0878ecfe69ae3cdf07f63ea4f1fd
+plan_size: 23840
+plan_mtime_ns: 1793895617246064654
+built: '2026-11-05T16:20:17+00:00'
 current_phase: P1
 phases:
 - phase_id: P1
@@ -12,7 +12,6 @@ phases:
   objective: An empty but secure app shell deployed to workers.dev, with every Cloudflare binding wired up, and a measurement
     of whether LangGraph fits the free plan (3 MB compressed / 10 ms CPU).
   active_tasks:
-  - T-1.7
   - T-1.8
   tasks:
   - id: T-1.1
@@ -39,7 +38,7 @@ phases:
   - id: T-1.7
     title: '**Platform check:** a minimal LangGraph graph (2 nodes) + Hono; measure the bundle with `wrangler deploy --dry-run
       --outdir` and the CPU per request on workers.dev'
-    status: BLOCKED
+    status: VERIFIED
   - id: T-1.8
     title: First deploy to `*.workers.dev`; secrets set (`LLM_API_KEY`, `ANON_ID_SECRET`, `ADMIN_INGEST_TOKEN`); verify the
       free-tier figures on our account (PP §3)
@@ -59,7 +58,7 @@ phases:
   evidence_pointer: null
   section:
     start: 1295
-    end: 4398
+    end: 4399
 - phase_id: P2
   phase_name: Paper ingestion
   status: PLANNED
@@ -106,8 +105,8 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 4398
-    end: 7048
+    start: 4399
+    end: 7049
 - phase_id: P3
   phase_name: Retrieval and evaluation
   status: PLANNED
@@ -149,13 +148,13 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 7048
-    end: 9264
+    start: 7049
+    end: 9265
 - phase_id: P4
-  phase_name: Answer generation (LangGraph)
+  phase_name: Answer generation
   status: PLANNED
-  objective: Streaming, grounded answers with validated citations and an honest "I couldn't find this", run as a LangGraph
-    graph (PP §6, RAG §5.9–5.11).
+  objective: Streaming, grounded answers with validated citations and an honest "I couldn't find this", run as a pipeline
+    of plain functions (PP §6, RAG §5.9–5.11).
   active_tasks: []
   tasks:
   - id: T-4.1
@@ -174,8 +173,8 @@ phases:
     title: 'Validate node: citation check, retry edge once, fallback message (RAG §5.10)'
     status: PLANNED
   - id: T-4.6
-    title: Wire the LangGraph graph (guard → rewrite → retrieve → rerank → generate → validate → save) with plain-function
-      nodes; drop to plain calls if T-1.7 says so
+    title: 'Pipeline runner: call guard → rewrite → retrieve → rerank → generate → validate → save in order, with the single
+      retry (no LangGraph in the demo, per T-1.7)'
     status: PLANNED
   - id: T-4.7
     title: '`/api/chat` SSE route; save the message and citation chunk IDs to D1; KV answer cache for public-only questions'
@@ -196,8 +195,8 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 9264
-    end: 11848
+    start: 9265
+    end: 11850
 - phase_id: P5
   phase_name: UI foundation and chat
   status: PLANNED
@@ -235,8 +234,8 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 11848
-    end: 13898
+    start: 11850
+    end: 13900
 - phase_id: P6
   phase_name: Library and chat history
   status: PLANNED
@@ -268,8 +267,8 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 13898
-    end: 15154
+    start: 13900
+    end: 15156
 - phase_id: P7
   phase_name: PDF uploads
   status: PLANNED
@@ -308,8 +307,8 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 15154
-    end: 16877
+    start: 15156
+    end: 16879
 - phase_id: P8
   phase_name: Hardening and demo launch
   status: PLANNED
@@ -352,8 +351,8 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 16877
-    end: 18854
+    start: 16879
+    end: 18856
 - phase_id: P9
   phase_name: Paid MVP (after the deal)
   status: INTENTIONALLY_DEFERRED
@@ -377,7 +376,7 @@ phases:
     title: Optional Python parsing service (Docling/GROBID) if T-2.5 found table problems
     status: INTENTIONALLY_DEFERRED
   - id: T-9.6
-    title: LangGraph agent for multi-paper research questions
+    title: Reintroduce LangGraph (paid plan) and build an agent for multi-paper research questions
     status: INTENTIONALLY_DEFERRED
   - id: T-9.7
     title: Tracing (Langfuse), privacy notice, dependency scanning, SEC §14 MVP checklist
@@ -391,5 +390,5 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 18854
-    end: 20634
+    start: 18856
+    end: 20673

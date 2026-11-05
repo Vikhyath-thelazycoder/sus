@@ -1,0 +1,117 @@
+{
+ "schema_version": 1,
+ "mode": "tests-and-browser",
+ "task": null,
+ "result": "PASSED",
+ "impact": {
+  "method": "structural",
+  "changed": [
+   "package-lock.json",
+   "package.json",
+   "src/worker/index.ts",
+   "src/worker/rag/graph.ts",
+   "test/admin.test.ts",
+   "wrangler.toml"
+  ],
+  "notice": "graph-based analysis unavailable; limited structural analysis used (graph-based analysis unavailable: graphify runtime not installed (`agylite runtime install graphify`))"
+ },
+ "checks": [
+  {
+   "command": [
+    "npm",
+    "run",
+    "test",
+    "--",
+    "test/admin.test.ts",
+    "test/helpers.ts",
+    "test/headers.test.ts",
+    "test/identity.test.ts",
+    "test/request-guard.test.ts"
+   ],
+   "exit_code": 0,
+   "result": "PASSED",
+   "duration_ms": 1942,
+   "diagnosis": [],
+   "kind": "test",
+   "name": "test",
+   "reason": "5 tests affected by the change",
+   "tests": [
+    "test/admin.test.ts",
+    "test/helpers.ts",
+    "test/headers.test.ts",
+    "test/identity.test.ts",
+    "test/request-guard.test.ts"
+   ],
+   "at": "2026-11-05T16:19:24Z"
+  },
+  {
+   "command": [
+    "npm",
+    "run",
+    "build"
+   ],
+   "exit_code": 0,
+   "result": "PASSED",
+   "duration_ms": 1929,
+   "diagnosis": [],
+   "kind": "typecheck",
+   "name": "build",
+   "reason": "typecheck check for the project",
+   "tests": [],
+   "at": "2026-11-05T16:19:26Z"
+  },
+  {
+   "command": [
+    "npm",
+    "run",
+    "typecheck"
+   ],
+   "exit_code": 0,
+   "result": "PASSED",
+   "duration_ms": 1083,
+   "diagnosis": [],
+   "kind": "typecheck",
+   "name": "typecheck",
+   "reason": "typecheck check for the project",
+   "tests": [],
+   "at": "2026-11-05T16:19:27Z"
+  },
+  {
+   "command": [
+    "npm",
+    "run",
+    "lint"
+   ],
+   "exit_code": 0,
+   "result": "PASSED",
+   "duration_ms": 825,
+   "diagnosis": [],
+   "kind": "lint",
+   "name": "lint",
+   "reason": "lint check for the project",
+   "tests": [],
+   "at": "2026-11-05T16:19:28Z"
+  },
+  {
+   "command": [
+    "/Users/vikhyathmgowda007/.agylite/core/bin/python",
+    "-m",
+    "compileall",
+    "-q",
+    "-x",
+    "(^|/)(\\.|node_modules|venv)",
+    "."
+   ],
+   "exit_code": 0,
+   "result": "PASSED",
+   "duration_ms": 113,
+   "diagnosis": [],
+   "kind": "build",
+   "name": "compileall",
+   "reason": "build check for the project",
+   "tests": [],
+   "at": "2026-11-05T16:19:28Z"
+  }
+ ],
+ "at": "2026-11-05T16:19:28Z"
+}

@@ -34,7 +34,7 @@ decisions:
   - Hono + plain functions; Hono + LangChain
   impact: Bundle and CPU measured in T-1.7
   supersedes: null
-  status: ACTIVE
+  status: SUPERSEDED
   tags: []
 - decision_id: D-004
   date: '2026-11-05'
@@ -106,5 +106,18 @@ decisions:
   - Dark-first; pure white
   impact: ''
   supersedes: null
+  status: ACTIVE
+  tags: []
+- decision_id: D-010
+  date: '2026-11-05'
+  kind: architecture
+  topic: Orchestration
+  decision: 'Demo: Hono + plain-function pipeline with own retrieval code; LangGraph returns in the MVP on Workers Paid'
+  reason: 'T-1.7: LangGraph fit on size (502 KiB gzip) but used p50 14 ms / p90 82 ms CPU vs the free 10 ms limit; owner chose
+    option B'
+  alternatives:
+  - Workers Paid now (A); Render demo (C)
+  impact: Bundle 21 KiB gzip; same steps; agents need LangGraph later
+  supersedes: D-003
   status: ACTIVE
   tags: []

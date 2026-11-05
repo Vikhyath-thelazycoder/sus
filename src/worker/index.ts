@@ -6,7 +6,6 @@ import { requestGuard } from "./security/request-guard";
 import { identity } from "./security/identity";
 import { requireAdmin } from "./security/admin";
 import { errorHandler } from "./security/errors";
-import { spikeGraph } from "./rag/graph";
 
 export const app = new Hono<AppEnv>();
 
@@ -30,11 +29,8 @@ app.get("/api/session", (c) => c.body(null, 204));
 
 const admin = new Hono<AppEnv>();
 admin.use("*", requireAdmin);
-// T-1.7 platform check: runs the LangGraph spike so CPU can be read from `wrangler tail`. Removed in P4.
-admin.get("/diag/graph", async (c) => {
-  const out = await spikeGraph.invoke({ question: "  How fast does PLA   degrade? " });
-  return c.json({ ok: out.answer === "received: How fast does PLA degrade?" });
-});
+/** Lets the local ingest script check its token before uploading anything. */
+admin.get("/ping", (c) => c.json({ ok: true }));
 app.route("/api/admin", admin);
 
 app.notFound((c) => c.json({ error: "Not found" }, 404));

@@ -14,9 +14,9 @@ verification:
   browser_verification: enabled
   simulator_recording_loop: disabled
   last: &id001
-    task: T-1.6
+    task: T-1.7
     result: VERIFIED
     evidence: docs/evidence/P1.md
-    at: '2026-11-05T16:02:55+00:00'
+    at: '2026-11-05T16:20:17+00:00'
   last_task: *id001
-updated: '2026-11-05T16:02:55+00:00'
+updated: '2026-11-05T16:20:17+00:00'

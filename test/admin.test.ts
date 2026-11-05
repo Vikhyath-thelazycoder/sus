@@ -5,13 +5,13 @@ import { call } from "./helpers";
 
 describe("admin token gate (SECURITY §5.1)", () => {
   it("rejects missing and wrong tokens", async () => {
-    expect((await call("/api/admin/diag/graph")).status).toBe(401);
-    const wrong = await call("/api/admin/diag/graph", { headers: { Authorization: "Bearer nope" } });
+    expect((await call("/api/admin/ping")).status).toBe(401);
+    const wrong = await call("/api/admin/ping", { headers: { Authorization: "Bearer nope" } });
     expect(wrong.status).toBe(401);
   });
 
-  it("accepts the right token and runs the LangGraph spike", async () => {
-    const res = await call("/api/admin/diag/graph", {
+  it("accepts the right token", async () => {
+    const res = await call("/api/admin/ping", {
       headers: { Authorization: `Bearer ${env.ADMIN_INGEST_TOKEN}` },
     });
     expect(res.status).toBe(200);

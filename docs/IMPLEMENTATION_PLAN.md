@@ -29,7 +29,7 @@ Objective: An empty but secure app shell deployed to workers.dev, with every Clo
 | T-1.4 | Security middleware: headers + CSP, `no-store` on `/api/*`, JSON-only + Origin check, zod error handler with generic messages | VERIFIED | T-1.1 | engineering/security | SEC §3.1, §3.3, §12 #5 | — | Header tests (SEC §13 #21) | `curl -I` shows every header from SEC §3.3 |
 | T-1.5 | Signed anonymous identity cookie (HMAC, `crypto.subtle.verify`, two-secret rotation) | VERIFIED | T-1.4 | engineering/security | SEC §3.2, §12 #6 | — | Forged and tampered cookie tests (SEC §13 #2) | Tampered cookie gets a new ID and no data |
 | T-1.6 | LLM provider module: OpenAI SDK pointed at Groq (`baseURL` + key from secret); fallback chain config (PP §6.6) | VERIFIED | T-1.1 | engineering/ai-systems | Key only in `wrangler secret` (SEC §2) | — | Unit test with a mocked provider, incl. 429 → fallback | One config value switches provider |
-| T-1.7 | **Platform check:** a minimal LangGraph graph (2 nodes) + Hono; measure the bundle with `wrangler deploy --dry-run --outdir` and the CPU per request on workers.dev | BLOCKED | T-1.6 | engineering/architecture, engineering/performance | — | — | Measurements recorded in `docs/evidence/P1.md` | Report: bundle size vs 3 MB, CPU ms vs 10 ms, recommendation. **Owner decides the demo fallback if it doesn't fit.** |
+| T-1.7 | **Platform check:** a minimal LangGraph graph (2 nodes) + Hono; measure the bundle with `wrangler deploy --dry-run --outdir` and the CPU per request on workers.dev | VERIFIED | T-1.6 | engineering/architecture, engineering/performance | — | — | Measurements recorded in `docs/evidence/P1.md` | Report: bundle size vs 3 MB, CPU ms vs 10 ms, recommendation. **Owner decides the demo fallback if it doesn't fit.** |
 | T-1.8 | First deploy to `*.workers.dev`; secrets set (`LLM_API_KEY`, `ANON_ID_SECRET`, `ADMIN_INGEST_TOKEN`); verify the free-tier figures on our account (PP §3) | PARTIALLY_COMPLETE | T-1.7 | engineering/release | Secret scan (SEC §13 #16) | — | Live smoke: `/api/health`, headers | Live URL serves the shell; free-tier limits confirmed and noted |
 
 ## P2 · Paper ingestion
@@ -60,9 +60,9 @@ Objective: Hybrid search + RRF + reranker returning the right passages, **measur
 | T-3.6 | `scripts/eval.ts`: recall@6, MRR; compare vector-only vs hybrid vs hybrid + rerank (RAG §9.2) | PLANNED | T-3.1, T-3.5 | engineering/ai-systems, testing/regression | — | — | Eval runs locally and against remote | Scores recorded in `docs/evidence/P3.md` |
 | T-3.7 | Tune chunk size, k and rerank count on the golden set; plot the score histogram before any threshold (RAG §5.7) | PLANNED | T-3.6 | engineering/ai-systems | — | — | Before/after numbers | Chosen settings justified with numbers |
 
-## P4 · Answer generation (LangGraph)
+## P4 · Answer generation
 Status: PLANNED · Depends: P3 · Paths: src/worker/rag/graph.ts, src/worker/routes/chat.ts, src/worker/llm.ts · Flags: security, testing · Evidence: —
-Objective: Streaming, grounded answers with validated citations and an honest "I couldn't find this", run as a LangGraph graph (PP §6, RAG §5.9–5.11).
+Objective: Streaming, grounded answers with validated citations and an honest "I couldn't find this", run as a pipeline of plain functions (PP §6, RAG §5.9–5.11).
 
 | ID | Task | Status | Depends | Capabilities | Security | Design | Testing | Acceptance |
 |---|---|---|---|---|---|---|---|---|
@@ -71,7 +71,7 @@ Objective: Streaming, grounded answers with validated citations and an honest "I
 | T-4.3 | Prompt builder: fenced `<sources>`, tag escaping, canary, numbered sources with title/section/page (RAG §5.9) | PLANNED | T-3.5 | engineering/ai-systems | SEC §6.1–6.4 | — | SEC §13 #7, #8, #9 | Injected chunks don't change behaviour |
 | T-4.4 | Generate node: Groq streaming, temperature 0.2, max 800 tokens, timeout, fallback chain | PLANNED | T-4.3 | engineering/ai-systems | SEC §7.4, §12 #20 | — | Mocked-provider tests incl. 429 fallback | Streams token by token; fallback works |
 | T-4.5 | Validate node: citation check, retry edge once, fallback message (RAG §5.10) | PLANNED | T-4.4 | engineering/ai-systems | SEC §7.2 | — | SEC §13 #10 | No answer ships with a citation that wasn't retrieved |
-| T-4.6 | Wire the LangGraph graph (guard → rewrite → retrieve → rerank → generate → validate → save) with plain-function nodes; drop to plain calls if T-1.7 says so | PLANNED | T-4.1–T-4.5 | engineering/architecture | — | — | Graph test with each path (decline, ok, retry) | Each path covered by a test |
+| T-4.6 | Pipeline runner: call guard → rewrite → retrieve → rerank → generate → validate → save in order, with the single retry (no LangGraph in the demo, per T-1.7) | PLANNED | T-4.1–T-4.5 | engineering/architecture | — | — | Graph test with each path (decline, ok, retry) | Each path covered by a test |
 | T-4.7 | `/api/chat` SSE route; save the message and citation chunk IDs to D1; KV answer cache for public-only questions | PLANNED | T-4.6 | engineering/backend | Cache never crosses owners (SEC §8) | — | API tests; cache-scope test | Second identical public question served from cache |
 | T-4.8 | Answer evaluation: faithfulness + "I don't know" accuracy on the golden set, with an LLM judge checked by hand (RAG §9.2–9.3) | PLANNED | T-4.7 | engineering/ai-systems, testing/regression | — | — | `npm run eval` extended | Scores in `docs/evidence/P4.md`; ≥ 90% correct declines on unanswerable questions (target) |
 
@@ -136,7 +136,7 @@ Objective: Turn the demo into the client's production MVP on Cloudflare Workers 
 | T-9.3 | Real login (magic link / Google) replacing the anonymous ID | INTENTIONALLY_DEFERRED | — | engineering/security | SEC §10 | DESIGN.md | Login security tests | Client decision |
 | T-9.4 | Server-side processing of big PDFs (300–400 pages) with Cloudflare Queues | INTENTIONALLY_DEFERRED | — | engineering/backend | SEC §5.1 | — | Large-PDF tests | Client decision |
 | T-9.5 | Optional Python parsing service (Docling/GROBID) if T-2.5 found table problems | INTENTIONALLY_DEFERRED | T-2.5 | engineering/ai-systems | SEC §12 #7 | — | Table fixtures | Only if needed |
-| T-9.6 | LangGraph agent for multi-paper research questions | INTENTIONALLY_DEFERRED | — | engineering/ai-systems | Tool allowlist, budgets (RAG §7) | — | Agent evals | Client decision |
+| T-9.6 | Reintroduce LangGraph (paid plan) and build an agent for multi-paper research questions | INTENTIONALLY_DEFERRED | — | engineering/ai-systems | Tool allowlist, budgets (RAG §7) | — | Agent evals | Client decision |
 | T-9.7 | Tracing (Langfuse), privacy notice, dependency scanning, SEC §14 MVP checklist | INTENTIONALLY_DEFERRED | — | engineering/security | SEC §14 [MVP] | — | — | Client decision |
 
 ---
@@ -168,6 +168,7 @@ P1 ──► P2 ──► P3 ──► P4 ──┐
 |---|---|
 | 2026-11-05 | Plan created |
 | 2026-11-05 | Phases P1–P9 written from PROJECT_PLAN.md, SECURITY.md and RAG_PRODUCTION_GUIDE.md |
+| 2026-11-05 | T-1.7 result: LangGraph over the free CPU limit; owner chose option B (plain functions in the demo, LangGraph in P9) |
 | 2026-11-05 | T-1.7: PLANNED → BLOCKED |
 | 2026-11-05 | P1: PLANNED → IN_PROGRESS (roll-up from T-1.7) |
 | 2026-11-05 | P1: IN_PROGRESS → PARTIALLY_COMPLETE |
@@ -191,3 +192,6 @@ P1 ──► P2 ──► P3 ──► P4 ──┐
 | 2026-11-05 | T-1.6: READY_FOR_VERIFICATION → VERIFIED (evidence: docs/evidence/P1.md) |
 | 2026-11-05 | T-1.8: PLANNED → IN_PROGRESS |
 | 2026-11-05 | T-1.8: IN_PROGRESS → PARTIALLY_COMPLETE |
+| 2026-11-05 | T-1.7: BLOCKED → IN_PROGRESS |
+| 2026-11-05 | T-1.7: IN_PROGRESS → READY_FOR_VERIFICATION |
+| 2026-11-05 | T-1.7: READY_FOR_VERIFICATION → VERIFIED (evidence: docs/evidence/P1.md) |

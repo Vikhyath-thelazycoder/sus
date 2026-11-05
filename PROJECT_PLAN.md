@@ -26,7 +26,7 @@ Related docs: [RAG_PRODUCTION_GUIDE.md](RAG_PRODUCTION_GUIDE.md) (RAG theory and
 | PDF parsing | Start with **pdf.js**. Add a small **Python parsing service** (Docling/GROBID) only if tests in Phase 2 show tables come out badly. |
 | Database | **D1 (SQLite + FTS5) + Vectorize**: all-Cloudflare, cheapest, never pauses. Supabase was considered and not chosen (see docs/PROJECT_DECISIONS.md). |
 | Answer AI | **Groq**: Llama 3.3 70B, with fallbacks (§6.6). Provider is one config value, so OpenAI later is a one-line change. |
-| Orchestration | **LangGraph** (`@langchain/langgraph`) runs the answer pipeline as a graph of steps (§6). Each step is a plain function, so the graph can be removed if the free plan can't fit it. No full LangChain. |
+| Orchestration | **Demo: plain TypeScript functions** run the answer pipeline (§6). LangGraph was measured in Phase 1: it fits on size but not on the free plan's 10 ms CPU limit (p50 14 ms, p90 82 ms), so the owner chose to leave it out of the demo. **MVP: LangGraph returns** on the paid plan for agents. |
 | RAG engine | Built ourselves: Workers AI `bge-m3` embeddings → **Vectorize** (meaning search) + **D1 FTS5** (keyword/BM25) → **RRF** merge → Workers AI `bge-reranker-base`. |
 | Papers | 15–25 curated **open-access** papers preloaded, **plus** user uploads. |
 | Uploads | Parsed **in the browser** (pdf.js). Limit: 5 PDFs, 100 pages each, per user. Visible only to the uploader. Auto-deleted after 7 days. |
@@ -47,7 +47,7 @@ Related docs: [RAG_PRODUCTION_GUIDE.md](RAG_PRODUCTION_GUIDE.md) (RAG theory and
 | Markdown | `react-markdown` (raw HTML **off**, images dropped) | Safe rendering of AI output (SECURITY §7.3) |
 | PDF parsing | **pdf.js** (`pdfjs-dist`) in a Web Worker | Free, runs in the browser, keeps page numbers, avoids the 10 ms CPU limit |
 | API | **Hono** on Cloudflare Workers | Tiny, fast, built for Workers |
-| Orchestration | **LangGraph.js** (`@langchain/langgraph` + `@langchain/core` only), in-memory graph | Steps and retries as a visible graph; the base for agents in the MVP. Officially supports Workers. We don't use its Postgres/Redis checkpointers (history is in D1). |
+| Orchestration | Plain TypeScript functions (demo); **LangGraph.js** in the MVP | Same steps either way. LangGraph exceeded the free CPU limit in Phase 1 (docs/evidence/P1.md); it returns on the paid plan for agents |
 | Validation | `zod` | Checks every input (SECURITY §3.1) |
 | Database | **Cloudflare D1** (SQLite + FTS5) | Papers, chunks, chats, quotas; keyword search |
 | Vector search | **Cloudflare Vectorize** (1024 dims, cosine) | Meaning search |
@@ -86,7 +86,7 @@ Related docs: [RAG_PRODUCTION_GUIDE.md](RAG_PRODUCTION_GUIDE.md) (RAG theory and
                                      │ HTTPS (same origin, signed anon cookie)
                      ┌───────────────▼────────────── Cloudflare Worker (Hono) ─┐
                      │ security headers · zod validation · rate limit · Turnstile│
-                     │ /api/chat  → LangGraph RAG graph (§6) → Groq (stream)     │
+                     │ /api/chat  → RAG pipeline (§6) → Groq (stream)            │
                      │ /api/upload → validate chunks → embed → store             │
                      │ /api/papers, /api/chats, /api/me/delete                   │
                      │ Cron: expire uploads (7d) · clean orphan vectors          │
@@ -147,7 +147,7 @@ Vectorize vector ID = `chunks.id`. Metadata: `{ owner_id, paper_id }`.
 
 ## 6. How a question is answered (query pipeline)
 
-The steps below are the nodes of a **LangGraph** graph:
+The pipeline steps (plain functions in the demo; the same steps become LangGraph nodes in the MVP):
 ```
 START → guard ──off-topic──→ decline → END
           │
@@ -156,7 +156,7 @@ START → guard ──off-topic──→ decline → END
           ▲                                                      │
           └──────────────── bad citations (retry once) ──────────┘
 ```
-Each node is a plain TypeScript function with its own tests. LangGraph only connects them and handles the retry edge. The graph's state is `{ question, history, chunks, answer, citations, attempts }`.
+Each step is a plain TypeScript function with its own tests; a small runner calls them in order and handles the one retry. The graph's state is `{ question, history, chunks, answer, citations, attempts }`.
 
 1. **Check:** cookie identity → rate limit → Turnstile (first question) → validate → strip invisible characters.
 2. **Topic and safety gate:** a cheap check (keywords plus a small model when unsure) catches off-topic and hazardous-chemistry questions and returns the polite decline (SECURITY §12 #11).
@@ -312,7 +312,7 @@ npm run eval -- --remote                # confirm scores on the live system
 | pdf.js loses tables and equations in some papers | Pick demo papers that parse cleanly; test `toMarkdown` and Docling for the MVP |
 | Free-tier figures are partly from third-party sites | Verify on our accounts in Phase 1 before relying on them |
 | Rate-limiting binding or WAF rule may not be on the free plan | D1-counter fallback (SECURITY §8) |
-| LangGraph pushes the Worker over the free **3 MB compressed** size limit or the 10 ms CPU limit | Measure in Phase 1 with `wrangler deploy --dry-run`. If it doesn't fit: run the same node functions without the graph, or move to the $5 plan (10 MB) |
+| ~~LangGraph over the free limits~~ **Resolved in P1:** fits on size (502 KiB) but not on CPU (p50 14 ms) | Owner chose option B: no LangGraph in the demo; it returns in the MVP on the paid plan |
 | Free Vectorize space fills up | 100-page/5-PDF cap, 7-day expiry, orphan cleanup |
 | "Zero errors" expectation | Promise measured accuracy, citations and "I don't know", not perfection |
 | D1 limits: 500 MB free, **10 GB per database** on Paid | Far beyond the paper library for a long time; split across databases or move to Postgres if ever reached |

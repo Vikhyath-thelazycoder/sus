@@ -13,7 +13,7 @@ Types a question in the chat (or taps a suggestion) and presses send.
 1. `POST /api/chat { chatId?, question, turnstileToken? }`; zod validation (question ≤ 2,000 characters).
 2. Verify the signed anonymous cookie → `ownerId` (issue a new one if missing).
 3. Rate limit (20/min, 200/day per owner + IP); Turnstile check on the first question of a session.
-4. Strip invisible characters; run the LangGraph graph; stream events over SSE.
+4. Strip invisible characters; run the RAG pipeline; stream events over SSE.
 
 ### Data flow
 Read: `messages` (last 10 turns, by `chatId` + `ownerId`) → Vectorize + `chunks_fts` → `chunks`/`papers` (owner re-check) → KV cache lookup (public scope only).

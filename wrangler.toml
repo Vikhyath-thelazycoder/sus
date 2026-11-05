@@ -3,7 +3,7 @@
 name = "sustainiq-dev"
 main = "src/worker/index.ts"
 compatibility_date = "2026-11-01"
-compatibility_flags = ["nodejs_compat"] # LangGraph uses AsyncLocalStorage
+compatibility_flags = ["nodejs_compat"] # Node.js APIs for npm libraries
 
 [assets]
 not_found_handling = "single-page-application"

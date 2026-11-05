@@ -9,7 +9,7 @@ How it will be built (spec §20.2). Full reasoning: [../PROJECT_PLAN.md](../PROJ
 | Language | TypeScript (strict) | One language for web, Worker and scripts |
 | Frontend | React + Vite, Tailwind CSS, `react-markdown` | Simple SPA served as static assets by the Worker |
 | API | Hono on Cloudflare Workers | Small, fast, Workers-native; also runs on Node (demo fallback) |
-| Orchestration | LangGraph.js (`@langchain/langgraph`, `@langchain/core`) | Answer pipeline as a graph with a retry edge; base for MVP agents |
+| Orchestration | Plain TypeScript functions (demo); LangGraph.js in the MVP | LangGraph exceeded the free 10 ms CPU limit in P1; returns on the paid plan for agents |
 | Validation | zod | Schema at every trust boundary |
 | PDF parsing | pdf.js (`pdfjs-dist`) | Free, keeps page numbers, runs in the browser and in Node |
 | Tests | Vitest + `@cloudflare/vitest-pool-workers` | Tests on the real Workers runtime |
@@ -90,4 +90,4 @@ External: Groq (OpenAI-compatible Chat Completions), Crossref (metadata, from th
 
 ## Dependencies
 
-`hono`, `zod`, `openai` (Groq/OpenAI client), `@langchain/langgraph`, `@langchain/core`, `react`, `react-dom`, `react-markdown`, `pdfjs-dist`, `tailwindcss`, `vitest`, `@cloudflare/vitest-pool-workers`, `wrangler`. Nothing else without a reason recorded here.
+`hono`, `zod`, `openai` (Groq/OpenAI client), `react`, `react-dom`, `react-markdown`, `pdfjs-dist`, `tailwindcss`, `vitest`, `@cloudflare/vitest-pool-workers`, `wrangler`. Nothing else without a reason recorded here.
