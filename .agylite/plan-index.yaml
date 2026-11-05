@@ -1,0 +1,395 @@
+schema_version: 1
+plan_path: docs/IMPLEMENTATION_PLAN.md
+plan_sha256: 1a1217db0865c46fc94b3a50a1fe9eda77f2c805a37f0748be8e5291a53333a0
+plan_size: 23464
+plan_mtime_ns: 1793894575298595265
+built: '2026-11-05T16:02:55+00:00'
+current_phase: P1
+phases:
+- phase_id: P1
+  phase_name: Foundations and platform check
+  status: PARTIALLY_COMPLETE
+  objective: An empty but secure app shell deployed to workers.dev, with every Cloudflare binding wired up, and a measurement
+    of whether LangGraph fits the free plan (3 MB compressed / 10 ms CPU).
+  active_tasks:
+  - T-1.7
+  - T-1.8
+  tasks:
+  - id: T-1.1
+    title: 'Scaffold: TypeScript, Vite + React (`src/web`), Hono Worker (`src/worker`), shared code (`src/shared`), ESLint,
+      Prettier, Vitest with `@cloudflare/vitest-pool-workers`'
+    status: VERIFIED
+  - id: T-1.2
+    title: '`wrangler.toml` with dev/prod environments and bindings: D1, Vectorize (1024-dim, cosine, `owner_id` metadata
+      index), Workers AI, KV, static assets, cron'
+    status: VERIFIED
+  - id: T-1.3
+    title: 'D1 migration 0001: `papers`, `sections`, `chunks`, `chunks_fts` (FTS5), `chats`, `messages`, `usage` (PP §5.4)'
+    status: VERIFIED
+  - id: T-1.4
+    title: 'Security middleware: headers + CSP, `no-store` on `/api/*`, JSON-only + Origin check, zod error handler with generic
+      messages'
+    status: VERIFIED
+  - id: T-1.5
+    title: Signed anonymous identity cookie (HMAC, `crypto.subtle.verify`, two-secret rotation)
+    status: VERIFIED
+  - id: T-1.6
+    title: 'LLM provider module: OpenAI SDK pointed at Groq (`baseURL` + key from secret); fallback chain config (PP §6.6)'
+    status: VERIFIED
+  - id: T-1.7
+    title: '**Platform check:** a minimal LangGraph graph (2 nodes) + Hono; measure the bundle with `wrangler deploy --dry-run
+      --outdir` and the CPU per request on workers.dev'
+    status: BLOCKED
+  - id: T-1.8
+    title: First deploy to `*.workers.dev`; secrets set (`LLM_API_KEY`, `ANON_ID_SECRET`, `ADMIN_INGEST_TOKEN`); verify the
+      free-tier figures on our account (PP §3)
+    status: PARTIALLY_COMPLETE
+  dependencies: []
+  affected_paths:
+  - package.json
+  - wrangler.toml
+  - src/worker/**
+  - src/web/**
+  - migrations/**
+  - test/**
+  security_flags: true
+  design_flags: false
+  testing_flags: true
+  last_updated: null
+  evidence_pointer: null
+  section:
+    start: 1295
+    end: 4398
+- phase_id: P2
+  phase_name: Paper ingestion
+  status: PLANNED
+  objective: 15–25 curated open-access papers parsed, chunked by structure, embedded and stored, with text a human has read
+    and checked (RAG §4).
+  active_tasks: []
+  tasks:
+  - id: T-2.1
+    title: Pick 15–25 open-access papers across biopolymers, green chemistry, packaging and biomaterials; record DOI, licence
+      and source URL in `data/papers/metadata.json`
+    status: PLANNED
+  - id: T-2.2
+    title: 'PDF text extraction with pdf.js: page numbers, two-column ordering, header/footer removal, de-hyphenation, invisible-character
+      stripping, scanned-PDF detection (PP §5.2)'
+    status: PLANNED
+  - id: T-2.3
+    title: Section detection; References section kept out of the index
+    status: PLANNED
+  - id: T-2.4
+    title: 'Shared chunker: parent = section, child ≈ 350 tokens, 15% overlap, never crosses sections, contextual header `Paper:
+      … Section: …` (RAG §4.3, §4.4)'
+    status: PLANNED
+  - id: T-2.5
+    title: '**Table quality check:** inspect how 5 table-heavy papers parse; decide whether the optional Python parser is
+      needed (PP decision)'
+    status: PLANNED
+  - id: T-2.6
+    title: Protected admin ingest endpoint (`ADMIN_INGEST_TOKEN`, constant-time compare); embeds with `bge-m3` in batches,
+      writes D1 + FTS + Vectorize with `owner_id='public'`
+    status: PLANNED
+  - id: T-2.7
+    title: '`scripts/ingest.ts`: local run over `data/papers`, Crossref metadata by DOI, progress output, `--remote` flag'
+    status: PLANNED
+  dependencies:
+  - P1
+  affected_paths:
+  - src/shared/chunker.ts
+  - scripts/ingest.ts
+  - src/worker/routes/admin.ts
+  - data/papers/**
+  security_flags: true
+  design_flags: false
+  testing_flags: true
+  last_updated: null
+  evidence_pointer: null
+  section:
+    start: 4398
+    end: 7048
+- phase_id: P3
+  phase_name: Retrieval and evaluation
+  status: PLANNED
+  objective: Hybrid search + RRF + reranker returning the right passages, **measured** on a golden set before any answer generation
+    is built (RAG §5.3–5.8, §9).
+  active_tasks: []
+  tasks:
+  - id: T-3.1
+    title: 'Golden set: 30 real-style questions with the correct paper, section and page, plus 5 unanswerable ones (RAG §9.1)'
+    status: PLANNED
+  - id: T-3.2
+    title: 'Meaning search: embed the query with `bge-m3`, Vectorize top 30, **server-built** owner pre-filter (RAG §5.3)'
+    status: PLANNED
+  - id: T-3.3
+    title: 'Keyword search: FTS5 BM25 top 30 with escaped phrase query; malformed query → empty result'
+    status: PLANNED
+  - id: T-3.4
+    title: RRF merge (k = 60) → top 20 → re-check owners in D1 (RAG §5.4)
+    status: PLANNED
+  - id: T-3.5
+    title: Rerank with `bge-reranker-base` → top 6; neighbour expansion (±1 child) within the token budget; best first (RAG
+      §5.6, §5.8)
+    status: PLANNED
+  - id: T-3.6
+    title: '`scripts/eval.ts`: recall@6, MRR; compare vector-only vs hybrid vs hybrid + rerank (RAG §9.2)'
+    status: PLANNED
+  - id: T-3.7
+    title: Tune chunk size, k and rerank count on the golden set; plot the score histogram before any threshold (RAG §5.7)
+    status: PLANNED
+  dependencies:
+  - P2
+  affected_paths:
+  - src/worker/rag/**
+  - scripts/eval.ts
+  - data/golden.json
+  security_flags: true
+  design_flags: false
+  testing_flags: true
+  last_updated: null
+  evidence_pointer: null
+  section:
+    start: 7048
+    end: 9264
+- phase_id: P4
+  phase_name: Answer generation (LangGraph)
+  status: PLANNED
+  objective: Streaming, grounded answers with validated citations and an honest "I couldn't find this", run as a LangGraph
+    graph (PP §6, RAG §5.9–5.11).
+  active_tasks: []
+  tasks:
+  - id: T-4.1
+    title: 'Guard node: topic check + hazardous-chemistry refusal + override-attempt speed bump → polite decline'
+    status: PLANNED
+  - id: T-4.2
+    title: Rewrite node (small model, only with history; history from D1 only) (RAG §5.1)
+    status: PLANNED
+  - id: T-4.3
+    title: 'Prompt builder: fenced `<sources>`, tag escaping, canary, numbered sources with title/section/page (RAG §5.9)'
+    status: PLANNED
+  - id: T-4.4
+    title: 'Generate node: Groq streaming, temperature 0.2, max 800 tokens, timeout, fallback chain'
+    status: PLANNED
+  - id: T-4.5
+    title: 'Validate node: citation check, retry edge once, fallback message (RAG §5.10)'
+    status: PLANNED
+  - id: T-4.6
+    title: Wire the LangGraph graph (guard → rewrite → retrieve → rerank → generate → validate → save) with plain-function
+      nodes; drop to plain calls if T-1.7 says so
+    status: PLANNED
+  - id: T-4.7
+    title: '`/api/chat` SSE route; save the message and citation chunk IDs to D1; KV answer cache for public-only questions'
+    status: PLANNED
+  - id: T-4.8
+    title: 'Answer evaluation: faithfulness + "I don''t know" accuracy on the golden set, with an LLM judge checked by hand
+      (RAG §9.2–9.3)'
+    status: PLANNED
+  dependencies:
+  - P3
+  affected_paths:
+  - src/worker/rag/graph.ts
+  - src/worker/routes/chat.ts
+  - src/worker/llm.ts
+  security_flags: true
+  design_flags: false
+  testing_flags: true
+  last_updated: null
+  evidence_pointer: null
+  section:
+    start: 9264
+    end: 11848
+- phase_id: P5
+  phase_name: UI foundation and chat
+  status: PLANNED
+  objective: The calm, minimal, desktop-first and mobile-ready chat experience with the citation side panel and bottom sheet
+    (DESIGN.md). Can start in parallel with P2–P4 against a mocked API.
+  active_tasks: []
+  tasks:
+  - id: T-5.1
+    title: Design tokens (colour, type, spacing, radius) as CSS variables + Tailwind config; light/dark, with dark following
+      the system setting and a toggle
+    status: PLANNED
+  - id: T-5.2
+    title: 'App shell: history sidebar (desktop) / drawer (mobile), header, main column ≤ 720 px'
+    status: PLANNED
+  - id: T-5.3
+    title: 'Chat view: input, suggested questions, streaming answer, inline `[n]`, sources row, copy, thumbs up/down'
+    status: PLANNED
+  - id: T-5.4
+    title: 'Citation panel (desktop) / bottom sheet (mobile): stored passage, highlight, title, authors, year, page, DOI,
+      Curated / Your upload badge'
+    status: PLANNED
+  - id: T-5.5
+    title: 'All states: empty, loading skeletons, error, "couldn''t find", rate-limited, busy'
+    status: PLANNED
+  - id: T-5.6
+    title: 'Accessibility pass: WCAG AA contrast, focus-visible, labels, reduced motion'
+    status: PLANNED
+  dependencies:
+  - P1
+  affected_paths:
+  - src/web/**
+  security_flags: true
+  design_flags: true
+  testing_flags: true
+  last_updated: null
+  evidence_pointer: null
+  section:
+    start: 11848
+    end: 13898
+- phase_id: P6
+  phase_name: Library and chat history
+  status: PLANNED
+  objective: Browse the paper library and return to past conversations, each strictly scoped to its owner.
+  active_tasks: []
+  tasks:
+  - id: T-6.1
+    title: '`GET /api/papers` (public + own), `GET /api/papers/:id` with sections'
+    status: PLANNED
+  - id: T-6.2
+    title: 'Library page: search, topic filters, paper cards, paper detail'
+    status: PLANNED
+  - id: T-6.3
+    title: 'Chat history API: list, open, rename, delete (D1, owner-scoped)'
+    status: PLANNED
+  - id: T-6.4
+    title: History sidebar wired to the API; new chat; grouping by date
+    status: PLANNED
+  dependencies:
+  - P4
+  - P5
+  affected_paths:
+  - src/worker/routes/papers.ts
+  - src/worker/routes/chats.ts
+  - src/web/pages/**
+  security_flags: true
+  design_flags: true
+  testing_flags: true
+  last_updated: null
+  evidence_pointer: null
+  section:
+    start: 13898
+    end: 15154
+- phase_id: P7
+  phase_name: PDF uploads
+  status: PLANNED
+  objective: Users upload their own PDFs (5 × 100 pages), parsed in the browser, re-validated on the server, private to them,
+    deleted after 7 days.
+  active_tasks: []
+  tasks:
+  - id: T-7.1
+    title: Browser parsing in a Web Worker with pdf.js (scripting off, magic-byte check, size/page caps, timeout) using the
+      shared chunker
+    status: PLANNED
+  - id: T-7.2
+    title: '`POST /api/upload` in batches: zod re-validation, server IDs and embeddings, **atomic** quota check (5 PDFs /
+      100 pages)'
+    status: PLANNED
+  - id: T-7.3
+    title: 'Upload UI: drag-and-drop, progress (Reading → Splitting → Indexing), limits and "don''t upload confidential documents"
+      notice'
+    status: PLANNED
+  - id: T-7.4
+    title: Own uploads searchable only by their owner; "Your upload (unverified)" labels
+    status: PLANNED
+  - id: T-7.5
+    title: 'Cron: expire uploads after 7 days; orphan-vector cleanup; "delete my data" endpoint + button'
+    status: PLANNED
+  dependencies:
+  - P2
+  - P6
+  affected_paths:
+  - src/web/upload/**
+  - src/worker/routes/upload.ts
+  - src/worker/cron.ts
+  security_flags: true
+  design_flags: true
+  testing_flags: true
+  last_updated: null
+  evidence_pointer: null
+  section:
+    start: 15154
+    end: 16877
+- phase_id: P8
+  phase_name: Hardening and demo launch
+  status: PLANNED
+  objective: Every [DEMO] item in SECURITY.md done, abuse limits on, full test suite green, live demo link ready for the client.
+  active_tasks: []
+  tasks:
+  - id: T-8.1
+    title: Rate limits (questions, uploads, new IDs) via the Rate Limiting binding or Durable Objects; global LLM and Workers
+      AI budget guard
+    status: PLANNED
+  - id: T-8.2
+    title: Cloudflare Turnstile on the first question and on uploads (server-side token check)
+    status: PLANNED
+  - id: T-8.3
+    title: Structured JSON logging (no secrets or raw IPs), alerts, `/.well-known/security.txt`
+    status: PLANNED
+  - id: T-8.4
+    title: 'Full security test suite (SEC §13 #1–23) green in CI'
+    status: PLANNED
+  - id: T-8.5
+    title: Final eval run on production (retrieval + answers)
+    status: PLANNED
+  - id: T-8.6
+    title: Production deploy + smoke test (5 golden questions, citations open the right page, upload from a phone, headers,
+      429)
+    status: PLANNED
+  - id: T-8.7
+    title: 'Demo hand-off: short walkthrough video and a one-page "how it works" for the client'
+    status: PLANNED
+  dependencies:
+  - P4
+  - P6
+  - P7
+  affected_paths:
+  - src/worker/security/**
+  - test/security/**
+  security_flags: true
+  design_flags: true
+  testing_flags: true
+  last_updated: null
+  evidence_pointer: null
+  section:
+    start: 16877
+    end: 18854
+- phase_id: P9
+  phase_name: Paid MVP (after the deal)
+  status: INTENTIONALLY_DEFERRED
+  objective: Turn the demo into the client's production MVP on Cloudflare Workers Paid. Re-planned in detail after the client
+    call; tasks below are the known scope.
+  active_tasks: []
+  tasks:
+  - id: T-9.1
+    title: Move to Cloudflare Workers Paid ($5); custom domain; WAF; D1 backups
+    status: INTENTIONALLY_DEFERRED
+  - id: T-9.2
+    title: Switch the LLM to OpenAI (first in the fallback chain); re-run all evals
+    status: INTENTIONALLY_DEFERRED
+  - id: T-9.3
+    title: Real login (magic link / Google) replacing the anonymous ID
+    status: INTENTIONALLY_DEFERRED
+  - id: T-9.4
+    title: Server-side processing of big PDFs (300–400 pages) with Cloudflare Queues
+    status: INTENTIONALLY_DEFERRED
+  - id: T-9.5
+    title: Optional Python parsing service (Docling/GROBID) if T-2.5 found table problems
+    status: INTENTIONALLY_DEFERRED
+  - id: T-9.6
+    title: LangGraph agent for multi-paper research questions
+    status: INTENTIONALLY_DEFERRED
+  - id: T-9.7
+    title: Tracing (Langfuse), privacy notice, dependency scanning, SEC §14 MVP checklist
+    status: INTENTIONALLY_DEFERRED
+  dependencies:
+  - P8
+  affected_paths: []
+  security_flags: true
+  design_flags: true
+  testing_flags: true
+  last_updated: null
+  evidence_pointer: null
+  section:
+    start: 18854
+    end: 20634

@@ -1,0 +1,110 @@
+schema_version: 1
+decisions:
+- decision_id: D-001
+  date: '2026-11-05'
+  kind: architecture
+  topic: Hosting
+  decision: Demo on Cloudflare Workers Free; production on Cloudflare Workers Paid only
+  reason: 'All needed services in one free account; owner rule: production stays on Cloudflare'
+  alternatives:
+  - Render, Vercel
+  impact: Free-plan limits (3 MB, 10 ms) checked in T-1.7; demo-only fallback decided then
+  supersedes: null
+  status: ACTIVE
+  tags: []
+- decision_id: D-002
+  date: '2026-11-05'
+  kind: architecture
+  topic: Database
+  decision: D1 (SQLite+FTS5) + Vectorize
+  reason: All-Cloudflare, cheapest (~$10-15/mo est. at 100k chunks), never pauses
+  alternatives:
+  - Supabase Postgres+pgvector (~$30-60/mo, pauses on free, built-in auth)
+  impact: 'Two stores to keep in sync: orphan-vector cleanup cron; 10 GB per-DB cap'
+  supersedes: null
+  status: ACTIVE
+  tags: []
+- decision_id: D-003
+  date: '2026-11-05'
+  kind: architecture
+  topic: Orchestration
+  decision: Hono + LangGraph.js with own retrieval code; no full LangChain
+  reason: Owner wants LangGraph; nodes as plain functions keep it removable; security-critical retrieval is custom anyway
+  alternatives:
+  - Hono + plain functions; Hono + LangChain
+  impact: Bundle and CPU measured in T-1.7
+  supersedes: null
+  status: ACTIVE
+  tags: []
+- decision_id: D-004
+  date: '2026-11-05'
+  kind: architecture
+  topic: LLM provider
+  decision: Groq (Llama 3.3 70B) for the demo via the OpenAI SDK; OpenAI in the MVP
+  reason: No OpenAI key yet; Groq is free and OpenAI-compatible
+  alternatives:
+  - Gemini free, Workers AI, OpenRouter
+  impact: ~25-30 full answers/day on the 70B free tier; fallback chain
+  supersedes: null
+  status: ACTIVE
+  tags: []
+- decision_id: D-005
+  date: '2026-11-05'
+  kind: architecture
+  topic: Caching and counters
+  decision: Workers KV for the answer cache; Rate Limiting binding / Durable Objects for counters; no Redis on Cloudflare
+  reason: Built in and included; KV is eventually consistent so not used for counters
+  alternatives:
+  - Upstash Redis (only if the demo moves to Render)
+  impact: ''
+  supersedes: null
+  status: ACTIVE
+  tags: []
+- decision_id: D-006
+  date: '2026-11-05'
+  kind: architecture
+  topic: PDF parsing
+  decision: pdf.js first; optional Python parser (Docling/GROBID) only if T-2.5 shows bad tables
+  reason: Free and runs in browser and Node; Python can't run in Workers
+  alternatives:
+  - Workers AI toMarkdown, Docling, GROBID
+  impact: ''
+  supersedes: null
+  status: ACTIVE
+  tags: []
+- decision_id: D-007
+  date: '2026-11-05'
+  kind: architecture
+  topic: Big PDFs
+  decision: 'Demo: browser-side parsing (5 x 100 pages). Production: server-side via Cloudflare Queues'
+  reason: Avoids the free 10 ms CPU limit; Queues need the paid plan
+  alternatives: []
+  impact: ''
+  supersedes: null
+  status: ACTIVE
+  tags: []
+- decision_id: D-008
+  date: '2026-11-05'
+  kind: security
+  topic: Identity in demo
+  decision: No login; server-issued HMAC-signed anonymous cookie; owner_id on every query; uploads private to the uploader
+  reason: Frictionless client demo without cross-user leaks
+  alternatives:
+  - Email or Google login (moved to the MVP)
+  impact: ''
+  supersedes: null
+  status: ACTIVE
+  tags: []
+- decision_id: D-009
+  date: '2026-11-05'
+  kind: design
+  topic: Visual direction
+  decision: 'Calm minimal: warm off-white + sage green, dark mode toggle, desktop-first, citation side panel / mobile bottom
+    sheet'
+  reason: Owner choice; long technical answers need low visual noise
+  alternatives:
+  - Dark-first; pure white
+  impact: ''
+  supersedes: null
+  status: ACTIVE
+  tags: []

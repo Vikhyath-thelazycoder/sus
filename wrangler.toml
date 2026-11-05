@@ -1,0 +1,65 @@
+# SustainIQ Worker. Top level = dev (local `vite dev` / tests); [env.production] = the live demo.
+# Bindings and vars are NOT inherited by environments, so production repeats them on purpose.
+name = "sustainiq-dev"
+main = "src/worker/index.ts"
+compatibility_date = "2026-11-01"
+compatibility_flags = ["nodejs_compat"] # LangGraph uses AsyncLocalStorage
+
+[assets]
+not_found_handling = "single-page-application"
+run_worker_first = ["/api/*"]
+
+[observability]
+enabled = true
+
+[vars]
+LLM_BASE_URL = "https://api.groq.com/openai/v1"
+LLM_MODELS = "llama-3.3-70b-versatile,openai/gpt-oss-120b,llama-3.1-8b-instant"
+LLM_SMALL_MODEL = "llama-3.1-8b-instant"
+UPLOADS_ENABLED = "true"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "sustainiq-db-dev"
+database_id = "b69f66d0-5712-4b03-9d63-a24fb97e195d"
+migrations_dir = "migrations"
+
+[[vectorize]]
+binding = "VECTORIZE"
+index_name = "sustainiq-chunks-dev"
+remote = true
+
+[ai]
+binding = "AI"
+remote = true
+
+[[kv_namespaces]]
+binding = "CACHE"
+id = "b79a742bfa2847bca2aa5131c2ab6815"
+
+# ---------------------------------------------------------------- production
+[env.production]
+name = "sustainiq"
+
+[env.production.vars]
+LLM_BASE_URL = "https://api.groq.com/openai/v1"
+LLM_MODELS = "llama-3.3-70b-versatile,openai/gpt-oss-120b,llama-3.1-8b-instant"
+LLM_SMALL_MODEL = "llama-3.1-8b-instant"
+UPLOADS_ENABLED = "true"
+
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "sustainiq-db"
+database_id = "804411b1-e5eb-4d0e-bcc1-2dddfa035841"
+migrations_dir = "migrations"
+
+[[env.production.vectorize]]
+binding = "VECTORIZE"
+index_name = "sustainiq-chunks"
+
+[env.production.ai]
+binding = "AI"
+
+[[env.production.kv_namespaces]]
+binding = "CACHE"
+id = "f027aaa63c22459e8609c63f5ac11ddc"

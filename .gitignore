@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.wrangler/
+.dev.vars*
+.env*
+*.log
+.DS_Store
+coverage/
+.secrets/
+
+# Course PDFs (third-party, not ours to publish)
+/BASWE-15-RAG-Concepts-Guide.pdf
+/Everything-to-know-about-RAG.pdf
+/RAG-Expert-Guide-BASWE.pdf

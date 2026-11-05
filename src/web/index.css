@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+/* Design tokens from docs/DESIGN.md. Dark mode follows the system; a toggle arrives in P5 (T-5.1). */
+:root {
+  --bg: #faf8f3;
+  --surface: #ffffff;
+  --text: #2b2b28;
+  --muted: #6b6b63;
+  --accent: #5e7f62;
+  --accent-soft: #e6eee6;
+  --border: #e7e3d9;
+  --danger: #a4473d;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #161815;
+    --surface: #1e211d;
+    --text: #e8e6df;
+    --muted: #9a988f;
+    --accent: #8db290;
+    --accent-soft: #24302a;
+    --border: #2c302b;
+    --danger: #e08a7f;
+  }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-border: var(--border);
+  --color-danger: var(--danger);
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+html {
+  font-size: 106.25%; /* 17px body (DESIGN.md typography) */
+}
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  line-height: 1.6;
+}

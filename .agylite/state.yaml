@@ -1,0 +1,22 @@
+schema_version: 1
+project:
+  name: sustainIQ
+  project_id: eb4926bec63f9757
+  created: '2026-11-05T14:33:04+00:00'
+  stage: new
+stack: []
+plan:
+  path: docs/IMPLEMENTATION_PLAN.md
+  current_phase: P1
+answers: {}
+verification:
+  mode: tests-and-browser
+  browser_verification: enabled
+  simulator_recording_loop: disabled
+  last: &id001
+    task: T-1.6
+    result: VERIFIED
+    evidence: docs/evidence/P1.md
+    at: '2026-11-05T16:02:55+00:00'
+  last_task: *id001
+updated: '2026-11-05T16:02:55+00:00'
