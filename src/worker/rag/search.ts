@@ -32,6 +32,7 @@ export interface ChunkRow {
   section: string;
   title: string;
   year: number | null;
+  doi: string | null;
   owner_id: string;
 }
 
@@ -48,6 +49,7 @@ export interface Passage {
   paperId: string;
   title: string;
   year: number | null;
+  doi: string | null;
   section: string;
   pageStart: number;
   pageEnd: number;
@@ -112,7 +114,7 @@ export async function fetchChunks(env: Env, ids: string[], ownerId: string): Pro
   const marks = ids.map((_, i) => `?${i + 2}`).join(", ");
   const { results } = await env.DB.prepare(
     `SELECT c.id, c.paper_id, c.section_id, c.idx, c.text, c.page_start, c.page_end, c.owner_id,
-            s.name AS section, p.title, p.year
+            s.name AS section, p.title, p.year, p.doi
      FROM chunks c JOIN sections s ON s.id = c.section_id JOIN papers p ON p.id = c.paper_id
      WHERE c.id IN (${marks}) AND c.owner_id IN ('public', ?1) AND p.owner_id = c.owner_id AND p.status = 'ready'`,
   )
@@ -180,6 +182,7 @@ export function buildPassages(hits: Hit[], neighbours: Map<string, ChunkRow>, ma
       paperId: h.paper_id,
       title: h.title,
       year: h.year,
+      doi: h.doi,
       section: h.section,
       pageStart: Math.min(...run.map((r) => r.page_start)),
       pageEnd: Math.max(...run.map((r) => r.page_end)),

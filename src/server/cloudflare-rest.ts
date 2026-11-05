@@ -25,6 +25,7 @@ function client(cfg: CfRestConfig) {
         ...(init.body !== undefined ? { "Content-Type": init.contentType ?? "application/json" } : {}),
       },
       body: init.body,
+      signal: AbortSignal.timeout(20_000), // a stalled Cloudflare call must not hang the request
     });
     const data = (await res.json().catch(() => ({}))) as { success?: boolean; result?: T; errors?: { message?: string }[] };
     if (!res.ok || !data.success) {
@@ -144,7 +145,7 @@ export class RestKv {
   }
   /** KV values are returned raw (not wrapped in {success,result}), so this one bypasses `call`. */
   async get(key: string): Promise<string | null> {
-    const res = await (this.cfg.fetch ?? fetch)(this.valueUrl(key), { headers: { Authorization: `Bearer ${this.cfg.apiToken}` } });
+    const res = await (this.cfg.fetch ?? fetch)(this.valueUrl(key), { headers: { Authorization: `Bearer ${this.cfg.apiToken}` }, signal: AbortSignal.timeout(20_000) });
     if (res.status === 404) return null;
     if (!res.ok) throw new CfApiError(`Cloudflare API ${res.status}: KV read failed`);
     return res.text();
@@ -155,11 +156,12 @@ export class RestKv {
       method: "PUT",
       headers: { Authorization: `Bearer ${this.cfg.apiToken}`, "Content-Type": "text/plain" },
       body: value,
+      signal: AbortSignal.timeout(20_000),
     });
     if (!res.ok) throw new CfApiError(`Cloudflare API ${res.status}: KV write failed`);
   }
   async delete(key: string) {
-    const res = await (this.cfg.fetch ?? fetch)(this.valueUrl(key), { method: "DELETE", headers: { Authorization: `Bearer ${this.cfg.apiToken}` } });
+    const res = await (this.cfg.fetch ?? fetch)(this.valueUrl(key), { method: "DELETE", headers: { Authorization: `Bearer ${this.cfg.apiToken}` }, signal: AbortSignal.timeout(20_000) });
     if (!res.ok && res.status !== 404) throw new CfApiError(`Cloudflare API ${res.status}: KV delete failed`);
   }
 }

@@ -4,6 +4,7 @@
  *   npm run eval                     run the pipeline here, on production data over the Cloudflare REST API
  *   npm run eval -- --remote         call the Render demo's admin search endpoint (records REST latency)
  *   options: --modes vector,keyword,hybrid,rerank  --searchK 30  --fuseTop 10  --rerankTop 10  --out file.json
+ *   npm run eval -- --answers        answer evaluation (T-4.8): full pipeline + Groq + LLM judge, see eval-answers.ts
  *
  * A hit is correct when it is from the gold paper and section and its pages overlap the gold pages.
  */
@@ -11,18 +12,20 @@ import { readFile, writeFile } from "node:fs/promises";
 import { RestAi, RestD1, RestVectorize } from "../src/server/cloudflare-rest";
 import { RETRIEVAL, retrieve, type Mode } from "../src/worker/rag/search";
 import { paperIdFor } from "../src/worker/routes/admin-papers";
+import { runAnswerEval } from "./eval-answers";
 
 const PROD_URL = "https://sustainiq-demo.onrender.com";
 // Production resource IDs (render.yaml); not secret.
 const PROD = { accountId: "e9233209373a92669b3057d4159652ff", d1: "804411b1-e5eb-4d0e-bcc1-2dddfa035841", index: "sustainiq-chunks" };
 
-interface Gold {
+export interface Gold {
   id: string;
   question: string;
   doi: string;
   section: string;
   pages: [number, number];
   style: string;
+  answer: string;
 }
 interface RankedHit {
   id: string;
@@ -66,15 +69,31 @@ async function searcher(remote: boolean): Promise<Search> {
       return { hits: out.hits, timings: { ...out.timings, roundTrip: Date.now() - t0 } };
     };
   }
-  const apiToken = (await readFile(".secrets/cloudflare.env", "utf8")).match(/CLOUDFLARE_API_TOKEN=(\S+)/)?.[1];
-  if (!apiToken) throw new Error("CLOUDFLARE_API_TOKEN missing from .secrets/cloudflare.env");
-  const cf = { accountId: PROD.accountId, apiToken };
-  const env = { DB: new RestD1(cf, PROD.d1), VECTORIZE: new RestVectorize(cf, PROD.index), AI: new RestAi(cf) } as unknown as Env;
+  const env = await localEnv();
   return async (query: string, mode: Mode) => {
     const t0 = Date.now();
     const r = await retrieve(env, query, "admin-eval", { mode, ...sizes, rankingOnly: true });
     return { hits: r.hits as RankedHit[], timings: { ...r.timings, total: Date.now() - t0 } };
   };
+}
+
+/** Production data over REST plus the LLM settings from wrangler.toml and the key in .dev.vars (git-ignored). */
+async function localEnv(): Promise<Env> {
+  const apiToken = (await readFile(".secrets/cloudflare.env", "utf8")).match(/CLOUDFLARE_API_TOKEN=(\S+)/)?.[1];
+  if (!apiToken) throw new Error("CLOUDFLARE_API_TOKEN missing from .secrets/cloudflare.env");
+  const toml = await readFile("wrangler.toml", "utf8");
+  const tomlVar = (k: string) => toml.match(new RegExp(`^${k} = "([^"]*)"`, "m"))?.[1] ?? "";
+  const llmKey = (await readFile(".dev.vars", "utf8").catch(() => "")).match(/^LLM_API_KEY=(\S+)/m)?.[1] ?? "";
+  const cf = { accountId: PROD.accountId, apiToken };
+  return {
+    DB: new RestD1(cf, PROD.d1),
+    VECTORIZE: new RestVectorize(cf, PROD.index),
+    AI: new RestAi(cf),
+    LLM_API_KEY: llmKey,
+    LLM_BASE_URL: tomlVar("LLM_BASE_URL"),
+    LLM_MODELS: tomlVar("LLM_MODELS"),
+    LLM_SMALL_MODEL: tomlVar("LLM_SMALL_MODEL"),
+  } as unknown as Env;
 }
 
 /** Run `fn` over items with at most `n` in flight (Workers AI and D1 REST limits). */
@@ -94,6 +113,12 @@ async function pool<T, R>(items: T[], n: number, fn: (t: T) => Promise<R>): Prom
 
 async function main() {
   const golden = JSON.parse(await readFile("data/golden.json", "utf8")) as { questions: Gold[]; unanswerable: { id: string; question: string }[] };
+  if (args.includes("--answers")) {
+    const out = opt("out");
+    const report = await runAnswerEval(await localEnv(), golden, opt("only")?.split(","));
+    if (out) await writeFile(out, JSON.stringify(report, null, 2));
+    return;
+  }
   const remote = args.includes("--remote");
   const modes = (opt("modes") ?? "vector,keyword,hybrid,rerank").split(",") as Mode[];
   const search = await searcher(remote);

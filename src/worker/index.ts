@@ -9,6 +9,7 @@ import { errorHandler } from "./security/errors";
 import { llmConfigFromEnv } from "./llm";
 import { adminPapers } from "./routes/admin-papers";
 import { adminSearch } from "./routes/admin-search";
+import { chatRoutes } from "./routes/chat";
 
 export const app = new Hono<AppEnv>();
 
@@ -29,6 +30,7 @@ app.use("/api/*", async (c, next) => {
 
 /** Ensures the anonymous session cookie exists before the first question. */
 app.get("/api/session", (c) => c.body(null, 204));
+app.route("/api", chatRoutes());
 
 const admin = new Hono<AppEnv>();
 admin.use("*", requireAdmin);

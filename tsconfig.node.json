@@ -11,5 +11,5 @@
     "types": ["node"]
   },
   "include": ["vite.config.ts", "vitest.config.ts", "scripts"],
-  "exclude": ["scripts/eval.ts"] // imports Worker code, so it is checked with the Worker types
+  "exclude": ["scripts/eval.ts", "scripts/eval-answers.ts"] // imports Worker code, so it is checked with the Worker types
 }

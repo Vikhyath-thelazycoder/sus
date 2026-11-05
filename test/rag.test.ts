@@ -132,6 +132,7 @@ describe("passages (T-3.5)", () => {
     section: "S",
     title: "T",
     year: 2020,
+    doi: null,
     owner_id: "public",
   });
   const hit = (r: ChunkRow, score: number): Hit => ({ ...r, score });

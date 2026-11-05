@@ -7,7 +7,7 @@ interface __BaseEnv_Env {
 	VECTORIZE: VectorizeIndex;
 	AI: Ai;
 	LLM_BASE_URL: "https://api.groq.com/openai/v1";
-	LLM_MODELS: "openai/gpt-oss-120b,qwen/qwen3.8-27b,openai/gpt-oss-20b";
+	LLM_MODELS: "openai/gpt-oss-120b,qwen/qwen3.8-27b";
 	LLM_SMALL_MODEL: "openai/gpt-oss-20b";
 	UPLOADS_ENABLED: "true";
 	ANON_ID_SECRET: string;
@@ -25,7 +25,7 @@ declare namespace Cloudflare {
 		VECTORIZE: VectorizeIndex;
 		AI: Ai;
 		LLM_BASE_URL: "https://api.groq.com/openai/v1";
-		LLM_MODELS: "openai/gpt-oss-120b,qwen/qwen3.8-27b,openai/gpt-oss-20b";
+		LLM_MODELS: "openai/gpt-oss-120b,qwen/qwen3.8-27b";
 		LLM_SMALL_MODEL: "openai/gpt-oss-20b";
 		UPLOADS_ENABLED: "true";
 		ANON_ID_SECRET: string;

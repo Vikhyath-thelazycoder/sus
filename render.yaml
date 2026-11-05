@@ -23,7 +23,7 @@ services:
       - key: LLM_BASE_URL
         value: https://api.groq.com/openai/v1
       - key: LLM_MODELS
-        value: openai/gpt-oss-120b,qwen/qwen3.8-27b,openai/gpt-oss-20b
+        value: openai/gpt-oss-120b,qwen/qwen3.8-27b
       - key: LLM_SMALL_MODEL
         value: openai/gpt-oss-20b
       - key: UPLOADS_ENABLED

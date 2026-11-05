@@ -132,7 +132,7 @@ decisions:
   alternatives: []
   impact: ''
   supersedes: D-004
-  status: ACTIVE
+  status: SUPERSEDED
   tags: []
 - decision_id: D-012
   date: '2026-11-05'
@@ -146,5 +146,19 @@ decisions:
   - Workers Paid now; local-only ingestion via REST; Render Postgres (expires after 30 days)
   impact: Free web service sleeps after 15 min idle (30-60 s cold start); one REST adapter (src/server/cloudflare-rest.ts)
   supersedes: D-001
+  status: ACTIVE
+  tags: []
+- decision_id: D-013
+  date: '2026-11-06'
+  kind: architecture
+  topic: Answer model chain
+  decision: Answers use openai/gpt-oss-120b -> qwen/qwen3.8-27b only; openai/gpt-oss-20b stays the small model for guard and
+    rewrite
+  reason: 'T-4.8: all 4 unfaithful answers came from gpt-oss-20b (4 of its 12); with the 2-model chain the same 12 questions
+    were 12/12 faithful. Cost: lower burst capacity (~3-4 answers/min on Groq free)'
+  alternatives:
+  - Keep gpt-oss-20b as last resort with a visible label
+  impact: ''
+  supersedes: D-011
   status: ACTIVE
   tags: []
