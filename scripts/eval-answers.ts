@@ -55,6 +55,7 @@ const evil = (n: number, body: string): Passage => ({
   title: "Planted paper",
   year: 2024,
   doi: null,
+  authors: null,
   section: "Results",
   pageStart: 1,
   pageEnd: 1,

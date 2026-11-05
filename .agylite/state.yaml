@@ -15,12 +15,12 @@ verification:
   simulator_recording_loop: disabled
   last:
     task: null
-    result: PASSED
-    evidence: .agylite/evidence/20261105T193205603432Z.json
-    at: '2026-11-05T19:32:05+00:00'
+    result: FAILED
+    evidence: .agylite/evidence/20261105T194339159660Z.json
+    at: '2026-11-05T19:43:39+00:00'
   last_task:
     task: T-2.8
     result: VERIFIED
     evidence: docs/evidence/P2.md
     at: '2026-11-05T17:48:04+00:00'
-updated: '2026-11-05T19:32:05+00:00'
+updated: '2026-11-05T19:43:39+00:00'

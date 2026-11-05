@@ -33,9 +33,10 @@ Visual and interaction direction (spec §20.6, §26–27).
 | `--accent` | `#5E7F62` | `#8DB290` | Citations, primary button, focus |
 | `--accent-soft` | `#E6EEE6` | `#24302A` | Highlighted passage |
 | `--border` | `#E7E3D9` | `#2C302B` | Dividers |
+| `--control-border` | `#8C877A` | `#6E736B` | Outlines that identify a control (input, chips): 3:1 on page and surface (WCAG 1.4.11), added in T-5.6 |
 | `--danger` | `#A4473D` | `#E08A7F` | Errors only |
 
-Contrast target: WCAG AA (4.5:1 for text, 3:1 for UI elements); verified in T-5.6. Dark mode follows the system setting, with a toggle.
+Contrast target: WCAG AA (4.5:1 for text, 3:1 for UI elements); verified in T-5.6. In light mode the accent is 4.2:1 on the page, so it is used for icons, focus rings, underlines and the send button, never for small text. Dark mode follows the system setting, with a toggle.
 
 ## Spacing
 

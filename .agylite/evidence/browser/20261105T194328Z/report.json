@@ -1,0 +1,40 @@
+{
+ "schema_version": 1,
+ "url": "http://localhost:4173/",
+ "result": "PASSED",
+ "defects": [],
+ "widths": [
+  1440,
+  768,
+  390
+ ],
+ "overflow": null,
+ "flows": [],
+ "at": "20261105T194328Z",
+ "artifacts": [
+  {
+   "path": "screenshot-1440.png",
+   "sha256": "694777ff2d2b1ccc7054f34ee34cb3c0be2a71c7c5570798d05cb71790120eae"
+  },
+  {
+   "path": "screenshot-768.png",
+   "sha256": "a8f60d3882bc1a4a5fe79fa3ae775838fd3826fdf71b1506c4434f925e012efd"
+  },
+  {
+   "path": "screenshot-390.png",
+   "sha256": "f3283cab144e5a9a96f3e1738dbc8fcf6f823e40b6211fd9bdc1cd448c699570"
+  },
+  {
+   "path": "console.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "network.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "flows.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  }
+ ]
+}

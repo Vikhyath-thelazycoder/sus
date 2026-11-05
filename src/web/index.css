@@ -1,6 +1,8 @@
 @import "tailwindcss";
+@import "@fontsource-variable/inter";
+@import "@fontsource-variable/source-serif-4";
 
-/* Design tokens from docs/DESIGN.md. Dark mode follows the system; a toggle arrives in P5 (T-5.1). */
+/* Design tokens from docs/DESIGN.md. Dark follows the system unless the toggle sets data-theme on <html>. */
 :root {
   --bg: #faf8f3;
   --surface: #ffffff;
@@ -9,11 +11,12 @@
   --accent: #5e7f62;
   --accent-soft: #e6eee6;
   --border: #e7e3d9;
+  --control-border: #8c877a;
   --danger: #a4473d;
-  color-scheme: light dark;
+  color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --bg: #161815;
     --surface: #1e211d;
     --text: #e8e6df;
@@ -21,8 +24,22 @@
     --accent: #8db290;
     --accent-soft: #24302a;
     --border: #2c302b;
+    --control-border: #6e736b;
     --danger: #e08a7f;
+    color-scheme: dark;
   }
+}
+:root[data-theme="dark"] {
+  --bg: #161815;
+  --surface: #1e211d;
+  --text: #e8e6df;
+  --muted: #9a988f;
+  --accent: #8db290;
+  --accent-soft: #24302a;
+  --border: #2c302b;
+  --control-border: #6e736b;
+  --danger: #e08a7f;
+  color-scheme: dark;
 }
 
 @theme inline {
@@ -33,16 +50,80 @@
   --color-accent: var(--accent);
   --color-accent-soft: var(--accent-soft);
   --color-border: var(--border);
+  /* Outlines that identify a control need 3:1 (WCAG 1.4.11); --border is for dividers only. */
+  --color-control: var(--control-border);
   --color-danger: var(--danger);
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  /* The accent is a background only behind text in --on-accent. */
+  --color-on-accent: var(--bg);
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Source Serif 4 Variable", ui-serif, Georgia, serif;
+  /* Type scale (rem): caption · small · body 17 px · h3 · h2 · h1 */
+  --text-caption: 0.8125rem;
+  --text-small: 0.875rem;
+  --text-body: 1.0625rem;
+  --text-h3: 1.25rem;
+  --text-h2: 1.5rem;
+  --text-h1: 2rem;
+  --leading-answer: 1.6;
+  --leading-ui: 1.4;
+  --radius-control: 8px;
+  --radius-card: 12px;
+  --spacing-sidebar: 260px;
+  --spacing-rail: 64px;
+  --spacing-column: 720px;
+  --spacing-panel: 380px;
+  --spacing-touch: 44px;
 }
 
-html {
-  font-size: 106.25%; /* 17px body (DESIGN.md typography) */
-}
 body {
   background: var(--bg);
   color: var(--text);
   font-family: var(--font-sans);
-  line-height: 1.6;
+  font-size: var(--text-body);
+  line-height: 1.4;
+}
+
+/* Motion (DESIGN.md): functional only, 150–200 ms, none under reduced motion. */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+  }
+}
+@keyframes slide-in-up {
+  from {
+    transform: translateY(100%);
+  }
+}
+@keyframes slide-in-left {
+  from {
+    transform: translateX(-100%);
+  }
+}
+.motion-fade {
+  animation: fade-in 150ms ease-out;
+}
+.motion-panel {
+  animation: slide-in-up 200ms ease-out;
+}
+@media (min-width: 768px) {
+  .motion-panel {
+    animation-name: slide-in-right;
+  }
+}
+.motion-drawer {
+  animation: slide-in-left 200ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
 }

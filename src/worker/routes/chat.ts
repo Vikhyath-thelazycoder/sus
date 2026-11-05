@@ -26,6 +26,15 @@ export async function cacheKey(question: string): Promise<string> {
   return `ans:${CACHE_VERSION}:public:${[...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("")}`;
 }
 
+function parseAuthors(json: string | null): string[] {
+  try {
+    const v: unknown = JSON.parse(json ?? "[]");
+    return Array.isArray(v) ? v.filter((a): a is string => typeof a === "string").slice(0, 20) : [];
+  } catch {
+    return [];
+  }
+}
+
 /** What the citation panel shows: stored passage text and metadata from D1, never model text (SECURITY §7.2). */
 const sourcesOut = (r: AnswerResult) =>
   r.sources.map((s) => ({
@@ -34,6 +43,7 @@ const sourcesOut = (r: AnswerResult) =>
     title: s.title,
     year: s.year,
     doi: s.doi,
+    authors: parseAuthors(s.authors),
     section: s.section,
     pageStart: s.pageStart,
     pageEnd: s.pageEnd,
@@ -116,6 +126,18 @@ export function chatRoutes(steps: Steps = defaultSteps) {
         await send({ type: "error", message: "Something went wrong" });
       }
     });
+  });
+
+  /** Thumbs up/down on an answer (T-5.3). Only the owner's own assistant messages; 0 clears it. */
+  chat.post("/messages/:id/feedback", async (c) => {
+    const { value } = await parseJson(c, z.strictObject({ value: z.union([z.literal(1), z.literal(-1), z.literal(0)]) }));
+    const id = c.req.param("id");
+    if (!z.uuid().safeParse(id).success) throw new HTTPException(404, { message: "Not found" });
+    const res = await c.env.DB.prepare("UPDATE messages SET feedback = ?1 WHERE id = ?2 AND owner_id = ?3 AND role = 'assistant'")
+      .bind(value || null, id, c.get("ownerId"))
+      .run();
+    if (!res.meta.changes) throw new HTTPException(404, { message: "Not found" });
+    return c.body(null, 204);
   });
 
   return chat;

@@ -1,0 +1,300 @@
+{
+ "schema_version": 1,
+ "mode": "tests-and-browser",
+ "task": null,
+ "result": "FAILED",
+ "impact": {
+  "method": "structural",
+  "changed": [
+   "docs/DESIGN.md",
+   "migrations/0002_feedback.sql",
+   "package-lock.json",
+   "package.json",
+   "scripts/eval-answers.ts",
+   "src/web/AnswerText.tsx",
+   "src/web/App.tsx",
+   "src/web/CitationPanel.tsx",
+   "src/web/Conversation.tsx",
+   "src/web/api.ts",
+   "src/web/index.css",
+   "src/web/ui.tsx",
+   "src/worker/rag/search.ts",
+   "src/worker/routes/chat.ts",
+   "test/answer.test.ts",
+   "test/chat.test.ts",
+   "test/rag.test.ts",
+   "test/web/answer-text.test.tsx",
+   "test/web/app.test.tsx",
+   "tsconfig.app.json",
+   "tsconfig.worker.json",
+   "vitest.config.ts"
+  ],
+  "notice": "graph-based analysis unavailable; limited structural analysis used (graph-based analysis unavailable: graphify runtime not installed (`agylite runtime install graphify`))"
+ },
+ "checks": [
+  {
+   "command": [
+    "npm",
+    "run",
+    "test",
+    "--",
+    "test/answer.test.ts",
+    "test/chat.test.ts",
+    "test/rag.test.ts",
+    "test/web/answer-text.test.tsx",
+    "test/web/app.test.tsx",
+    "test/admin-papers.test.ts",
+    "test/helpers.ts"
+   ],
+   "exit_code": 0,
+   "result": "PASSED",
+   "duration_ms": 3018,
+   "diagnosis": [],
+   "kind": "test",
+   "name": "test",
+   "reason": "7 tests affected by the change",
+   "tests": [
+    "test/answer.test.ts",
+    "test/chat.test.ts",
+    "test/rag.test.ts",
+    "test/web/answer-text.test.tsx",
+    "test/web/app.test.tsx",
+    "test/admin-papers.test.ts",
+    "test/helpers.ts"
+   ],
+   "at": "2026-11-05T19:43:13Z"
+  },
+  {
+   "command": [
+    "npm",
+    "run",
+    "build"
+   ],
+   "exit_code": 0,
+   "result": "PASSED",
+   "duration_ms": 2272,
+   "diagnosis": [],
+   "kind": "typecheck",
+   "name": "build",
+   "reason": "typecheck check for the project",
+   "tests": [],
+   "at": "2026-11-05T19:43:15Z"
+  },
+  {
+   "command": [
+    "npm",
+    "run",
+    "typecheck"
+   ],
+   "exit_code": 0,
+   "result": "PASSED",
+   "duration_ms": 1491,
+   "diagnosis": [],
+   "kind": "typecheck",
+   "name": "typecheck",
+   "reason": "typecheck check for the project",
+   "tests": [],
+   "at": "2026-11-05T19:43:16Z"
+  },
+  {
+   "command": [
+    "npm",
+    "run",
+    "lint"
+   ],
+   "exit_code": 0,
+   "result": "PASSED",
+   "duration_ms": 998,
+   "diagnosis": [],
+   "kind": "lint",
+   "name": "lint",
+   "reason": "lint check for the project",
+   "tests": [],
+   "at": "2026-11-05T19:43:17Z"
+  },
+  {
+   "command": [
+    "/Users/vikhyathmgowda007/.agylite/core/bin/python",
+    "-m",
+    "compileall",
+    "-q",
+    "-x",
+    "(^|/)(\\.|node_modules|venv)",
+    "."
+   ],
+   "exit_code": 0,
+   "result": "PASSED",
+   "duration_ms": 243,
+   "diagnosis": [],
+   "kind": "build",
+   "name": "compileall",
+   "reason": "build check for the project",
+   "tests": [],
+   "at": "2026-11-05T19:43:18Z"
+  },
+  {
+   "command": [
+    "/Users/vikhyathmgowda007/.agylite/core/bin/python",
+    "-m",
+    "agylite.cli",
+    "design",
+    "check",
+    "--project",
+    "/Users/vikhyathmgowda007/Developer/sustainIQ"
+   ],
+   "exit_code": 1,
+   "result": "FAILED",
+   "duration_ms": 63,
+   "packages_ok": 0,
+   "packages_failed": 1,
+   "diagnosis": [
+    "FAIL  grey families     5 (limit 1)  #2b2b28, #5e7f62, #8c877a, #161815, #24302a",
+    "design check: FAIL · no DESIGN.md"
+   ],
+   "kind": "design",
+   "name": "design tokens",
+   "reason": "style/markup changed: src/web/AnswerText.tsx, src/web/App.tsx, src/web/CitationPanel.tsx, src/web/Conversation.tsx, src/web/index.css",
+   "tests": [],
+   "at": "2026-11-05T19:43:18Z"
+  },
+  {
+   "command": [
+    "/Users/vikhyathmgowda007/.agylite/core/bin/python",
+    "-m",
+    "agylite.cli",
+    "design",
+    "taste",
+    "--project",
+    "/Users/vikhyathmgowda007/Developer/sustainIQ",
+    "lint",
+    "src/web/AnswerText.tsx",
+    "src/web/App.tsx",
+    "src/web/CitationPanel.tsx",
+    "src/web/Conversation.tsx",
+    "src/web/index.css",
+    "src/web/ui.tsx",
+    "test/web/answer-text.test.tsx",
+    "test/web/app.test.tsx"
+   ],
+   "exit_code": 1,
+   "result": "FAILED",
+   "duration_ms": 88,
+   "packages_ok": 0,
+   "packages_failed": 1,
+   "diagnosis": [
+    "FAIL",
+    "RESULT: 7 FAIL, 2 WARN — fix the FAILs before rendering."
+   ],
+   "kind": "design",
+   "name": "taste lint",
+   "reason": "style/markup changed: src/web/AnswerText.tsx, src/web/App.tsx, src/web/CitationPanel.tsx, src/web/Conversation.tsx, src/web/index.css",
+   "tests": [],
+   "at": "2026-11-05T19:43:18Z"
+  },
+  {
+   "command": [
+    "/Users/vikhyathmgowda007/.agylite/core/bin/python",
+    "-m",
+    "agylite.cli",
+    "design",
+    "taste",
+    "--project",
+    "/Users/vikhyathmgowda007/Developer/sustainIQ",
+    "inspect",
+    "/Users/vikhyathmgowda007/Developer/sustainIQ/index.html"
+   ],
+   "exit_code": 1,
+   "result": "FAILED",
+   "duration_ms": 10491,
+   "packages_ok": 0,
+   "packages_failed": 1,
+   "diagnosis": [
+    "FAIL — fix every one of these",
+    "RESULT: 3 FAIL, 4 WARN — not done."
+   ],
+   "fails": 3,
+   "warns": 4,
+   "artifacts": [
+    {
+     "path": ".taste-skill/inspect/desktop-fold.jpg",
+     "sha256": "4ae4f76e9463d4fc0c02ebc332787f739f0e152f46df37b57e4997dbdb4c8a29"
+    },
+    {
+     "path": ".taste-skill/inspect/desktop-page-01.jpg",
+     "sha256": "f6adbe61d565d8f3f4eafa3cdbd2a2beb02679463d021f007425fb66de2f2bfb"
+    },
+    {
+     "path": ".taste-skill/inspect/mobile-fold.jpg",
+     "sha256": "7faa4d840eb1da6e028397791b07c3e2d2fa394e6df0b47944ac84264de1c7f0"
+    },
+    {
+     "path": ".taste-skill/inspect/mobile-page-01.jpg",
+     "sha256": "3acc86242ef675ba354401f87577483895381923c523452d11f97748b096c41d"
+    },
+    {
+     "path": ".taste-skill/inspect/tablet-fold.jpg",
+     "sha256": "afe78a6947b9e8511e92eb15c42364c84ff929a34a8a594c8e25d4f5e9d4a7d1"
+    },
+    {
+     "path": ".taste-skill/inspect/tablet-page-01.jpg",
+     "sha256": "590fd465c76cd8d832c4b9f32b4d418f80730d48498c3be328da6b7c4207f45f"
+    }
+   ],
+   "kind": "design",
+   "name": "taste inspect",
+   "reason": "style/markup changed: src/web/AnswerText.tsx, src/web/App.tsx, src/web/CitationPanel.tsx, src/web/Conversation.tsx, src/web/index.css",
+   "tests": [],
+   "at": "2026-11-05T19:43:28Z"
+  },
+  {
+   "command": [
+    "/Users/vikhyathmgowda007/.agylite/core/bin/python",
+    "-m",
+    "agylite.cli",
+    "browser-check",
+    "--project",
+    "/Users/vikhyathmgowda007/Developer/sustainIQ"
+   ],
+   "exit_code": 0,
+   "result": "PASSED",
+   "duration_ms": 10462,
+   "diagnosis": [],
+   "defects": [],
+   "artifacts": [
+    {
+     "path": ".agylite/evidence/browser/20261105T194328Z/screenshot-1440.png",
+     "sha256": "694777ff2d2b1ccc7054f34ee34cb3c0be2a71c7c5570798d05cb71790120eae"
+    },
+    {
+     "path": ".agylite/evidence/browser/20261105T194328Z/screenshot-768.png",
+     "sha256": "a8f60d3882bc1a4a5fe79fa3ae775838fd3826fdf71b1506c4434f925e012efd"
+    },
+    {
+     "path": ".agylite/evidence/browser/20261105T194328Z/screenshot-390.png",
+     "sha256": "f3283cab144e5a9a96f3e1738dbc8fcf6f823e40b6211fd9bdc1cd448c699570"
+    },
+    {
+     "path": ".agylite/evidence/browser/20261105T194328Z/console.json",
+     "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+     "path": ".agylite/evidence/browser/20261105T194328Z/network.json",
+     "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+     "path": ".agylite/evidence/browser/20261105T194328Z/flows.json",
+     "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+     "path": ".agylite/evidence/browser/20261105T194328Z/report.json"
+    }
+   ],
+   "kind": "browser",
+   "name": "browser check",
+   "reason": "browser check requested",
+   "tests": [],
+   "at": "2026-11-05T19:43:39Z"
+  }
+ ],
+ "at": "2026-11-05T19:43:39Z"
+}

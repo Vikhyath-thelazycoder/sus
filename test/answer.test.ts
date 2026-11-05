@@ -24,6 +24,7 @@ const passage = (n: number, text = "PLA meets ASTM D6400."): Passage => ({
   title: "PLA paper",
   year: 2020,
   doi: "10.1/x",
+  authors: null,
   section: "Results",
   pageStart: n,
   pageEnd: n,

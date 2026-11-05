@@ -15,6 +15,7 @@ const source: Passage = {
   title: "PLA paper",
   year: 2020,
   doi: "10.1/x",
+  authors: '["A. Author"]',
   section: "Results",
   pageStart: 4,
   pageEnd: 5,
@@ -62,7 +63,7 @@ describe("/api/chat (T-4.7)", () => {
     expect(events.map((e) => e.type)).toEqual(["status", "status", "token", "token", "done"]);
     expect(done).toMatchObject({ status: "ok", cached: false, content: "PLA composts [1]." });
     expect(done.sources).toEqual([
-      expect.objectContaining({ n: 1, doi: "10.1/x", text: "Stored passage text.", upload: false, pageStart: 4 }),
+      expect.objectContaining({ n: 1, doi: "10.1/x", authors: ["A. Author"], text: "Stored passage text.", upload: false, pageStart: 4 }),
     ]);
     const rows = await env.DB.prepare("SELECT role, content, citations_json, status, model FROM messages WHERE chat_id = ?1 ORDER BY created_at")
       .bind(done.chatId)
@@ -130,3 +131,24 @@ describe("/api/chat input rules (real app)", () => {
     expect((await postJson("/api/chat", { question: "hi", chatId: crypto.randomUUID() })).status).toBe(404);
   });
 });
+
+describe("feedback (T-5.3)", () => {
+  it("stores thumbs on the owner's own answer only", async () => {
+    const { ask } = harness();
+    const a = await ask({ question: "Does PLA compost? (feedback test)" });
+    const send = (id: string, value: unknown, cookie?: string) =>
+      new Hono<AppEnv>().use(identity).route("/api", chatRoutes()).request(
+        `https://sustainiq.test/api/messages/${id}/feedback`,
+        { method: "POST", headers: { "Content-Type": "application/json", ...(cookie ? { Cookie: cookie } : {}) }, body: JSON.stringify({ value }) },
+        env,
+      );
+    expect((await send(a.done.messageId, 1, a.cookie)).status).toBe(204);
+    const row = await env.DB.prepare("SELECT feedback FROM messages WHERE id = ?1").bind(a.done.messageId).first<{ feedback: number }>();
+    expect(row!.feedback).toBe(1);
+    expect((await send(a.done.messageId, -1)).status).toBe(404); // another owner
+    expect((await send(a.done.messageId, 5, a.cookie)).status).toBe(400);
+    expect((await send("nope", 1, a.cookie)).status).toBe(404);
+    expect((await send(a.done.messageId, 0, a.cookie)).status).toBe(204);
+  });
+});
+
