@@ -11,7 +11,9 @@ INTENTIONALLY_DEFERRED. `agylite plan index` keeps a compact index in `.agylite/
 - RAG rules: [../RAG_PRODUCTION_GUIDE.md](../RAG_PRODUCTION_GUIDE.md) (cited as **RAG §n**)
 - Product overview and decisions: [../PROJECT_PLAN.md](../PROJECT_PLAN.md) (cited as **PP §n**)
 
-**Scope:** P1–P8 build the **demo** (Cloudflare Workers free plan, Groq, no login). P9 is the **paid MVP**, deferred until the client accepts the deal.
+**Scope:** P1–P8 build the **demo** (Render free web service at https://sustainiq-demo.onrender.com with data on Cloudflare, Groq, no login; D-012). P9 is the **paid MVP** on Cloudflare Workers Paid, deferred until the client accepts the deal.
+
+**Progress (2026-11-05):** P1 ✅ verified · P2 ✅ verified (20 papers, 881 chunks, 881 vectors) · **next: P3**. Changes from the first draft: no LangGraph in the demo (D-010), Groq models updated (D-011), demo hosted on Render (D-012).
 
 **Definition of done for every task:** `agylite verify` passes (tests, types, lint, build), the acceptance column is met, and the SEC items it touches have their tests.
 
@@ -33,18 +35,19 @@ Objective: An empty but secure app shell deployed to workers.dev, with every Clo
 | T-1.8 | First deploy to `*.workers.dev`; secrets set (`LLM_API_KEY`, `ANON_ID_SECRET`, `ADMIN_INGEST_TOKEN`); verify the free-tier figures on our account (PP §3) | VERIFIED | T-1.7 | engineering/release | Secret scan (SEC §13 #16) | — | Live smoke: `/api/health`, headers | Live URL serves the shell; free-tier limits confirmed and noted |
 
 ## P2 · Paper ingestion
-Status: IN_PROGRESS · Depends: P1 · Paths: src/shared/chunker.ts, scripts/ingest.ts, src/worker/routes/admin.ts, data/papers/** · Flags: security, testing · Evidence: —
+Status: VERIFIED · Depends: P1 · Paths: src/shared/**, scripts/ingest.ts, src/worker/routes/admin-papers.ts, src/worker/platform.ts, src/server/**, render.yaml, data/papers/** · Flags: security, testing · Evidence: docs/evidence/P2.md
 Objective: 15–25 curated open-access papers parsed, chunked by structure, embedded and stored, with text a human has read and checked (RAG §4).
 
 | ID | Task | Status | Depends | Capabilities | Security | Design | Testing | Acceptance |
 |---|---|---|---|---|---|---|---|---|
-| T-2.1 | Pick 15–25 open-access papers across biopolymers, green chemistry, packaging and biomaterials; record DOI, licence and source URL in `data/papers/metadata.json` | READY_FOR_VERIFICATION | — | research/web | Licence recorded; curated only (SEC §5.1) | — | Every paper has an open licence | List reviewed by the owner |
+| T-2.1 | Pick 15–25 open-access papers across biopolymers, green chemistry, packaging and biomaterials; record DOI, licence and source URL in `data/papers/metadata.json` | VERIFIED | — | research/web | Licence recorded; curated only (SEC §5.1) | — | Every paper has an open licence | List reviewed by the owner |
 | T-2.2 | PDF text extraction with pdf.js: page numbers, two-column ordering, header/footer removal, de-hyphenation, invisible-character stripping, scanned-PDF detection (PP §5.2) | VERIFIED | T-1.1 | engineering/implementation | Strip invisible Unicode (SEC §6.8) | — | Fixture tests on 3 real papers | Parsed text of 3 papers **read by eye** and correct (RAG §4.1) |
 | T-2.3 | Section detection; References section kept out of the index | VERIFIED | T-2.2 | engineering/ai-systems | — | — | Unit tests: headings found on fixtures | Sections match the papers' headings |
 | T-2.4 | Shared chunker: parent = section, child ≈ 350 tokens, 15% overlap, never crosses sections, contextual header `Paper: … Section: …` (RAG §4.3, §4.4) | VERIFIED | T-2.3 | engineering/ai-systems | — | — | Unit tests: sizes, overlap, boundaries, page ranges | Same output in Node and in a browser Web Worker |
 | T-2.5 | **Table quality check:** inspect how 5 table-heavy papers parse; decide whether the optional Python parser is needed (PP decision) | VERIFIED | T-2.2 | engineering/ai-systems | — | — | Findings in `docs/evidence/P2.md` | Owner informed: pdf.js OK, or Python parser proposed for the MVP |
 | T-2.6 | Protected admin ingest endpoint (`ADMIN_INGEST_TOKEN`, constant-time compare); embeds with `bge-m3` in batches, writes D1 + FTS + Vectorize with `owner_id='public'` | VERIFIED | T-1.3, T-2.4 | engineering/backend | Token auth, server-assigned IDs (SEC §5.1) | — | API tests: bad token → 401; idempotent re-run | Re-ingesting the same paper creates no duplicates |
-| T-2.7 | `scripts/ingest.ts`: local run over `data/papers`, Crossref metadata by DOI, progress output, `--remote` flag | VERIFIED | T-2.6 | engineering/implementation | Scoped token, never committed (SEC §12 #17) | — | Dry run on 2 papers | All papers ingested; chunk count reported; Vectorize within the free limit |
+| T-2.7 | `scripts/ingest.ts`: local run over `data/papers`, OpenAlex metadata (stored in metadata.json), progress output, `--remote` flag | VERIFIED | T-2.6 | engineering/implementation | Scoped token, never committed (SEC §12 #17) | — | Dry run on 2 papers | All papers ingested; chunk count reported; Vectorize within the free limit |
+| T-2.8 | Move the demo host to Render (D-012): same Hono app on Node, Cloudflare D1/Vectorize/Workers AI/KV via REST, Render CLI deploy | VERIFIED | T-2.6 | engineering/release | — | — | — | Live checks pass on sustainiq-demo.onrender.com; 20 papers ingested through Render |
 
 ## P3 · Retrieval and evaluation
 Status: PLANNED · Depends: P2 · Paths: src/worker/rag/**, scripts/eval.ts, data/golden.json · Flags: security, testing · Evidence: —
@@ -57,7 +60,7 @@ Objective: Hybrid search + RRF + reranker returning the right passages, **measur
 | T-3.3 | Keyword search: FTS5 BM25 top 30 with escaped phrase query; malformed query → empty result | PLANNED | T-1.3 | engineering/backend | SEC §4.1, §4.2 | — | Injection tests (SEC §13 #5, #6) | Exact terms (PLA, PBAT, ASTM D6400) are found |
 | T-3.4 | RRF merge (k = 60) → top 20 → re-check owners in D1 (RAG §5.4) | PLANNED | T-3.2, T-3.3 | engineering/ai-systems | Second-layer owner check (SEC §4.3) | — | Unit test with the worked example from RAG §5.4 | Merged list is correct and deduplicated |
 | T-3.5 | Rerank with `bge-reranker-base` → top 6; neighbour expansion (±1 child) within the token budget; best first (RAG §5.6, §5.8) | PLANNED | T-3.4 | engineering/ai-systems | — | — | Unit tests: ordering, budget cap | Prompt context ≤ ~3,000 tokens |
-| T-3.6 | `scripts/eval.ts`: recall@6, MRR; compare vector-only vs hybrid vs hybrid + rerank (RAG §9.2) | PLANNED | T-3.1, T-3.5 | engineering/ai-systems, testing/regression | — | — | Eval runs locally and against remote | Scores recorded in `docs/evidence/P3.md` |
+| T-3.6 | `scripts/eval.ts`: recall@6, MRR; compare vector-only vs hybrid vs hybrid + rerank (RAG §9.2) | PLANNED | T-3.1, T-3.5 | engineering/ai-systems, testing/regression | — | — | Eval runs locally and against the Render demo (REST latency recorded) | Scores recorded in `docs/evidence/P3.md` |
 | T-3.7 | Tune chunk size, k and rerank count on the golden set; plot the score histogram before any threshold (RAG §5.7) | PLANNED | T-3.6 | engineering/ai-systems | — | — | Before/after numbers | Chosen settings justified with numbers |
 
 ## P4 · Answer generation
@@ -109,7 +112,7 @@ Objective: Users upload their own PDFs (5 × 100 pages), parsed in the browser, 
 | T-7.2 | `POST /api/upload` in batches: zod re-validation, server IDs and embeddings, **atomic** quota check (5 PDFs / 100 pages) | PLANNED | T-7.1, T-2.6 | engineering/backend, engineering/security | SEC §5.1, §12 #3 | — | SEC §13 #13, #14, #19 | 10 parallel uploads at 4/5 → exactly 1 succeeds |
 | T-7.3 | Upload UI: drag-and-drop, progress (Reading → Splitting → Indexing), limits and "don't upload confidential documents" notice | PLANNED | T-7.1, T-5.2 | design/frontend | SEC §12 #21 | DESIGN.md | Visual check on a phone | Upload works on desktop and mobile |
 | T-7.4 | Own uploads searchable only by their owner; "Your upload (unverified)" labels | PLANNED | T-7.2, T-3.4 | engineering/ai-systems | SEC §12 #10 | DESIGN.md | SEC §13 #4 | User A never sees user B's upload |
-| T-7.5 | Cron: expire uploads after 7 days; orphan-vector cleanup; "delete my data" endpoint + button | PLANNED | T-7.2 | engineering/backend | SEC §12 #16 | — | SEC §13 #23 | Deleted text is never found again |
+| T-7.5 | Cleanup as a **Cloudflare Worker cron** (free; data lives on Cloudflare; Render's free tier has no cron): expire uploads after 7 days; orphan-vector cleanup; "delete my data" endpoint + button | PLANNED | T-7.2 | engineering/backend | SEC §12 #16 | — | SEC §13 #23 | Deleted text is never found again |
 
 ## P8 · Hardening and demo launch
 Status: PLANNED · Depends: P4, P6, P7 · Paths: src/worker/security/**, test/security/** · Flags: security, testing · Evidence: —
@@ -117,12 +120,12 @@ Objective: Every [DEMO] item in SECURITY.md done, abuse limits on, full test sui
 
 | ID | Task | Status | Depends | Capabilities | Security | Design | Testing | Acceptance |
 |---|---|---|---|---|---|---|---|---|
-| T-8.1 | Rate limits (questions, uploads, new IDs) via the Rate Limiting binding or Durable Objects; global LLM and Workers AI budget guard | PLANNED | T-4.7, T-7.2 | engineering/security | SEC §8, §12 #4 | — | SEC §13 #12 | 21st question in a minute → 429 |
+| T-8.1 | Rate limits (questions, uploads, new IDs): demo on Render (single instance) uses in-memory per-minute limits + D1 daily counters; the production Worker uses the Rate Limiting binding / Durable Objects; global LLM and Workers AI budget guard | PLANNED | T-4.7, T-7.2 | engineering/security | SEC §8, §12 #4 | — | SEC §13 #12 | 21st question in a minute → 429 |
 | T-8.2 | Cloudflare Turnstile on the first question and on uploads (server-side token check) | PLANNED | T-8.1 | engineering/security | SEC §8 | Fits DESIGN.md | Token-missing test | Bots without a token are blocked |
 | T-8.3 | Structured JSON logging (no secrets or raw IPs), alerts, `/.well-known/security.txt` | PLANNED | T-1.4 | engineering/security | SEC §11, §12 #13, incident response | — | Log-format test | Logs contain no secrets or PII |
 | T-8.4 | Full security test suite (SEC §13 #1–23) green in CI | PLANNED | T-8.1–T-8.3 | testing/security | All of SEC §13 | — | `agylite verify` | 23/23 pass |
 | T-8.5 | Final eval run on production (retrieval + answers) | PLANNED | T-8.4 | testing/regression | — | — | `npm run eval -- --remote` | Scores ≥ P3/P4 baselines; recorded |
-| T-8.6 | Production deploy + smoke test (5 golden questions, citations open the right page, upload from a phone, headers, 429) | PLANNED | T-8.5 | engineering/release, testing/release-verification | SEC §14 demo checklist | — | Smoke checklist | Every [DEMO] item ticked |
+| T-8.6 | Demo deploy to Render (Render CLI) + smoke test, waking the free instance first (5 golden questions, citations open the right page, upload from a phone, headers, 429) | PLANNED | T-8.5 | engineering/release, testing/release-verification | SEC §14 demo checklist | — | Smoke checklist | Every [DEMO] item ticked |
 | T-8.7 | Demo hand-off: short walkthrough video and a one-page "how it works" for the client | PLANNED | T-8.6 | media/demo | No private data in the video | DESIGN.md | Review by the owner | Link + video sent before the Google Meet |
 
 ## P9 · Paid MVP (after the deal)
@@ -150,8 +153,8 @@ P1 ──► P2 ──► P3 ──► P4 ──┐
 
 | Phase | Est. working days |
 |---|---|
-| P1 Foundations and platform check | 1 |
-| P2 Paper ingestion | 1.5–2 |
+| P1 Foundations and platform check ✅ | 1 |
+| P2 Paper ingestion ✅ (incl. Render move) | 2 |
 | P3 Retrieval and evaluation | 1.5 |
 | P4 Answer generation | 1.5–2 |
 | P5 UI foundation and chat | 2 |
@@ -160,7 +163,7 @@ P1 ──► P2 ──► P3 ──► P4 ──┐
 | P8 Hardening and launch | 1–1.5 |
 | **Total** | **≈ 10.5–12.5 days** |
 
-**Decision gates (owner decides):** after T-1.7 (demo fallback if the free plan doesn't fit) · after T-2.5 (Python parser for the MVP?) · after T-3.7 (accept retrieval quality) · after T-8.7 (send the demo).
+**Decision gates (owner decides):** after T-1.7 ✅ (option B: no LangGraph) · after P2 ✅ (demo on Render) · after T-2.5 ✅ (pdf.js for the demo; better table parser in P9) · after T-3.7 (accept retrieval quality) · after T-8.7 (send the demo).
 
 ## Change history
 
@@ -170,6 +173,7 @@ P1 ──► P2 ──► P3 ──► P4 ──┐
 | 2026-11-05 | Phases P1–P9 written from PROJECT_PLAN.md, SECURITY.md and RAG_PRODUCTION_GUIDE.md |
 | 2026-11-05 | T-1.7 result: LangGraph over the free CPU limit; owner chose option B (plain functions in the demo, LangGraph in P9) |
 | 2026-11-05 | P2: ingestion exceeded the Workers free CPU limit; per the owner's rule the demo moved to Render (D-012). Demo deploys (T-8.6) go to Render via the Render CLI; production stays on Cloudflare |
+| 2026-11-05 | P2 verified: 20 papers / 881 chunks / 881 vectors; T-2.8 (Render host) added; T-3.6, T-7.5, T-8.1, T-8.6 updated for Render |
 | 2026-11-05 | T-1.7: PLANNED → BLOCKED |
 | 2026-11-05 | P1: PLANNED → IN_PROGRESS (roll-up from T-1.7) |
 | 2026-11-05 | P1: IN_PROGRESS → PARTIALLY_COMPLETE |
@@ -223,3 +227,10 @@ P1 ──► P2 ──► P3 ──► P4 ──┐
 | 2026-11-05 | T-2.7: READY_FOR_VERIFICATION → VERIFIED (evidence: docs/evidence/P2.md) |
 | 2026-11-05 | T-2.1: PLANNED → IN_PROGRESS |
 | 2026-11-05 | T-2.1: IN_PROGRESS → READY_FOR_VERIFICATION |
+| 2026-11-05 | T-2.1: READY_FOR_VERIFICATION → VERIFIED (evidence: docs/evidence/P2.md) |
+| 2026-11-05 | P2: IN_PROGRESS → VERIFIED (roll-up from T-2.1) |
+| 2026-11-05 | T-2.8 added to P2 Paper ingestion: Move the demo host to Render (D-012): same Hono app on Node, Cloudflare D1/Vectorize/Workers AI/KV via REST, Render CLI deploy (phase reopened) |
+| 2026-11-05 | T-2.8: PLANNED → IN_PROGRESS |
+| 2026-11-05 | T-2.8: IN_PROGRESS → READY_FOR_VERIFICATION |
+| 2026-11-05 | T-2.8: READY_FOR_VERIFICATION → VERIFIED (evidence: docs/evidence/P2.md) |
+| 2026-11-05 | P2: IN_PROGRESS → VERIFIED (roll-up from T-2.8) |

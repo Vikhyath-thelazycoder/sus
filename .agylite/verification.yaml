@@ -92,3 +92,15 @@ results:
   result: PASSED
   evidence: .agylite/evidence/20261105T173528496271Z.json
   at: '2026-11-05T17:35:28+00:00'
+- task: T-2.1
+  result: VERIFIED
+  evidence: docs/evidence/P2.md
+  at: '2026-11-05T17:46:10+00:00'
+- task: T-2.8
+  result: VERIFIED
+  evidence: docs/evidence/P2.md
+  at: '2026-11-05T17:48:04+00:00'
+- task: null
+  result: PASSED
+  evidence: .agylite/evidence/20261105T174855975300Z.json
+  at: '2026-11-05T17:48:55+00:00'

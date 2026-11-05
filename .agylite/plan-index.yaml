@@ -1,10 +1,10 @@
 schema_version: 1
 plan_path: docs/IMPLEMENTATION_PLAN.md
-plan_sha256: 53d800fd932dba028e7a0df504b702b61b05c12ecd7331e649278a46b4e3c899
-plan_size: 25895
-plan_mtime_ns: 1793900097403687132
-built: '2026-11-05T17:34:57+00:00'
-current_phase: P2
+plan_sha256: 86476bbc6ee9b43a4b7b4334b1070cc036931bc4ca2bbad0348a2fb2a0a036e6
+plan_size: 27701
+plan_mtime_ns: 1793900908133046729
+built: '2026-11-05T17:48:28+00:00'
+current_phase: P3
 phases:
 - phase_id: P1
   phase_name: Foundations and platform check
@@ -56,20 +56,19 @@ phases:
   last_updated: null
   evidence_pointer: docs/evidence/P1.md
   section:
-    start: 1295
-    end: 4397
+    start: 1622
+    end: 4724
 - phase_id: P2
   phase_name: Paper ingestion
-  status: IN_PROGRESS
+  status: VERIFIED
   objective: 15–25 curated open-access papers parsed, chunked by structure, embedded and stored, with text a human has read
     and checked (RAG §4).
-  active_tasks:
-  - T-2.1
+  active_tasks: []
   tasks:
   - id: T-2.1
     title: Pick 15–25 open-access papers across biopolymers, green chemistry, packaging and biomaterials; record DOI, licence
       and source URL in `data/papers/metadata.json`
-    status: READY_FOR_VERIFICATION
+    status: VERIFIED
   - id: T-2.2
     title: 'PDF text extraction with pdf.js: page numbers, two-column ordering, header/footer removal, de-hyphenation, invisible-character
       stripping, scanned-PDF detection (PP §5.2)'
@@ -90,23 +89,31 @@ phases:
       writes D1 + FTS + Vectorize with `owner_id='public'`
     status: VERIFIED
   - id: T-2.7
-    title: '`scripts/ingest.ts`: local run over `data/papers`, Crossref metadata by DOI, progress output, `--remote` flag'
+    title: '`scripts/ingest.ts`: local run over `data/papers`, OpenAlex metadata (stored in metadata.json), progress output,
+      `--remote` flag'
+    status: VERIFIED
+  - id: T-2.8
+    title: 'Move the demo host to Render (D-012): same Hono app on Node, Cloudflare D1/Vectorize/Workers AI/KV via REST, Render
+      CLI deploy'
     status: VERIFIED
   dependencies:
   - P1
   affected_paths:
-  - src/shared/chunker.ts
+  - src/shared/**
   - scripts/ingest.ts
-  - src/worker/routes/admin.ts
+  - src/worker/routes/admin-papers.ts
+  - src/worker/platform.ts
+  - src/server/**
+  - render.yaml
   - data/papers/**
   security_flags: true
   design_flags: false
   testing_flags: true
   last_updated: null
-  evidence_pointer: null
+  evidence_pointer: docs/evidence/P2.md
   section:
-    start: 4397
-    end: 7072
+    start: 4724
+    end: 7747
 - phase_id: P3
   phase_name: Retrieval and evaluation
   status: PLANNED
@@ -148,8 +155,8 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 7072
-    end: 9288
+    start: 7747
+    end: 9996
 - phase_id: P4
   phase_name: Answer generation
   status: PLANNED
@@ -195,8 +202,8 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 9288
-    end: 11873
+    start: 9996
+    end: 12581
 - phase_id: P5
   phase_name: UI foundation and chat
   status: PLANNED
@@ -234,8 +241,8 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 11873
-    end: 13923
+    start: 12581
+    end: 14631
 - phase_id: P6
   phase_name: Library and chat history
   status: PLANNED
@@ -267,8 +274,8 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 13923
-    end: 15179
+    start: 14631
+    end: 15887
 - phase_id: P7
   phase_name: PDF uploads
   status: PLANNED
@@ -292,7 +299,8 @@ phases:
     title: Own uploads searchable only by their owner; "Your upload (unverified)" labels
     status: PLANNED
   - id: T-7.5
-    title: 'Cron: expire uploads after 7 days; orphan-vector cleanup; "delete my data" endpoint + button'
+    title: 'Cleanup as a **Cloudflare Worker cron** (free; data lives on Cloudflare; Render''s free tier has no cron): expire
+      uploads after 7 days; orphan-vector cleanup; "delete my data" endpoint + button'
     status: PLANNED
   dependencies:
   - P2
@@ -307,8 +315,8 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 15179
-    end: 16902
+    start: 15887
+    end: 17710
 - phase_id: P8
   phase_name: Hardening and demo launch
   status: PLANNED
@@ -316,8 +324,9 @@ phases:
   active_tasks: []
   tasks:
   - id: T-8.1
-    title: Rate limits (questions, uploads, new IDs) via the Rate Limiting binding or Durable Objects; global LLM and Workers
-      AI budget guard
+    title: 'Rate limits (questions, uploads, new IDs): demo on Render (single instance) uses in-memory per-minute limits +
+      D1 daily counters; the production Worker uses the Rate Limiting binding / Durable Objects; global LLM and Workers AI
+      budget guard'
     status: PLANNED
   - id: T-8.2
     title: Cloudflare Turnstile on the first question and on uploads (server-side token check)
@@ -332,8 +341,8 @@ phases:
     title: Final eval run on production (retrieval + answers)
     status: PLANNED
   - id: T-8.6
-    title: Production deploy + smoke test (5 golden questions, citations open the right page, upload from a phone, headers,
-      429)
+    title: Demo deploy to Render (Render CLI) + smoke test, waking the free instance first (5 golden questions, citations
+      open the right page, upload from a phone, headers, 429)
     status: PLANNED
   - id: T-8.7
     title: 'Demo hand-off: short walkthrough video and a one-page "how it works" for the client'
@@ -351,8 +360,8 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 16902
-    end: 18879
+    start: 17710
+    end: 19846
 - phase_id: P9
   phase_name: Paid MVP (after the deal)
   status: INTENTIONALLY_DEFERRED
@@ -390,5 +399,5 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 18879
-    end: 20696
+    start: 19846
+    end: 21663
