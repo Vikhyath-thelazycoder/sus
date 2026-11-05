@@ -13,7 +13,7 @@ INTENTIONALLY_DEFERRED. `agylite plan index` keeps a compact index in `.agylite/
 
 **Scope:** P1–P8 build the **demo** (Render free web service at https://sustainiq-demo.onrender.com with data on Cloudflare, Groq, no login; D-012). P9 is the **paid MVP** on Cloudflare Workers Paid, deferred until the client accepts the deal.
 
-**Progress (2026-11-05):** P1 ✅ verified · P2 ✅ verified (20 papers, 881 chunks, 881 vectors) · **next: P3**. Changes from the first draft: no LangGraph in the demo (D-010), Groq models updated (D-011), demo hosted on Render (D-012).
+**Progress (2026-11-05):** P1 ✅ verified · P2 ✅ verified (20 papers, 881 chunks, 881 vectors) · P3 ✅ verified (hybrid + fused rerank: recall@6 1.00, MRR 0.944, ~0.85 s server-side) · **next: P4**. Changes from the first draft: no LangGraph in the demo (D-010), Groq models updated (D-011), demo hosted on Render (D-012).
 
 **Definition of done for every task:** `agylite verify` passes (tests, types, lint, build), the acceptance column is met, and the SEC items it touches have their tests.
 
@@ -50,18 +50,18 @@ Objective: 15–25 curated open-access papers parsed, chunked by structure, embe
 | T-2.8 | Move the demo host to Render (D-012): same Hono app on Node, Cloudflare D1/Vectorize/Workers AI/KV via REST, Render CLI deploy | VERIFIED | T-2.6 | engineering/release | — | — | — | Live checks pass on sustainiq-demo.onrender.com; 20 papers ingested through Render |
 
 ## P3 · Retrieval and evaluation
-Status: PLANNED · Depends: P2 · Paths: src/worker/rag/**, scripts/eval.ts, data/golden.json · Flags: security, testing · Evidence: —
+Status: VERIFIED · Depends: P2 · Paths: src/worker/rag/**, scripts/eval.ts, data/golden.json, src/worker/routes/admin-search.ts · Flags: security, testing · Evidence: docs/evidence/P3.md
 Objective: Hybrid search + RRF + reranker returning the right passages, **measured** on a golden set before any answer generation is built (RAG §5.3–5.8, §9).
 
 | ID | Task | Status | Depends | Capabilities | Security | Design | Testing | Acceptance |
 |---|---|---|---|---|---|---|---|---|
-| T-3.1 | Golden set: 30 real-style questions with the correct paper, section and page, plus 5 unanswerable ones (RAG §9.1) | PLANNED | T-2.7 | engineering/ai-systems | — | — | Reviewed by hand | `data/golden.json` with 35 entries |
-| T-3.2 | Meaning search: embed the query with `bge-m3`, Vectorize top 30, **server-built** owner pre-filter (RAG §5.3) | PLANNED | T-2.6 | engineering/ai-systems | SEC §4.3 | — | Unit + owner-isolation test (SEC §13 #4) | Returns only `public` + own chunks |
-| T-3.3 | Keyword search: FTS5 BM25 top 30 with escaped phrase query; malformed query → empty result | PLANNED | T-1.3 | engineering/backend | SEC §4.1, §4.2 | — | Injection tests (SEC §13 #5, #6) | Exact terms (PLA, PBAT, ASTM D6400) are found |
-| T-3.4 | RRF merge (k = 60) → top 20 → re-check owners in D1 (RAG §5.4) | PLANNED | T-3.2, T-3.3 | engineering/ai-systems | Second-layer owner check (SEC §4.3) | — | Unit test with the worked example from RAG §5.4 | Merged list is correct and deduplicated |
-| T-3.5 | Rerank with `bge-reranker-base` → top 6; neighbour expansion (±1 child) within the token budget; best first (RAG §5.6, §5.8) | PLANNED | T-3.4 | engineering/ai-systems | — | — | Unit tests: ordering, budget cap | Prompt context ≤ ~3,000 tokens |
-| T-3.6 | `scripts/eval.ts`: recall@6, MRR; compare vector-only vs hybrid vs hybrid + rerank (RAG §9.2) | PLANNED | T-3.1, T-3.5 | engineering/ai-systems, testing/regression | — | — | Eval runs locally and against the Render demo (REST latency recorded) | Scores recorded in `docs/evidence/P3.md` |
-| T-3.7 | Tune chunk size, k and rerank count on the golden set; plot the score histogram before any threshold (RAG §5.7) | PLANNED | T-3.6 | engineering/ai-systems | — | — | Before/after numbers | Chosen settings justified with numbers |
+| T-3.1 | Golden set: 30 real-style questions with the correct paper, section and page, plus 5 unanswerable ones (RAG §9.1) | VERIFIED | T-2.7 | engineering/ai-systems | — | — | Reviewed by hand | `data/golden.json` with 35 entries |
+| T-3.2 | Meaning search: embed the query with `bge-m3`, Vectorize top 30, **server-built** owner pre-filter (RAG §5.3) | VERIFIED | T-2.6 | engineering/ai-systems | SEC §4.3 | — | Unit + owner-isolation test (SEC §13 #4) | Returns only `public` + own chunks |
+| T-3.3 | Keyword search: FTS5 BM25 top 30 with escaped phrase query; malformed query → empty result | VERIFIED | T-1.3 | engineering/backend | SEC §4.1, §4.2 | — | Injection tests (SEC §13 #5, #6) | Exact terms (PLA, PBAT, ASTM D6400) are found |
+| T-3.4 | RRF merge (k = 60) → top 20 → re-check owners in D1 (RAG §5.4) | VERIFIED | T-3.2, T-3.3 | engineering/ai-systems | Second-layer owner check (SEC §4.3) | — | Unit test with the worked example from RAG §5.4 | Merged list is correct and deduplicated |
+| T-3.5 | Rerank with `bge-reranker-base` → top 6; neighbour expansion (±1 child) within the token budget; best first (RAG §5.6, §5.8) | VERIFIED | T-3.4 | engineering/ai-systems | — | — | Unit tests: ordering, budget cap | Prompt context ≤ ~3,000 tokens |
+| T-3.6 | `scripts/eval.ts`: recall@6, MRR; compare vector-only vs hybrid vs hybrid + rerank (RAG §9.2) | VERIFIED | T-3.1, T-3.5 | engineering/ai-systems, testing/regression | — | — | Eval runs locally and against the Render demo (REST latency recorded) | Scores recorded in `docs/evidence/P3.md` |
+| T-3.7 | Tune chunk size, k and rerank count on the golden set; plot the score histogram before any threshold (RAG §5.7) | VERIFIED | T-3.6 | engineering/ai-systems | — | — | Before/after numbers | Chosen settings justified with numbers |
 
 ## P4 · Answer generation
 Status: PLANNED · Depends: P3 · Paths: src/worker/rag/graph.ts, src/worker/routes/chat.ts, src/worker/llm.ts · Flags: security, testing · Evidence: —

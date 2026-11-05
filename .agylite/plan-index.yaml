@@ -1,10 +1,10 @@
 schema_version: 1
 plan_path: docs/IMPLEMENTATION_PLAN.md
-plan_sha256: 86476bbc6ee9b43a4b7b4334b1070cc036931bc4ca2bbad0348a2fb2a0a036e6
-plan_size: 27701
-plan_mtime_ns: 1793900908133046729
-built: '2026-11-05T17:48:28+00:00'
-current_phase: P3
+plan_sha256: 9e3e0ceff38797b2fa936f5a21adcc706522cda864ccbfad483193df7a3689e7
+plan_size: 27850
+plan_mtime_ns: 1793904349455050612
+built: '2026-11-05T18:45:55+00:00'
+current_phase: P4
 phases:
 - phase_id: P1
   phase_name: Foundations and platform check
@@ -56,8 +56,8 @@ phases:
   last_updated: null
   evidence_pointer: docs/evidence/P1.md
   section:
-    start: 1622
-    end: 4724
+    start: 1709
+    end: 4811
 - phase_id: P2
   phase_name: Paper ingestion
   status: VERIFIED
@@ -112,51 +112,52 @@ phases:
   last_updated: null
   evidence_pointer: docs/evidence/P2.md
   section:
-    start: 4724
-    end: 7747
+    start: 4811
+    end: 7834
 - phase_id: P3
   phase_name: Retrieval and evaluation
-  status: PLANNED
+  status: VERIFIED
   objective: Hybrid search + RRF + reranker returning the right passages, **measured** on a golden set before any answer generation
     is built (RAG §5.3–5.8, §9).
   active_tasks: []
   tasks:
   - id: T-3.1
     title: 'Golden set: 30 real-style questions with the correct paper, section and page, plus 5 unanswerable ones (RAG §9.1)'
-    status: PLANNED
+    status: VERIFIED
   - id: T-3.2
     title: 'Meaning search: embed the query with `bge-m3`, Vectorize top 30, **server-built** owner pre-filter (RAG §5.3)'
-    status: PLANNED
+    status: VERIFIED
   - id: T-3.3
     title: 'Keyword search: FTS5 BM25 top 30 with escaped phrase query; malformed query → empty result'
-    status: PLANNED
+    status: VERIFIED
   - id: T-3.4
     title: RRF merge (k = 60) → top 20 → re-check owners in D1 (RAG §5.4)
-    status: PLANNED
+    status: VERIFIED
   - id: T-3.5
     title: Rerank with `bge-reranker-base` → top 6; neighbour expansion (±1 child) within the token budget; best first (RAG
       §5.6, §5.8)
-    status: PLANNED
+    status: VERIFIED
   - id: T-3.6
     title: '`scripts/eval.ts`: recall@6, MRR; compare vector-only vs hybrid vs hybrid + rerank (RAG §9.2)'
-    status: PLANNED
+    status: VERIFIED
   - id: T-3.7
     title: Tune chunk size, k and rerank count on the golden set; plot the score histogram before any threshold (RAG §5.7)
-    status: PLANNED
+    status: VERIFIED
   dependencies:
   - P2
   affected_paths:
   - src/worker/rag/**
   - scripts/eval.ts
   - data/golden.json
+  - src/worker/routes/admin-search.ts
   security_flags: true
   design_flags: false
   testing_flags: true
   last_updated: null
-  evidence_pointer: null
+  evidence_pointer: docs/evidence/P3.md
   section:
-    start: 7747
-    end: 9996
+    start: 7834
+    end: 10144
 - phase_id: P4
   phase_name: Answer generation
   status: PLANNED
@@ -202,8 +203,8 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 9996
-    end: 12581
+    start: 10144
+    end: 12729
 - phase_id: P5
   phase_name: UI foundation and chat
   status: PLANNED
@@ -241,8 +242,8 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 12581
-    end: 14631
+    start: 12729
+    end: 14779
 - phase_id: P6
   phase_name: Library and chat history
   status: PLANNED
@@ -274,8 +275,8 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 14631
-    end: 15887
+    start: 14779
+    end: 16035
 - phase_id: P7
   phase_name: PDF uploads
   status: PLANNED
@@ -315,8 +316,8 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 15887
-    end: 17710
+    start: 16035
+    end: 17858
 - phase_id: P8
   phase_name: Hardening and demo launch
   status: PLANNED
@@ -360,8 +361,8 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 17710
-    end: 19846
+    start: 17858
+    end: 19994
 - phase_id: P9
   phase_name: Paid MVP (after the deal)
   status: INTENTIONALLY_DEFERRED
@@ -399,5 +400,5 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 19846
-    end: 21663
+    start: 19994
+    end: 21811
