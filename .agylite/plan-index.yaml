@@ -1,10 +1,10 @@
 schema_version: 1
 plan_path: docs/IMPLEMENTATION_PLAN.md
-plan_sha256: 9e3e0ceff38797b2fa936f5a21adcc706522cda864ccbfad483193df7a3689e7
-plan_size: 27850
-plan_mtime_ns: 1793904349455050612
-built: '2026-11-05T18:45:55+00:00'
-current_phase: P4
+plan_sha256: e487cdb0044f1b8527a01eaa156af0ede2747be362fd32908f4c13d26c31e108
+plan_size: 28045
+plan_mtime_ns: 1793907111043080584
+built: '2026-11-05T19:32:12+00:00'
+current_phase: P5
 phases:
 - phase_id: P1
   phase_name: Foundations and platform check
@@ -56,8 +56,8 @@ phases:
   last_updated: null
   evidence_pointer: docs/evidence/P1.md
   section:
-    start: 1709
-    end: 4811
+    start: 1850
+    end: 4952
 - phase_id: P2
   phase_name: Paper ingestion
   status: VERIFIED
@@ -112,8 +112,8 @@ phases:
   last_updated: null
   evidence_pointer: docs/evidence/P2.md
   section:
-    start: 4811
-    end: 7834
+    start: 4952
+    end: 7975
 - phase_id: P3
   phase_name: Retrieval and evaluation
   status: VERIFIED
@@ -156,55 +156,56 @@ phases:
   last_updated: null
   evidence_pointer: docs/evidence/P3.md
   section:
-    start: 7834
-    end: 10144
+    start: 7975
+    end: 10285
 - phase_id: P4
   phase_name: Answer generation
-  status: PLANNED
+  status: VERIFIED
   objective: Streaming, grounded answers with validated citations and an honest "I couldn't find this", run as a pipeline
     of plain functions (PP §6, RAG §5.9–5.11).
   active_tasks: []
   tasks:
   - id: T-4.1
     title: 'Guard node: topic check + hazardous-chemistry refusal + override-attempt speed bump → polite decline'
-    status: PLANNED
+    status: VERIFIED
   - id: T-4.2
     title: Rewrite node (small model, only with history; history from D1 only) (RAG §5.1)
-    status: PLANNED
+    status: VERIFIED
   - id: T-4.3
     title: 'Prompt builder: fenced `<sources>`, tag escaping, canary, numbered sources with title/section/page (RAG §5.9)'
-    status: PLANNED
+    status: VERIFIED
   - id: T-4.4
     title: 'Generate node: Groq streaming, temperature 0.2, max 800 tokens, timeout, fallback chain'
-    status: PLANNED
+    status: VERIFIED
   - id: T-4.5
     title: 'Validate node: citation check, retry edge once, fallback message (RAG §5.10)'
-    status: PLANNED
+    status: VERIFIED
   - id: T-4.6
     title: 'Pipeline runner: call guard → rewrite → retrieve → rerank → generate → validate → save in order, with the single
       retry (no LangGraph in the demo, per T-1.7)'
-    status: PLANNED
+    status: VERIFIED
   - id: T-4.7
     title: '`/api/chat` SSE route; save the message and citation chunk IDs to D1; KV answer cache for public-only questions'
-    status: PLANNED
+    status: VERIFIED
   - id: T-4.8
     title: 'Answer evaluation: faithfulness + "I don''t know" accuracy on the golden set, with an LLM judge checked by hand
       (RAG §9.2–9.3)'
-    status: PLANNED
+    status: VERIFIED
   dependencies:
   - P3
   affected_paths:
-  - src/worker/rag/graph.ts
+  - src/worker/rag/answer.ts
   - src/worker/routes/chat.ts
   - src/worker/llm.ts
+  - scripts/eval-answers.ts
   security_flags: true
   design_flags: false
   testing_flags: true
   last_updated: null
-  evidence_pointer: null
+  evidence_pointer: docs/evidence/P4.md
   section:
-    start: 10144
-    end: 12729
+    start: 10285
+    end: 12923
 - phase_id: P5
   phase_name: UI foundation and chat
   status: PLANNED
@@ -242,8 +243,8 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 12729
-    end: 14779
+    start: 12923
+    end: 14973
 - phase_id: P6
   phase_name: Library and chat history
   status: PLANNED
@@ -275,8 +276,8 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 14779
-    end: 16035
+    start: 14973
+    end: 16229
 - phase_id: P7
   phase_name: PDF uploads
   status: PLANNED
@@ -316,8 +317,8 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 16035
-    end: 17858
+    start: 16229
+    end: 18052
 - phase_id: P8
   phase_name: Hardening and demo launch
   status: PLANNED
@@ -361,8 +362,8 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 17858
-    end: 19994
+    start: 18052
+    end: 20188
 - phase_id: P9
   phase_name: Paid MVP (after the deal)
   status: INTENTIONALLY_DEFERRED
@@ -400,5 +401,5 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 19994
-    end: 21811
+    start: 20188
+    end: 22005

@@ -13,7 +13,7 @@ INTENTIONALLY_DEFERRED. `agylite plan index` keeps a compact index in `.agylite/
 
 **Scope:** P1–P8 build the **demo** (Render free web service at https://sustainiq-demo.onrender.com with data on Cloudflare, Groq, no login; D-012). P9 is the **paid MVP** on Cloudflare Workers Paid, deferred until the client accepts the deal.
 
-**Progress (2026-11-05):** P1 ✅ verified · P2 ✅ verified (20 papers, 881 chunks, 881 vectors) · P3 ✅ verified (hybrid + fused rerank: recall@6 1.00, MRR 0.944, ~0.85 s server-side) · **next: P4**. Changes from the first draft: no LangGraph in the demo (D-010), Groq models updated (D-011), demo hosted on Render (D-012).
+**Progress (2026-11-06):** P1 ✅ verified · P2 ✅ verified (20 papers, 881 chunks, 881 vectors) · P3 ✅ verified (hybrid + fused rerank: recall@6 1.00, MRR 0.944, ~0.85 s server-side) · P4 ✅ verified (35/35 faithful, 5/5 declines, 6/6 injection; first token ~3 s on Render) · **next: P5**. Changes from the first draft: no LangGraph in the demo (D-010), Groq models updated (D-011), demo hosted on Render (D-012), gpt-oss-20b removed from the answer chain (D-013).
 
 **Definition of done for every task:** `agylite verify` passes (tests, types, lint, build), the acceptance column is met, and the SEC items it touches have their tests.
 
@@ -64,19 +64,19 @@ Objective: Hybrid search + RRF + reranker returning the right passages, **measur
 | T-3.7 | Tune chunk size, k and rerank count on the golden set; plot the score histogram before any threshold (RAG §5.7) | VERIFIED | T-3.6 | engineering/ai-systems | — | — | Before/after numbers | Chosen settings justified with numbers |
 
 ## P4 · Answer generation
-Status: PLANNED · Depends: P3 · Paths: src/worker/rag/graph.ts, src/worker/routes/chat.ts, src/worker/llm.ts · Flags: security, testing · Evidence: —
+Status: VERIFIED · Depends: P3 · Paths: src/worker/rag/answer.ts, src/worker/routes/chat.ts, src/worker/llm.ts, scripts/eval-answers.ts · Flags: security, testing · Evidence: docs/evidence/P4.md
 Objective: Streaming, grounded answers with validated citations and an honest "I couldn't find this", run as a pipeline of plain functions (PP §6, RAG §5.9–5.11).
 
 | ID | Task | Status | Depends | Capabilities | Security | Design | Testing | Acceptance |
 |---|---|---|---|---|---|---|---|---|
-| T-4.1 | Guard node: topic check + hazardous-chemistry refusal + override-attempt speed bump → polite decline | PLANNED | T-1.6 | engineering/ai-systems, engineering/security | SEC §6.5–6.6, §12 #11 | — | SEC §13 #15, #22 | Off-topic and hazardous questions are declined |
-| T-4.2 | Rewrite node (small model, only with history; history from D1 only) (RAG §5.1) | PLANNED | T-1.6 | engineering/ai-systems | SEC §6.7 | — | SEC §13 #18 | Follow-up questions become standalone |
-| T-4.3 | Prompt builder: fenced `<sources>`, tag escaping, canary, numbered sources with title/section/page (RAG §5.9) | PLANNED | T-3.5 | engineering/ai-systems | SEC §6.1–6.4 | — | SEC §13 #7, #8, #9 | Injected chunks don't change behaviour |
-| T-4.4 | Generate node: Groq streaming, temperature 0.2, max 800 tokens, timeout, fallback chain | PLANNED | T-4.3 | engineering/ai-systems | SEC §7.4, §12 #20 | — | Mocked-provider tests incl. 429 fallback | Streams token by token; fallback works |
-| T-4.5 | Validate node: citation check, retry edge once, fallback message (RAG §5.10) | PLANNED | T-4.4 | engineering/ai-systems | SEC §7.2 | — | SEC §13 #10 | No answer ships with a citation that wasn't retrieved |
-| T-4.6 | Pipeline runner: call guard → rewrite → retrieve → rerank → generate → validate → save in order, with the single retry (no LangGraph in the demo, per T-1.7) | PLANNED | T-4.1–T-4.5 | engineering/architecture | — | — | Graph test with each path (decline, ok, retry) | Each path covered by a test |
-| T-4.7 | `/api/chat` SSE route; save the message and citation chunk IDs to D1; KV answer cache for public-only questions | PLANNED | T-4.6 | engineering/backend | Cache never crosses owners (SEC §8) | — | API tests; cache-scope test | Second identical public question served from cache |
-| T-4.8 | Answer evaluation: faithfulness + "I don't know" accuracy on the golden set, with an LLM judge checked by hand (RAG §9.2–9.3) | PLANNED | T-4.7 | engineering/ai-systems, testing/regression | — | — | `npm run eval` extended | Scores in `docs/evidence/P4.md`; ≥ 90% correct declines on unanswerable questions (target) |
+| T-4.1 | Guard node: topic check + hazardous-chemistry refusal + override-attempt speed bump → polite decline | VERIFIED | T-1.6 | engineering/ai-systems, engineering/security | SEC §6.5–6.6, §12 #11 | — | SEC §13 #15, #22 | Off-topic and hazardous questions are declined |
+| T-4.2 | Rewrite node (small model, only with history; history from D1 only) (RAG §5.1) | VERIFIED | T-1.6 | engineering/ai-systems | SEC §6.7 | — | SEC §13 #18 | Follow-up questions become standalone |
+| T-4.3 | Prompt builder: fenced `<sources>`, tag escaping, canary, numbered sources with title/section/page (RAG §5.9) | VERIFIED | T-3.5 | engineering/ai-systems | SEC §6.1–6.4 | — | SEC §13 #7, #8, #9 | Injected chunks don't change behaviour |
+| T-4.4 | Generate node: Groq streaming, temperature 0.2, max 800 tokens, timeout, fallback chain | VERIFIED | T-4.3 | engineering/ai-systems | SEC §7.4, §12 #20 | — | Mocked-provider tests incl. 429 fallback | Streams token by token; fallback works |
+| T-4.5 | Validate node: citation check, retry edge once, fallback message (RAG §5.10) | VERIFIED | T-4.4 | engineering/ai-systems | SEC §7.2 | — | SEC §13 #10 | No answer ships with a citation that wasn't retrieved |
+| T-4.6 | Pipeline runner: call guard → rewrite → retrieve → rerank → generate → validate → save in order, with the single retry (no LangGraph in the demo, per T-1.7) | VERIFIED | T-4.1–T-4.5 | engineering/architecture | — | — | Graph test with each path (decline, ok, retry) | Each path covered by a test |
+| T-4.7 | `/api/chat` SSE route; save the message and citation chunk IDs to D1; KV answer cache for public-only questions | VERIFIED | T-4.6 | engineering/backend | Cache never crosses owners (SEC §8) | — | API tests; cache-scope test | Second identical public question served from cache |
+| T-4.8 | Answer evaluation: faithfulness + "I don't know" accuracy on the golden set, with an LLM judge checked by hand (RAG §9.2–9.3) | VERIFIED | T-4.7 | engineering/ai-systems, testing/regression | — | — | `npm run eval` extended | Scores in `docs/evidence/P4.md`; ≥ 90% correct declines on unanswerable questions (target) |
 
 ## P5 · UI foundation and chat
 Status: PLANNED · Depends: P1 · Paths: src/web/** · Flags: design, testing · Evidence: —
