@@ -9,7 +9,7 @@ The table below is regenerated between the markers; edit text outside them freel
 <!-- agylite:decisions:start -->
 | ID | Date | Kind | Topic | Decision | Reason | Supersedes | Status |
 |---|---|---|---|---|---|---|---|
-| D-001 | 2026-11-05 | architecture | Hosting | Demo on Cloudflare Workers Free; production on Cloudflare Workers Paid only | All needed services in one free account; owner rule: production stays on Cloudflare | — | ACTIVE |
+| D-001 | 2026-11-05 | architecture | Hosting | Demo on Cloudflare Workers Free; production on Cloudflare Workers Paid only | All needed services in one free account; owner rule: production stays on Cloudflare | — | SUPERSEDED |
 | D-002 | 2026-11-05 | architecture | Database | D1 (SQLite+FTS5) + Vectorize | All-Cloudflare, cheapest (~$10-15/mo est. at 100k chunks), never pauses | — | ACTIVE |
 | D-003 | 2026-11-05 | architecture | Orchestration | Hono + LangGraph.js with own retrieval code; no full LangChain | Owner wants LangGraph; nodes as plain functions keep it removable; security-critical retrieval is custom anyway | — | SUPERSEDED |
 | D-004 | 2026-11-05 | architecture | LLM provider | Groq (Llama 3.3 70B) for the demo via the OpenAI SDK; OpenAI in the MVP | No OpenAI key yet; Groq is free and OpenAI-compatible | — | SUPERSEDED |
@@ -20,4 +20,5 @@ The table below is regenerated between the markers; edit text outside them freel
 | D-009 | 2026-11-05 | design | Visual direction | Calm minimal: warm off-white + sage green, dark mode toggle, desktop-first, citation side panel / mobile bottom sheet | Owner choice; long technical answers need low visual noise | — | ACTIVE |
 | D-010 | 2026-11-05 | architecture | Orchestration | Demo: Hono + plain-function pipeline with own retrieval code; LangGraph returns in the MVP on Workers Paid | T-1.7: LangGraph fit on size (502 KiB gzip) but used p50 14 ms / p90 82 ms CPU vs the free 10 ms limit; owner chose option B | D-003 | ACTIVE |
 | D-011 | 2026-11-05 | architecture | LLM provider | Groq openai/gpt-oss-120b -> qwen/qwen3.8-27b -> openai/gpt-oss-20b (small model gpt-oss-20b) for the demo; OpenAI in the MVP | P1 check: Groq retired llama-3.3-70b-versatile and llama-3.1-8b-instant (404); the three listed models return 200 with 1,000 req/day and 8,000 tokens/min each | D-004 | ACTIVE |
+| D-012 | 2026-11-05 | architecture | Demo hosting | Demo runs on Render free (Singapore) with the same Hono app on Node; data stays on Cloudflare (production D1, Vectorize, Workers AI, KV) via the REST API. Production stays on Cloudflare Workers Paid. | Owner rule (PROJECT_PLAN: demo moves to Render if it doesn't fit the Workers free plan). Ingestion measured 10-30 ms CPU per request vs the 10 ms limit; Render has no per-request CPU cap. | D-001 | ACTIVE |
 <!-- agylite:decisions:end -->

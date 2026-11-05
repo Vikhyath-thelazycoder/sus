@@ -1,0 +1,165 @@
+{
+ "schema_version": 1,
+ "mode": "tests-and-browser",
+ "task": null,
+ "result": "FAILED",
+ "impact": {
+  "method": "structural",
+  "changed": [
+   ".gitignore",
+   "data/papers/metadata.json",
+   "package-lock.json",
+   "package.json",
+   "render.yaml",
+   "scripts/ingest.ts",
+   "scripts/lib/pdf-node.ts",
+   "src/server/cloudflare-rest.ts",
+   "src/server/node.ts",
+   "src/shared/chunker.ts",
+   "src/shared/pdf/layout.ts",
+   "src/shared/pdf/read.ts",
+   "src/shared/pdf/structure.ts",
+   "src/shared/pdf/types.ts",
+   "src/shared/text.ts",
+   "src/worker/index.ts",
+   "src/worker/platform.ts",
+   "src/worker/routes/admin-papers.ts",
+   "src/worker/security/admin.ts",
+   "test/admin-papers.test.ts",
+   "test/node/papers.test.ts",
+   "test/node/server.test.ts",
+   "test/shared/chunker.test.ts",
+   "test/shared/layout.test.ts",
+   "test/shared/structure.test.ts",
+   "tsconfig.worker.json",
+   "vitest.config.ts"
+  ],
+  "notice": "graph-based analysis unavailable; limited structural analysis used (graph-based analysis unavailable: graphify runtime not installed (`agylite runtime install graphify`))"
+ },
+ "checks": [
+  {
+   "command": [
+    "npm",
+    "run",
+    "test",
+    "--",
+    "test/admin-papers.test.ts",
+    "test/node/papers.test.ts",
+    "test/node/server.test.ts",
+    "test/shared/chunker.test.ts",
+    "test/shared/layout.test.ts",
+    "test/shared/structure.test.ts",
+    "test/admin.test.ts",
+    "test/helpers.ts",
+    "test/headers.test.ts",
+    "test/identity.test.ts",
+    "test/request-guard.test.ts"
+   ],
+   "exit_code": 0,
+   "result": "PASSED",
+   "duration_ms": 10586,
+   "diagnosis": [],
+   "kind": "test",
+   "name": "test",
+   "reason": "11 tests affected by the change",
+   "tests": [
+    "test/admin-papers.test.ts",
+    "test/node/papers.test.ts",
+    "test/node/server.test.ts",
+    "test/shared/chunker.test.ts",
+    "test/shared/layout.test.ts",
+    "test/shared/structure.test.ts",
+    "test/admin.test.ts",
+    "test/helpers.ts",
+    "test/headers.test.ts",
+    "test/identity.test.ts",
+    "test/request-guard.test.ts"
+   ],
+   "at": "2026-11-05T17:15:43Z"
+  },
+  {
+   "command": [
+    "npm",
+    "run",
+    "build"
+   ],
+   "exit_code": 2,
+   "result": "FAILED",
+   "duration_ms": 4601,
+   "diagnosis": [
+    "test/node/server.test.ts(59,33): error TS2345: Argument of type '{ CLOUDFLARE_ACCOUNT_ID: string; CLOUDFLARE_API_TOKEN: string; D1_DATABASE_ID: string; VECTORIZE_INDEX: string; KV_NAMESPACE_ID: string; LLM_API_KEY: string; LLM_BASE_URL: string; LLM_MODELS: string; LLM_SMALL_MODEL: string; ANON_ID_SECRET: string; }' is not assignable to parameter of type 'ProcessEnv'.",
+    "test/node/server.test.ts(63,44): error TS2345: Argument of type '{ CLOUDFLARE_ACCOUNT_ID: string; CLOUDFLARE_API_TOKEN: string; D1_DATABASE_ID: string; VECTORIZE_INDEX: string; KV_NAMESPACE_ID: string; LLM_API_KEY: string; LLM_BASE_URL: string; LLM_MODELS: string; LLM_SMALL_MODEL: string; ANON_ID_SECRET: string; ADMIN_INGEST_TOKEN: string; }' is not assignable to parameter of type 'ProcessEnv'.",
+    "test/node/server.test.ts(72,44): error TS2345: Argument of type '{ CLOUDFLARE_ACCOUNT_ID: string; CLOUDFLARE_API_TOKEN: string; D1_DATABASE_ID: string; VECTORIZE_INDEX: string; KV_NAMESPACE_ID: string; LLM_API_KEY: string; LLM_BASE_URL: string; LLM_MODELS: string; LLM_SMALL_MODEL: string; ANON_ID_SECRET: string; ADMIN_INGEST_TOKEN: string; }' is not assignable to parameter of type 'ProcessEnv'.",
+    "test/node/server.test.ts(83,44): error TS2345: Argument of type '{ CLOUDFLARE_ACCOUNT_ID: string; CLOUDFLARE_API_TOKEN: string; D1_DATABASE_ID: string; VECTORIZE_INDEX: string; KV_NAMESPACE_ID: string; LLM_API_KEY: string; LLM_BASE_URL: string; LLM_MODELS: string; LLM_SMALL_MODEL: string; ANON_ID_SECRET: string; ADMIN_INGEST_TOKEN: string; }' is not assignable to parameter of type 'ProcessEnv'.",
+    "test/node/server.test.ts(100,44): error TS2345: Argument of type '{ CLOUDFLARE_ACCOUNT_ID: string; CLOUDFLARE_API_TOKEN: string; D1_DATABASE_ID: string; VECTORIZE_INDEX: string; KV_NAMESPACE_ID: string; LLM_API_KEY: string; LLM_BASE_URL: string; LLM_MODELS: string; LLM_SMALL_MODEL: string; ANON_ID_SECRET: string; ADMIN_INGEST_TOKEN: string; }' is not assignable to parameter of type 'ProcessEnv'."
+   ],
+   "kind": "typecheck",
+   "name": "build",
+   "reason": "typecheck check for the project",
+   "tests": [],
+   "at": "2026-11-05T17:15:48Z"
+  },
+  {
+   "command": [
+    "npm",
+    "run",
+    "typecheck"
+   ],
+   "exit_code": 2,
+   "result": "FAILED",
+   "duration_ms": 4927,
+   "diagnosis": [
+    "test/node/server.test.ts(59,33): error TS2345: Argument of type '{ CLOUDFLARE_ACCOUNT_ID: string; CLOUDFLARE_API_TOKEN: string; D1_DATABASE_ID: string; VECTORIZE_INDEX: string; KV_NAMESPACE_ID: string; LLM_API_KEY: string; LLM_BASE_URL: string; LLM_MODELS: string; LLM_SMALL_MODEL: string; ANON_ID_SECRET: string; }' is not assignable to parameter of type 'ProcessEnv'.",
+    "test/node/server.test.ts(63,44): error TS2345: Argument of type '{ CLOUDFLARE_ACCOUNT_ID: string; CLOUDFLARE_API_TOKEN: string; D1_DATABASE_ID: string; VECTORIZE_INDEX: string; KV_NAMESPACE_ID: string; LLM_API_KEY: string; LLM_BASE_URL: string; LLM_MODELS: string; LLM_SMALL_MODEL: string; ANON_ID_SECRET: string; ADMIN_INGEST_TOKEN: string; }' is not assignable to parameter of type 'ProcessEnv'.",
+    "test/node/server.test.ts(72,44): error TS2345: Argument of type '{ CLOUDFLARE_ACCOUNT_ID: string; CLOUDFLARE_API_TOKEN: string; D1_DATABASE_ID: string; VECTORIZE_INDEX: string; KV_NAMESPACE_ID: string; LLM_API_KEY: string; LLM_BASE_URL: string; LLM_MODELS: string; LLM_SMALL_MODEL: string; ANON_ID_SECRET: string; ADMIN_INGEST_TOKEN: string; }' is not assignable to parameter of type 'ProcessEnv'.",
+    "test/node/server.test.ts(83,44): error TS2345: Argument of type '{ CLOUDFLARE_ACCOUNT_ID: string; CLOUDFLARE_API_TOKEN: string; D1_DATABASE_ID: string; VECTORIZE_INDEX: string; KV_NAMESPACE_ID: string; LLM_API_KEY: string; LLM_BASE_URL: string; LLM_MODELS: string; LLM_SMALL_MODEL: string; ANON_ID_SECRET: string; ADMIN_INGEST_TOKEN: string; }' is not assignable to parameter of type 'ProcessEnv'.",
+    "test/node/server.test.ts(100,44): error TS2345: Argument of type '{ CLOUDFLARE_ACCOUNT_ID: string; CLOUDFLARE_API_TOKEN: string; D1_DATABASE_ID: string; VECTORIZE_INDEX: string; KV_NAMESPACE_ID: string; LLM_API_KEY: string; LLM_BASE_URL: string; LLM_MODELS: string; LLM_SMALL_MODEL: string; ANON_ID_SECRET: string; ADMIN_INGEST_TOKEN: string; }' is not assignable to parameter of type 'ProcessEnv'."
+   ],
+   "kind": "typecheck",
+   "name": "typecheck",
+   "reason": "typecheck check for the project",
+   "tests": [],
+   "at": "2026-11-05T17:15:53Z"
+  },
+  {
+   "command": [
+    "npm",
+    "run",
+    "lint"
+   ],
+   "exit_code": 1,
+   "result": "FAILED",
+   "duration_ms": 2074,
+   "diagnosis": [
+    "  58:33  error  '_drop' is assigned a value but never used  @typescript-eslint/no-unused-vars",
+    "✖ 1 problem (1 error, 0 warnings)"
+   ],
+   "kind": "lint",
+   "name": "lint",
+   "reason": "lint check for the project",
+   "tests": [],
+   "at": "2026-11-05T17:15:55Z"
+  },
+  {
+   "command": [
+    "/Users/vikhyathmgowda007/.agylite/core/bin/python",
+    "-m",
+    "compileall",
+    "-q",
+    "-x",
+    "(^|/)(\\.|node_modules|venv)",
+    "."
+   ],
+   "exit_code": 0,
+   "result": "PASSED",
+   "duration_ms": 267,
+   "diagnosis": [],
+   "kind": "build",
+   "name": "compileall",
+   "reason": "build check for the project",
+   "tests": [],
+   "at": "2026-11-05T17:15:55Z"
+  }
+ ],
+ "at": "2026-11-05T17:15:55Z"
+}

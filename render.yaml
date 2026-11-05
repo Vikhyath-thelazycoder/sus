@@ -1,0 +1,41 @@
+# Render Blueprint for the SustainIQ DEMO only (decision D-012). Production runs on Cloudflare Workers.
+# Data stays on Cloudflare (production D1, Vectorize, Workers AI, KV) via the REST API.
+services:
+  - type: web
+    name: sustainiq-demo
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start:render
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: CLOUDFLARE_ACCOUNT_ID
+        value: e9233209373a92669b3057d4159652ff
+      - key: D1_DATABASE_ID
+        value: 804411b1-e5eb-4d0e-bcc1-2dddfa035841
+      - key: VECTORIZE_INDEX
+        value: sustainiq-chunks
+      - key: KV_NAMESPACE_ID
+        value: f027aaa63c22459e8609c63f5ac11ddc
+      - key: LLM_BASE_URL
+        value: https://api.groq.com/openai/v1
+      - key: LLM_MODELS
+        value: openai/gpt-oss-120b,qwen/qwen3.8-27b,openai/gpt-oss-20b
+      - key: LLM_SMALL_MODEL
+        value: openai/gpt-oss-20b
+      - key: UPLOADS_ENABLED
+        value: "true"
+      # Secrets: entered in the Render dashboard (Environment tab), never committed.
+      - key: CLOUDFLARE_API_TOKEN
+        sync: false
+      - key: LLM_API_KEY
+        sync: false
+      - key: ANON_ID_SECRET
+        sync: false
+      - key: ANON_ID_SECRET_PREV
+        sync: false
+      - key: ADMIN_INGEST_TOKEN
+        sync: false

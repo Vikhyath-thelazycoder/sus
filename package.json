@@ -15,14 +15,18 @@
     "cf-typegen": "wrangler types -c wrangler.toml",
     "db:migrate:dev": "wrangler d1 migrations apply sustainiq-db-dev --remote -c wrangler.toml",
     "db:migrate:prod": "wrangler d1 migrations apply sustainiq-db --remote -c wrangler.toml --env production",
-    "verify": "npm test && npm run typecheck && npm run lint && npm run build"
+    "verify": "npm test && npm run typecheck && npm run lint && npm run build",
+    "ingest": "tsx scripts/ingest.ts",
+    "start:render": "tsx src/server/node.ts"
   },
   "dependencies": {
+    "@hono/node-server": "^2.1.6",
     "hono": "^4.13.16",
     "openai": "^7.51.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
-    "zod": "^4.6.7"
+    "zod": "^4.6.7",
+    "tsx": "^4.23.15"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.67.0",
@@ -36,6 +40,7 @@
     "eslint": "^10.14.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^17.14.0",
+    "pdfjs-dist": "^6.5.438",
     "prettier": "^3.9.10",
     "tailwindcss": "^4.3.4",
     "typescript": "^6.0.3",
@@ -43,5 +48,8 @@
     "vite": "^8.3.6",
     "vitest": "^5.1.0",
     "wrangler": "^4.158.0"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

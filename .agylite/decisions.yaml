@@ -10,7 +10,7 @@ decisions:
   - Render, Vercel
   impact: Free-plan limits (3 MB, 10 ms) checked in T-1.7; demo-only fallback decided then
   supersedes: null
-  status: ACTIVE
+  status: SUPERSEDED
   tags: []
 - decision_id: D-002
   date: '2026-11-05'
@@ -132,5 +132,19 @@ decisions:
   alternatives: []
   impact: ''
   supersedes: D-004
+  status: ACTIVE
+  tags: []
+- decision_id: D-012
+  date: '2026-11-05'
+  kind: architecture
+  topic: Demo hosting
+  decision: Demo runs on Render free (Singapore) with the same Hono app on Node; data stays on Cloudflare (production D1,
+    Vectorize, Workers AI, KV) via the REST API. Production stays on Cloudflare Workers Paid.
+  reason: 'Owner rule (PROJECT_PLAN: demo moves to Render if it doesn''t fit the Workers free plan). Ingestion measured 10-30
+    ms CPU per request vs the 10 ms limit; Render has no per-request CPU cap.'
+  alternatives:
+  - Workers Paid now; local-only ingestion via REST; Render Postgres (expires after 30 days)
+  impact: Free web service sleeps after 15 min idle (30-60 s cold start); one REST adapter (src/server/cloudflare-rest.ts)
+  supersedes: D-001
   status: ACTIVE
   tags: []

@@ -12,3 +12,7 @@ coverage/
 /BASWE-15-RAG-Concepts-Guide.pdf
 /Everything-to-know-about-RAG.pdf
 /RAG-Expert-Guide-BASWE.pdf
+
+# Paper PDFs: re-downloadable from data/papers/metadata.json source_url
+data/papers/*.pdf
+data/parsed/
