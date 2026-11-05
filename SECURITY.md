@@ -171,7 +171,7 @@ No single control stops prompt injection, so we layer several **[DEMO]**:
 
 - **[DEMO]** No secrets or API keys in frontend code or `VITE_*` variables. Anything in the bundle is public.
 - **[DEMO]** Don't store sensitive data in `localStorage` (only UI preferences such as theme). Chat history lives in D1 under the cookie identity.
-- **[DEMO]** File input accepts `application/pdf` and checks magic bytes `%PDF-` before parsing, with a size cap (≈25 MB) and a page cap (100). pdf.js runs with scripting **disabled** (`isEvalSupported: false`; never enable the PDF JavaScript or XFA forms options). Use a current pdf.js version (CVE-2024-4367 affected older versions that ran attacker code from fonts).
+- **[DEMO]** File input accepts `application/pdf` and checks magic bytes `%PDF-` before parsing, with a size cap (≈25 MB) and a page cap (100). pdf.js runs with scripting **disabled** (pdf.js 6 no longer evaluates code, so the old `isEvalSupported` switch is gone; keep `enableXfa: false` and never enable PDF JavaScript). Use a current pdf.js version (CVE-2024-4367 affected older versions that ran attacker code from fonts).
 - **[DEMO]** Clear error states with no stack traces. Give users a "delete my uploads and history" button (backed by a server endpoint that deletes rows and vectors by `owner_id`).
 - **[DEMO]** Show a disclaimer: *AI answers can be wrong. Check the cited sources.*
 - **[MVP]** Accessibility does not weaken security: focus-visible, keyboard navigation and labels are kept.

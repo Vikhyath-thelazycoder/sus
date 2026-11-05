@@ -18,7 +18,7 @@ Related docs: [RAG_PRODUCTION_GUIDE.md](RAG_PRODUCTION_GUIDE.md) (RAG theory and
 
 | Area | Decision |
 |---|---|
-| Hosting: demo | Cloudflare Workers **free plan**, `*.workers.dev`. If Phase 1 shows it doesn't fit (3 MB / 10 ms), choose another free option for the **demo only** (Render is the main candidate). |
+| Hosting: demo | **Render free web service** (Singapore): https://sustainiq-demo.onrender.com. The Workers free plan didn't fit (ingestion used 10–30 ms CPU vs 10 ms), so per this rule the demo moved to Render (D-012): same Hono app on Node, data stays on Cloudflare (D1, Vectorize, Workers AI, KV) via the REST API. Sleeps after 15 min idle. |
 | Hosting: production | **Cloudflare Workers Paid ($5/month + usage) only.** |
 | Caching | **Workers KV** for the answer cache. **No Redis on Cloudflare.** Free Redis only if the demo moves to Render. |
 | Counters / rate limits | **Rate Limiting binding / Durable Objects** (exact counters; KV is too slow to sync for counters). |

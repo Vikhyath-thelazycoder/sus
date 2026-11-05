@@ -20,7 +20,7 @@ Single Worker serving the SPA and `/api/*`; RAG over D1 (FTS5) + Vectorize; Groq
 
 ## Infrastructure
 
-- **Demo:** Cloudflare Workers **free** plan on `sustainiq.<account>.workers.dev`. Fallback, if T-1.7 fails, is decided by the owner (Render is the main candidate; demo only).
+- **Demo:** Render free web service `sustainiq-demo` (Singapore), https://sustainiq-demo.onrender.com, running `src/server/node.ts` (same Hono app). Data on Cloudflare via the REST API (`src/server/cloudflare-rest.ts`, token `CLOUDFLARE_API_TOKEN` with D1/Vectorize/KV edit + Workers AI read). Deployed with the Render CLI; `render.yaml` documents the settings (D-012).
 - **Production:** Cloudflare Workers **Paid** only, custom domain (P9).
 - Environments: `dev` (local `wrangler dev` + remote dev resources) and `production`, each with its own D1, Vectorize, KV and secrets.
 

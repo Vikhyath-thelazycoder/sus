@@ -1,0 +1,106 @@
+{
+ "schema_version": 1,
+ "mode": "tests-and-browser",
+ "task": "T-2.1",
+ "result": "PASSED",
+ "impact": {
+  "method": "structural",
+  "changed": [
+   "PROJECT_PLAN.md",
+   "SECURITY.md",
+   "docs/ARCHITECTURE.md",
+   "docs/IMPLEMENTATION_PLAN.md",
+   "docs/TRD.md",
+   "docs/evidence/P2.md",
+   "scripts/ingest.ts"
+  ],
+  "notice": "graph-based analysis unavailable; limited structural analysis used (graph-based analysis unavailable: graphify runtime not installed (`agylite runtime install graphify`))"
+ },
+ "checks": [
+  {
+   "command": [
+    "npm",
+    "run",
+    "test"
+   ],
+   "exit_code": 0,
+   "result": "PASSED",
+   "duration_ms": 10195,
+   "diagnosis": [],
+   "kind": "test",
+   "name": "test",
+   "reason": "full suite: no affected tests identified",
+   "tests": [],
+   "at": "2026-11-05T17:35:17Z"
+  },
+  {
+   "command": [
+    "npm",
+    "run",
+    "build"
+   ],
+   "exit_code": 0,
+   "result": "PASSED",
+   "duration_ms": 5772,
+   "diagnosis": [],
+   "kind": "typecheck",
+   "name": "build",
+   "reason": "typecheck check for the project",
+   "tests": [],
+   "at": "2026-11-05T17:35:23Z"
+  },
+  {
+   "command": [
+    "npm",
+    "run",
+    "typecheck"
+   ],
+   "exit_code": 0,
+   "result": "PASSED",
+   "duration_ms": 3087,
+   "diagnosis": [],
+   "kind": "typecheck",
+   "name": "typecheck",
+   "reason": "typecheck check for the project",
+   "tests": [],
+   "at": "2026-11-05T17:35:26Z"
+  },
+  {
+   "command": [
+    "npm",
+    "run",
+    "lint"
+   ],
+   "exit_code": 0,
+   "result": "PASSED",
+   "duration_ms": 1521,
+   "diagnosis": [],
+   "kind": "lint",
+   "name": "lint",
+   "reason": "lint check for the project",
+   "tests": [],
+   "at": "2026-11-05T17:35:28Z"
+  },
+  {
+   "command": [
+    "/Users/vikhyathmgowda007/.agylite/core/bin/python",
+    "-m",
+    "compileall",
+    "-q",
+    "-x",
+    "(^|/)(\\.|node_modules|venv)",
+    "."
+   ],
+   "exit_code": 0,
+   "result": "PASSED",
+   "duration_ms": 227,
+   "diagnosis": [],
+   "kind": "build",
+   "name": "compileall",
+   "reason": "build check for the project",
+   "tests": [],
+   "at": "2026-11-05T17:35:28Z"
+  }
+ ],
+ "at": "2026-11-05T17:35:28Z"
+}

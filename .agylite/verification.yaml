@@ -64,3 +64,31 @@ results:
   result: PASSED
   evidence: .agylite/evidence/20261105T171949228536Z.json
   at: '2026-11-05T17:19:49+00:00'
+- task: T-2.2
+  result: VERIFIED
+  evidence: docs/evidence/P2.md
+  at: '2026-11-05T17:34:55+00:00'
+- task: T-2.3
+  result: VERIFIED
+  evidence: docs/evidence/P2.md
+  at: '2026-11-05T17:34:55+00:00'
+- task: T-2.4
+  result: VERIFIED
+  evidence: docs/evidence/P2.md
+  at: '2026-11-05T17:34:55+00:00'
+- task: T-2.5
+  result: VERIFIED
+  evidence: docs/evidence/P2.md
+  at: '2026-11-05T17:34:56+00:00'
+- task: T-2.6
+  result: VERIFIED
+  evidence: docs/evidence/P2.md
+  at: '2026-11-05T17:34:56+00:00'
+- task: T-2.7
+  result: VERIFIED
+  evidence: docs/evidence/P2.md
+  at: '2026-11-05T17:34:57+00:00'
+- task: T-2.1
+  result: PASSED
+  evidence: .agylite/evidence/20261105T173528496271Z.json
+  at: '2026-11-05T17:35:28+00:00'

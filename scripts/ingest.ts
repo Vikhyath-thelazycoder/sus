@@ -27,8 +27,8 @@ interface PaperMeta {
 }
 
 const DIR = "data/papers";
-const PROD_URL = "https://sustainiq.sustainiq.workers.dev";
-const BATCH = 6; // ~1.2 ms CPU per chunk: keeps each request near the free plan's 10 ms limit
+const PROD_URL = "https://sustainiq-demo.onrender.com"; // demo host (D-012); data lives on Cloudflare
+const BATCH = 20; // chunks per request (the server accepts up to 32)
 
 const args = process.argv.slice(2);
 const flag = (name: string) => args.includes(`--${name}`);
@@ -85,7 +85,7 @@ async function main() {
       continue;
     }
 
-    const created = await api(baseUrl!, token, "POST", "/api/admin/papers", {
+    const created = await withRetry(() => api(baseUrl!, token, "POST", "/api/admin/papers", {
       paper: {
         doi: meta.doi,
         title: meta.title,
@@ -103,21 +103,30 @@ async function main() {
         pageStart: s.pageStart,
         pageEnd: s.pageEnd,
       })),
-    });
+    }));
     if (!created.ok) throw new Error(`${meta.file}: create failed ${created.status} ${await created.text()}`);
     const { paperId } = (await created.json()) as { paperId: string };
 
     for (let i = 0; i < chunks.length; i += BATCH) {
       const batch = chunks.slice(i, i + BATCH);
-      let res = await api(baseUrl!, token, "POST", `/api/admin/papers/${paperId}/chunks`, { chunks: batch });
-      if (!res.ok && res.status >= 500) {
-        await new Promise((r) => setTimeout(r, 2000));
-        res = await api(baseUrl!, token, "POST", `/api/admin/papers/${paperId}/chunks`, { chunks: batch }); // upsert: safe to retry
-      }
+      const res = await withRetry(() => api(baseUrl!, token, "POST", `/api/admin/papers/${paperId}/chunks`, { chunks: batch })); // upsert: safe to retry
       if (!res.ok) throw new Error(`${meta.file}: chunks ${i} failed ${res.status} ${await res.text()}`);
     }
   }
   console.log(`done: ${papers.length} papers, ${totalChunks} chunks${preview ? " (preview written to data/parsed/)" : ""}`);
+}
+
+/** Retry network errors and 5xx (every ingest step is an idempotent upsert), with backoff: 2 s, 4 s, 8 s. */
+async function withRetry(send: () => Promise<Response>, attempts = 4): Promise<Response> {
+  for (let i = 1; ; i++) {
+    try {
+      const res = await send();
+      if (res.status < 500 || i === attempts) return res;
+    } catch (err) {
+      if (i === attempts) throw err;
+    }
+    await new Promise((r) => setTimeout(r, 1000 * 2 ** i));
+  }
 }
 
 function api(base: string, token: string, method: string, path: string, body?: unknown) {

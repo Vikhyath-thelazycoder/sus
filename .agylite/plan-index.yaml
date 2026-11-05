@@ -1,9 +1,9 @@
 schema_version: 1
 plan_path: docs/IMPLEMENTATION_PLAN.md
-plan_sha256: 650dc52dbe54b1b94c0e4d3623c6071b92e75a9abe9728badf8823b1486bb5bf
-plan_size: 24267
-plan_mtime_ns: 1793896296188489487
-built: '2026-11-05T16:31:36+00:00'
+plan_sha256: 53d800fd932dba028e7a0df504b702b61b05c12ecd7331e649278a46b4e3c899
+plan_size: 25895
+plan_mtime_ns: 1793900097403687132
+built: '2026-11-05T17:34:57+00:00'
 current_phase: P2
 phases:
 - phase_id: P1
@@ -60,37 +60,38 @@ phases:
     end: 4397
 - phase_id: P2
   phase_name: Paper ingestion
-  status: PLANNED
+  status: IN_PROGRESS
   objective: 15–25 curated open-access papers parsed, chunked by structure, embedded and stored, with text a human has read
     and checked (RAG §4).
-  active_tasks: []
+  active_tasks:
+  - T-2.1
   tasks:
   - id: T-2.1
     title: Pick 15–25 open-access papers across biopolymers, green chemistry, packaging and biomaterials; record DOI, licence
       and source URL in `data/papers/metadata.json`
-    status: PLANNED
+    status: READY_FOR_VERIFICATION
   - id: T-2.2
     title: 'PDF text extraction with pdf.js: page numbers, two-column ordering, header/footer removal, de-hyphenation, invisible-character
       stripping, scanned-PDF detection (PP §5.2)'
-    status: PLANNED
+    status: VERIFIED
   - id: T-2.3
     title: Section detection; References section kept out of the index
-    status: PLANNED
+    status: VERIFIED
   - id: T-2.4
     title: 'Shared chunker: parent = section, child ≈ 350 tokens, 15% overlap, never crosses sections, contextual header `Paper:
       … Section: …` (RAG §4.3, §4.4)'
-    status: PLANNED
+    status: VERIFIED
   - id: T-2.5
     title: '**Table quality check:** inspect how 5 table-heavy papers parse; decide whether the optional Python parser is
       needed (PP decision)'
-    status: PLANNED
+    status: VERIFIED
   - id: T-2.6
     title: Protected admin ingest endpoint (`ADMIN_INGEST_TOKEN`, constant-time compare); embeds with `bge-m3` in batches,
       writes D1 + FTS + Vectorize with `owner_id='public'`
-    status: PLANNED
+    status: VERIFIED
   - id: T-2.7
     title: '`scripts/ingest.ts`: local run over `data/papers`, Crossref metadata by DOI, progress output, `--remote` flag'
-    status: PLANNED
+    status: VERIFIED
   dependencies:
   - P1
   affected_paths:
@@ -105,7 +106,7 @@ phases:
   evidence_pointer: null
   section:
     start: 4397
-    end: 7047
+    end: 7072
 - phase_id: P3
   phase_name: Retrieval and evaluation
   status: PLANNED
@@ -147,8 +148,8 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 7047
-    end: 9263
+    start: 7072
+    end: 9288
 - phase_id: P4
   phase_name: Answer generation
   status: PLANNED
@@ -194,8 +195,8 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 9263
-    end: 11848
+    start: 9288
+    end: 11873
 - phase_id: P5
   phase_name: UI foundation and chat
   status: PLANNED
@@ -233,8 +234,8 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 11848
-    end: 13898
+    start: 11873
+    end: 13923
 - phase_id: P6
   phase_name: Library and chat history
   status: PLANNED
@@ -266,8 +267,8 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 13898
-    end: 15154
+    start: 13923
+    end: 15179
 - phase_id: P7
   phase_name: PDF uploads
   status: PLANNED
@@ -306,8 +307,8 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 15154
-    end: 16877
+    start: 15179
+    end: 16902
 - phase_id: P8
   phase_name: Hardening and demo launch
   status: PLANNED
@@ -350,8 +351,8 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 16877
-    end: 18854
+    start: 16902
+    end: 18879
 - phase_id: P9
   phase_name: Paid MVP (after the deal)
   status: INTENTIONALLY_DEFERRED
@@ -389,5 +390,5 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 18854
-    end: 20671
+    start: 18879
+    end: 20696

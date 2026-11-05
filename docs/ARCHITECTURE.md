@@ -57,7 +57,7 @@ Groq, Workers AI, Turnstile, Crossref. Each behind one module (`llm.ts`, `platfo
 
 ## Infrastructure
 
-Everything runs on Cloudflare: Worker (global edge), D1, Vectorize, Workers AI, KV, Cron Triggers. Groq is the only external runtime dependency. The ingest and eval scripts run on the developer's Mac.
+**Production:** everything on Cloudflare: Worker (global edge), D1, Vectorize, Workers AI, KV, Cron Triggers. **Demo (D-012):** the same Hono app runs on Render (Node, Singapore) and reaches D1, Vectorize, Workers AI and KV through Cloudflare's REST API via `src/server/cloudflare-rest.ts`. Groq is the only other runtime dependency. The ingest and eval scripts run on the developer's Mac.
 
 ## Failure modes
 

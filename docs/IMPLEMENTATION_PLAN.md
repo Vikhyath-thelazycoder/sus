@@ -33,18 +33,18 @@ Objective: An empty but secure app shell deployed to workers.dev, with every Clo
 | T-1.8 | First deploy to `*.workers.dev`; secrets set (`LLM_API_KEY`, `ANON_ID_SECRET`, `ADMIN_INGEST_TOKEN`); verify the free-tier figures on our account (PP §3) | VERIFIED | T-1.7 | engineering/release | Secret scan (SEC §13 #16) | — | Live smoke: `/api/health`, headers | Live URL serves the shell; free-tier limits confirmed and noted |
 
 ## P2 · Paper ingestion
-Status: PLANNED · Depends: P1 · Paths: src/shared/chunker.ts, scripts/ingest.ts, src/worker/routes/admin.ts, data/papers/** · Flags: security, testing · Evidence: —
+Status: IN_PROGRESS · Depends: P1 · Paths: src/shared/chunker.ts, scripts/ingest.ts, src/worker/routes/admin.ts, data/papers/** · Flags: security, testing · Evidence: —
 Objective: 15–25 curated open-access papers parsed, chunked by structure, embedded and stored, with text a human has read and checked (RAG §4).
 
 | ID | Task | Status | Depends | Capabilities | Security | Design | Testing | Acceptance |
 |---|---|---|---|---|---|---|---|---|
-| T-2.1 | Pick 15–25 open-access papers across biopolymers, green chemistry, packaging and biomaterials; record DOI, licence and source URL in `data/papers/metadata.json` | PLANNED | — | research/web | Licence recorded; curated only (SEC §5.1) | — | Every paper has an open licence | List reviewed by the owner |
-| T-2.2 | PDF text extraction with pdf.js: page numbers, two-column ordering, header/footer removal, de-hyphenation, invisible-character stripping, scanned-PDF detection (PP §5.2) | PLANNED | T-1.1 | engineering/implementation | Strip invisible Unicode (SEC §6.8) | — | Fixture tests on 3 real papers | Parsed text of 3 papers **read by eye** and correct (RAG §4.1) |
-| T-2.3 | Section detection; References section kept out of the index | PLANNED | T-2.2 | engineering/ai-systems | — | — | Unit tests: headings found on fixtures | Sections match the papers' headings |
-| T-2.4 | Shared chunker: parent = section, child ≈ 350 tokens, 15% overlap, never crosses sections, contextual header `Paper: … Section: …` (RAG §4.3, §4.4) | PLANNED | T-2.3 | engineering/ai-systems | — | — | Unit tests: sizes, overlap, boundaries, page ranges | Same output in Node and in a browser Web Worker |
-| T-2.5 | **Table quality check:** inspect how 5 table-heavy papers parse; decide whether the optional Python parser is needed (PP decision) | PLANNED | T-2.2 | engineering/ai-systems | — | — | Findings in `docs/evidence/P2.md` | Owner informed: pdf.js OK, or Python parser proposed for the MVP |
-| T-2.6 | Protected admin ingest endpoint (`ADMIN_INGEST_TOKEN`, constant-time compare); embeds with `bge-m3` in batches, writes D1 + FTS + Vectorize with `owner_id='public'` | PLANNED | T-1.3, T-2.4 | engineering/backend | Token auth, server-assigned IDs (SEC §5.1) | — | API tests: bad token → 401; idempotent re-run | Re-ingesting the same paper creates no duplicates |
-| T-2.7 | `scripts/ingest.ts`: local run over `data/papers`, Crossref metadata by DOI, progress output, `--remote` flag | PLANNED | T-2.6 | engineering/implementation | Scoped token, never committed (SEC §12 #17) | — | Dry run on 2 papers | All papers ingested; chunk count reported; Vectorize within the free limit |
+| T-2.1 | Pick 15–25 open-access papers across biopolymers, green chemistry, packaging and biomaterials; record DOI, licence and source URL in `data/papers/metadata.json` | READY_FOR_VERIFICATION | — | research/web | Licence recorded; curated only (SEC §5.1) | — | Every paper has an open licence | List reviewed by the owner |
+| T-2.2 | PDF text extraction with pdf.js: page numbers, two-column ordering, header/footer removal, de-hyphenation, invisible-character stripping, scanned-PDF detection (PP §5.2) | VERIFIED | T-1.1 | engineering/implementation | Strip invisible Unicode (SEC §6.8) | — | Fixture tests on 3 real papers | Parsed text of 3 papers **read by eye** and correct (RAG §4.1) |
+| T-2.3 | Section detection; References section kept out of the index | VERIFIED | T-2.2 | engineering/ai-systems | — | — | Unit tests: headings found on fixtures | Sections match the papers' headings |
+| T-2.4 | Shared chunker: parent = section, child ≈ 350 tokens, 15% overlap, never crosses sections, contextual header `Paper: … Section: …` (RAG §4.3, §4.4) | VERIFIED | T-2.3 | engineering/ai-systems | — | — | Unit tests: sizes, overlap, boundaries, page ranges | Same output in Node and in a browser Web Worker |
+| T-2.5 | **Table quality check:** inspect how 5 table-heavy papers parse; decide whether the optional Python parser is needed (PP decision) | VERIFIED | T-2.2 | engineering/ai-systems | — | — | Findings in `docs/evidence/P2.md` | Owner informed: pdf.js OK, or Python parser proposed for the MVP |
+| T-2.6 | Protected admin ingest endpoint (`ADMIN_INGEST_TOKEN`, constant-time compare); embeds with `bge-m3` in batches, writes D1 + FTS + Vectorize with `owner_id='public'` | VERIFIED | T-1.3, T-2.4 | engineering/backend | Token auth, server-assigned IDs (SEC §5.1) | — | API tests: bad token → 401; idempotent re-run | Re-ingesting the same paper creates no duplicates |
+| T-2.7 | `scripts/ingest.ts`: local run over `data/papers`, Crossref metadata by DOI, progress output, `--remote` flag | VERIFIED | T-2.6 | engineering/implementation | Scoped token, never committed (SEC §12 #17) | — | Dry run on 2 papers | All papers ingested; chunk count reported; Vectorize within the free limit |
 
 ## P3 · Retrieval and evaluation
 Status: PLANNED · Depends: P2 · Paths: src/worker/rag/**, scripts/eval.ts, data/golden.json · Flags: security, testing · Evidence: —
@@ -169,6 +169,7 @@ P1 ──► P2 ──► P3 ──► P4 ──┐
 | 2026-11-05 | Plan created |
 | 2026-11-05 | Phases P1–P9 written from PROJECT_PLAN.md, SECURITY.md and RAG_PRODUCTION_GUIDE.md |
 | 2026-11-05 | T-1.7 result: LangGraph over the free CPU limit; owner chose option B (plain functions in the demo, LangGraph in P9) |
+| 2026-11-05 | P2: ingestion exceeded the Workers free CPU limit; per the owner's rule the demo moved to Render (D-012). Demo deploys (T-8.6) go to Render via the Render CLI; production stays on Cloudflare |
 | 2026-11-05 | T-1.7: PLANNED → BLOCKED |
 | 2026-11-05 | P1: PLANNED → IN_PROGRESS (roll-up from T-1.7) |
 | 2026-11-05 | P1: IN_PROGRESS → PARTIALLY_COMPLETE |
@@ -201,3 +202,24 @@ P1 ──► P2 ──► P3 ──► P4 ──┐
 | 2026-11-05 | P1: VERIFIED → IN_PROGRESS |
 | 2026-11-05 | P1: IN_PROGRESS → READY_FOR_VERIFICATION |
 | 2026-11-05 | P1: READY_FOR_VERIFICATION → VERIFIED (evidence: docs/evidence/P1.md) |
+| 2026-11-05 | T-2.2: PLANNED → IN_PROGRESS |
+| 2026-11-05 | P2: PLANNED → IN_PROGRESS (roll-up from T-2.2) |
+| 2026-11-05 | T-2.2: IN_PROGRESS → READY_FOR_VERIFICATION |
+| 2026-11-05 | T-2.2: READY_FOR_VERIFICATION → VERIFIED (evidence: docs/evidence/P2.md) |
+| 2026-11-05 | T-2.3: PLANNED → IN_PROGRESS |
+| 2026-11-05 | T-2.3: IN_PROGRESS → READY_FOR_VERIFICATION |
+| 2026-11-05 | T-2.3: READY_FOR_VERIFICATION → VERIFIED (evidence: docs/evidence/P2.md) |
+| 2026-11-05 | T-2.4: PLANNED → IN_PROGRESS |
+| 2026-11-05 | T-2.4: IN_PROGRESS → READY_FOR_VERIFICATION |
+| 2026-11-05 | T-2.4: READY_FOR_VERIFICATION → VERIFIED (evidence: docs/evidence/P2.md) |
+| 2026-11-05 | T-2.5: PLANNED → IN_PROGRESS |
+| 2026-11-05 | T-2.5: IN_PROGRESS → READY_FOR_VERIFICATION |
+| 2026-11-05 | T-2.5: READY_FOR_VERIFICATION → VERIFIED (evidence: docs/evidence/P2.md) |
+| 2026-11-05 | T-2.6: PLANNED → IN_PROGRESS |
+| 2026-11-05 | T-2.6: IN_PROGRESS → READY_FOR_VERIFICATION |
+| 2026-11-05 | T-2.6: READY_FOR_VERIFICATION → VERIFIED (evidence: docs/evidence/P2.md) |
+| 2026-11-05 | T-2.7: PLANNED → IN_PROGRESS |
+| 2026-11-05 | T-2.7: IN_PROGRESS → READY_FOR_VERIFICATION |
+| 2026-11-05 | T-2.7: READY_FOR_VERIFICATION → VERIFIED (evidence: docs/evidence/P2.md) |
+| 2026-11-05 | T-2.1: PLANNED → IN_PROGRESS |
+| 2026-11-05 | T-2.1: IN_PROGRESS → READY_FOR_VERIFICATION |
