@@ -20,6 +20,19 @@ export async function embed(env: Env, texts: string[]): Promise<number[][]> {
   return data;
 }
 
+export const RERANK_MODEL = "@cf/baai/bge-reranker-base";
+
+/** Cross-encoder relevance score for each text, in input order (RAG §5.6). */
+export async function rerankScores(env: Env, query: string, texts: string[]): Promise<number[]> {
+  const out = (await env.AI.run(RERANK_MODEL, { query, contexts: texts.map((text) => ({ text })) } as never)) as {
+    response?: { id?: number; score?: number }[];
+  };
+  const scores = new Array<number>(texts.length).fill(Number.NEGATIVE_INFINITY);
+  for (const r of out.response ?? []) if (r.id !== undefined && r.id < texts.length) scores[r.id] = r.score ?? 0;
+  if (scores.some((s) => s === Number.NEGATIVE_INFINITY)) throw new Error("Unexpected rerank response");
+  return scores;
+}
+
 export async function upsertVectors(env: Env, vectors: { id: string; values: number[]; metadata: VectorMeta }[]) {
   if (vectors.length) await env.VECTORIZE.upsert(vectors as unknown as VectorizeVector[]);
 }

@@ -8,6 +8,7 @@ import { requireAdmin } from "./security/admin";
 import { errorHandler } from "./security/errors";
 import { llmConfigFromEnv } from "./llm";
 import { adminPapers } from "./routes/admin-papers";
+import { adminSearch } from "./routes/admin-search";
 
 export const app = new Hono<AppEnv>();
 
@@ -57,6 +58,7 @@ admin.get("/llm-check", async (c) => {
   return c.json({ results, available });
 });
 admin.route("/", adminPapers);
+admin.route("/", adminSearch);
 app.route("/api/admin", admin);
 
 app.notFound((c) => c.json({ error: "Not found" }, 404));

@@ -21,6 +21,7 @@
     "src/worker",
     "src/shared",
     "src/server",
-    "test"
+    "test",
+    "scripts/eval.ts"
   ]
 }

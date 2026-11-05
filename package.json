@@ -17,7 +17,8 @@
     "db:migrate:prod": "wrangler d1 migrations apply sustainiq-db --remote -c wrangler.toml --env production",
     "verify": "npm test && npm run typecheck && npm run lint && npm run build",
     "ingest": "tsx scripts/ingest.ts",
-    "start:render": "tsx src/server/node.ts"
+    "start:render": "tsx src/server/node.ts",
+    "eval": "tsx scripts/eval.ts"
   },
   "dependencies": {
     "@hono/node-server": "^2.1.6",
@@ -25,8 +26,8 @@
     "openai": "^7.51.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
-    "zod": "^4.6.7",
-    "tsx": "^4.23.15"
+    "tsx": "^4.23.15",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.67.0",
