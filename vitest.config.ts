@@ -31,7 +31,7 @@ export default defineConfig(async () => {
         },
         {
           // React components in a simulated DOM (T-5.3–T-5.6).
-          test: { name: "web", include: ["test/web/**/*.test.tsx"], environment: "happy-dom" },
+          test: { name: "web", include: ["test/web/**/*.test.{ts,tsx}"], environment: "happy-dom" },
         },
         {
           // pdf.js on real PDFs (Node build), as the ingest script runs it.

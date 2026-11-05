@@ -162,3 +162,28 @@ decisions:
   supersedes: D-011
   status: ACTIVE
   tags: []
+- decision_id: D-014
+  date: '2026-11-06'
+  kind: design
+  topic: design-check-overrides
+  decision: 'design check uses the DESIGN.md limits {''grey_families'': 5}'
+  reason: The approved DESIGN.md needs more than config/design.yaml allows (MP4 §2.3)
+  alternatives: []
+  impact: ''
+  supersedes: null
+  status: ACTIVE
+  tags: []
+- decision_id: D-015
+  date: '2026-11-06'
+  kind: design
+  topic: Design-token check override
+  decision: 'DESIGN.md moves to the repo root and sets design_check_overrides.grey_families: 5 so agylite design check accepts
+    the approved palette'
+  reason: The heuristic counts the desaturated sage accent and the green-tinted dark neutrals as 5 grey families; no ad-hoc
+    colours exist (grep finds none outside index.css). Owner accepted the recommended option on 2026-11-06
+  alternatives:
+  - Change the approved palette to one grey family
+  impact: ''
+  supersedes: null
+  status: ACTIVE
+  tags: []

@@ -96,3 +96,63 @@ export async function sendFeedback(messageId: string, value: 1 | -1 | 0) {
 
 /** DOI links are built here from the stored DOI, never taken from model output (SECURITY §7.3). */
 export const doiUrl = (doi: string) => `https://doi.org/${encodeURIComponent(doi).replace(/%2F/g, "/")}`;
+
+// ---------------------------------------------------------------- history and library (P6)
+
+export interface ChatSummary {
+  id: string;
+  title: string;
+  createdAt: number;
+  updatedAt: number;
+}
+export interface StoredMessage {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  status: Done["status"];
+  feedback: 1 | -1 | 0;
+  createdAt: number;
+  sources?: Source[];
+}
+export interface Paper {
+  id: string;
+  title: string;
+  authors: string[];
+  year: number | null;
+  journal: string | null;
+  doi: string | null;
+  license: string | null;
+  sourceUrl: string | null;
+  topic: string | null;
+  pages: number | null;
+  upload: boolean;
+  verified: boolean;
+}
+export interface PaperDetail {
+  paper: Paper;
+  summary: { name: string; text: string } | null;
+  sections: { name: string; pageStart: number; pageEnd: number }[];
+}
+
+/** JSON request; state-changing calls need the JSON content type for the server's CSRF guard. */
+async function json<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const res = await fetch(path, {
+    credentials: "same-origin",
+    ...init,
+    headers: { "Content-Type": "application/json", ...init.headers },
+  });
+  if (!res.ok) throw new ChatHttpError(res.status);
+  return (res.status === 204 ? undefined : await res.json()) as T;
+}
+
+export const listChats = () => json<{ chats: ChatSummary[] }>("/api/chats").then((r) => r.chats);
+export const getChat = (id: string) =>
+  json<{ chat: { id: string; title: string }; messages: StoredMessage[] }>(
+    `/api/chats/${encodeURIComponent(id)}`,
+  );
+export const renameChat = (id: string, title: string) =>
+  json<void>(`/api/chats/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify({ title }) });
+export const deleteChat = (id: string) =>
+  json<void>(`/api/chats/${encodeURIComponent(id)}`, { method: "DELETE" });
+export const listPapers = () => json<{ papers: Paper[] }>("/api/papers").then((r) => r.papers);
+export const getPaper = (id: string) => json<PaperDetail>(`/api/papers/${encodeURIComponent(id)}`);

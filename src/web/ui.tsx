@@ -15,6 +15,9 @@ const paths = {
   moon: "M20 14.5A8 8 0 019.5 4a8 8 0 1010.5 10.5z",
   chat: "M4 5h16v11H8l-4 4z",
   external: "M14 4h6v6M20 4l-9 9M18 14v5H5V6h5",
+  library: "M5 4h4v16H5zM10 4h4v16h-4zM15.5 4.5l3.8 1 -3.6 14.5 -3.9-1z",
+  edit: "M4 20h4L19 9l-4-4L4 16zM14 6l4 4",
+  trash: "M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13",
 } as const;
 
 export function Icon({ name, className = "size-5" }: { name: keyof typeof paths; className?: string }) {

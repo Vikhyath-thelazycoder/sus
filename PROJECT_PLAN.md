@@ -192,7 +192,7 @@ Each step is a plain TypeScript function with its own tests; a small runner call
 
 ## 8. UI and UX (P5–P7)
 
-**Feel:** calm, minimal, focused (in the spirit of Perplexity, Claude and Elicit, without copying them). Full spec: [docs/DESIGN.md](docs/DESIGN.md).
+**Feel:** calm, minimal, focused (in the spirit of Perplexity, Claude and Elicit, without copying them). Full spec: [DESIGN.md](DESIGN.md).
 
 | Token | Light | Dark |
 |---|---|---|

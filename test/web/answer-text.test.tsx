@@ -34,7 +34,12 @@ describe("safe answer rendering (SECURITY §7.3, §13 #11, #17)", () => {
   it("turns [n] into citation buttons, including groups and ranges", () => {
     const { getAllByRole, onCite } = renderText("PLA composts [1][2] and degrades [3-4].");
     const buttons = getAllByRole("button");
-    expect(buttons.map((b) => b.getAttribute("aria-label"))).toEqual(["Source 1", "Source 2", "Source 3", "Source 4"]);
+    expect(buttons.map((b) => b.getAttribute("aria-label"))).toEqual([
+      "Source 1",
+      "Source 2",
+      "Source 3",
+      "Source 4",
+    ]);
     fireEvent.click(buttons[2]!);
     expect(onCite).toHaveBeenCalledWith(3, buttons[2]);
   });
@@ -46,7 +51,9 @@ describe("safe answer rendering (SECURITY §7.3, §13 #11, #17)", () => {
   });
 
   it("renders paragraphs, lists, bold, italic and code", () => {
-    const { container } = renderText("## Summary\n\nIntro **bold** and *it* `x`.\n\n- one [1]\n- two\n\n1. first\n2. second");
+    const { container } = renderText(
+      "## Summary\n\nIntro **bold** and *it* `x`.\n\n- one [1]\n- two\n\n1. first\n2. second",
+    );
     expect(container.querySelectorAll("p")).toHaveLength(2);
     expect(container.querySelector("p")!.className).toContain("font-semibold");
     expect(container.querySelector("strong")!.textContent).toBe("bold");
@@ -63,7 +70,7 @@ describe("SSE parser", () => {
     const feed = sseParser((e) => events.push(e));
     feed('event: status\ndata: {"type":"status","step":"sear');
     feed('ching"}\n\nevent: token\ndata: {"type":"token","text":"Hi"}\n');
-    feed("\ndata: not json\n\nevent: token\r\ndata: {\"type\":\"token\",\"text\":\"!\"}\r\n\r\n");
+    feed('\ndata: not json\n\nevent: token\r\ndata: {"type":"token","text":"!"}\r\n\r\n');
     expect(events).toEqual([
       { type: "status", step: "searching" },
       { type: "token", text: "Hi" },

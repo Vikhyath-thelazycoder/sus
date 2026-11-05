@@ -101,7 +101,7 @@ describe("/api/chat (T-4.7)", () => {
     const mine = await ask(q, first.cookie);
     expect(mine.done.cached).toBe(false);
     expect(calls.generate).toBe(2);
-    expect(await cacheKey(q.question)).toMatch(/^ans:v1:public:[0-9a-f]{64}$/);
+    expect(await cacheKey(q.question)).toMatch(/^ans:v2:public:[0-9a-f]{64}$/);
   });
 
   it("does not cache declined answers", async () => {

@@ -6,14 +6,14 @@ NOT_STARTED · PLANNED · IN_PROGRESS · PARTIALLY_COMPLETE · BLOCKED · READY_
 INTENTIONALLY_DEFERRED. `agylite plan index` keeps a compact index in `.agylite/plan-index.yaml`.
 
 **Reference docs:**
-- [PRD](PRD.md) · [TRD](TRD.md) · [Architecture](ARCHITECTURE.md) · [System workflow](SYSTEM_WORKFLOW.md) · [Design](DESIGN.md) · [Features](FEATURES.md) · [Security baseline](SECURITY.md) · [Decisions](PROJECT_DECISIONS.md)
+- [PRD](PRD.md) · [TRD](TRD.md) · [Architecture](ARCHITECTURE.md) · [System workflow](SYSTEM_WORKFLOW.md) · [Design](../DESIGN.md) · [Features](FEATURES.md) · [Security baseline](SECURITY.md) · [Decisions](PROJECT_DECISIONS.md)
 - Full security rules and tests: [../SECURITY.md](../SECURITY.md) (cited as **SEC §n**)
 - RAG rules: [../RAG_PRODUCTION_GUIDE.md](../RAG_PRODUCTION_GUIDE.md) (cited as **RAG §n**)
 - Product overview and decisions: [../PROJECT_PLAN.md](../PROJECT_PLAN.md) (cited as **PP §n**)
 
 **Scope:** P1–P8 build the **demo** (Render free web service at https://sustainiq-demo.onrender.com with data on Cloudflare, Groq, no login; D-012). P9 is the **paid MVP** on Cloudflare Workers Paid, deferred until the client accepts the deal.
 
-**Progress (2026-11-06):** P1 ✅ verified · P2 ✅ verified (20 papers, 881 chunks, 881 vectors) · P3 ✅ verified (hybrid + fused rerank: recall@6 1.00, MRR 0.944, ~0.85 s server-side) · P4 ✅ verified (35/35 faithful, 5/5 declines, 6/6 injection; first token ~3 s on Render) · P5 ✅ built and live (chat UI, citation panel/sheet, AA contrast; T-5.1 awaits the owner's call on the design-token heuristic) · **next: P6**. Changes from the first draft: no LangGraph in the demo (D-010), Groq models updated (D-011), demo hosted on Render (D-012), gpt-oss-20b removed from the answer chain (D-013).
+**Progress (2026-11-06):** P1 ✅ verified · P2 ✅ verified (20 papers, 881 chunks, 881 vectors) · P3 ✅ verified (hybrid + fused rerank: recall@6 1.00, MRR 0.944, ~0.85 s server-side) · P4 ✅ verified (35/35 faithful, 5/5 declines, 6/6 injection; first token ~3 s on Render) · P5 ✅ verified (chat UI, citation panel/sheet, AA contrast; design check override D-015) · **next: P6**. Changes from the first draft: no LangGraph in the demo (D-010), Groq models updated (D-011), demo hosted on Render (D-012), gpt-oss-20b removed from the answer chain (D-013).
 
 **Definition of done for every task:** `agylite verify` passes (tests, types, lint, build), the acceptance column is met, and the SEC items it touches have their tests.
 
@@ -79,12 +79,12 @@ Objective: Streaming, grounded answers with validated citations and an honest "I
 | T-4.8 | Answer evaluation: faithfulness + "I don't know" accuracy on the golden set, with an LLM judge checked by hand (RAG §9.2–9.3) | VERIFIED | T-4.7 | engineering/ai-systems, testing/regression | — | — | `npm run eval` extended | Scores in `docs/evidence/P4.md`; ≥ 90% correct declines on unanswerable questions (target) |
 
 ## P5 · UI foundation and chat
-Status: READY_FOR_VERIFICATION · Depends: P1 · Paths: src/web/**, migrations/0002_feedback.sql · Flags: design, testing · Evidence: docs/evidence/P5.md
+Status: VERIFIED · Depends: P1 · Paths: src/web/**, migrations/0002_feedback.sql · Flags: design, testing · Evidence: docs/evidence/P5.md
 Objective: The calm, minimal, desktop-first and mobile-ready chat experience with the citation side panel and bottom sheet (DESIGN.md). Can start in parallel with P2–P4 against a mocked API.
 
 | ID | Task | Status | Depends | Capabilities | Security | Design | Testing | Acceptance |
 |---|---|---|---|---|---|---|---|---|
-| T-5.1 | Design tokens (colour, type, spacing, radius) as CSS variables + Tailwind config; light/dark, with dark following the system setting and a toggle | READY_FOR_VERIFICATION | T-1.1 | design/design-system | — | DESIGN.md tokens | `agylite design` token check | No ad-hoc colour or spacing values |
+| T-5.1 | Design tokens (colour, type, spacing, radius) as CSS variables + Tailwind config; light/dark, with dark following the system setting and a toggle | VERIFIED | T-1.1 | design/design-system | — | DESIGN.md tokens | `agylite design` token check | No ad-hoc colour or spacing values |
 | T-5.2 | App shell: history sidebar (desktop) / drawer (mobile), header, main column ≤ 720 px | VERIFIED | T-5.1 | design/frontend | — | DESIGN.md layout | Responsive checks at 375 / 768 / 1280 px | No horizontal scroll on phones |
 | T-5.3 | Chat view: input, suggested questions, streaming answer, inline `[n]`, sources row, copy, thumbs up/down | VERIFIED | T-5.2 | design/frontend | Safe markdown: no raw HTML, no images, link allowlist (SEC §7.3, §12 #1) | DESIGN.md interaction | SEC §13 #11, #17; component tests | Streams smoothly; XSS payloads render as text |
 | T-5.4 | Citation panel (desktop) / bottom sheet (mobile): stored passage, highlight, title, authors, year, page, DOI, Curated / Your upload badge | VERIFIED | T-5.3 | design/frontend | Passage from D1, DOI link built by us (SEC §7.2–7.3) | DESIGN.md | Component + keyboard tests | Opens from `[n]` with mouse, touch and keyboard |

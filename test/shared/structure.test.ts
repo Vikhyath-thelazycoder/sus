@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parsePaper, toParagraphs } from "../../src/shared/pdf/structure";
+import { frontMatterProse, parsePaper, toParagraphs, withoutContactDetails } from "../../src/shared/pdf/structure";
 import { cleanText } from "../../src/shared/text";
 import type { Line, RawItem, RawPage } from "../../src/shared/pdf/types";
 
@@ -22,7 +22,7 @@ const body = (s: string) => [s, 10] as [string, number];
 const filler = (n: number) => Array.from({ length: n }, (_, i) => body(`This is body sentence number ${i} about polylactic acid films and their properties.`));
 
 describe("parsePaper", () => {
-  it("finds standard and numbered headings, keeps the title in front matter", () => {
+  it("finds standard and numbered headings; a title-and-authors front matter is not indexed", () => {
     const pages = paper([
       ["A Study of Polylactic Acid Degradation in Compost", 18],
       body("Jane Doe, John Roe"),
@@ -36,8 +36,8 @@ describe("parsePaper", () => {
       ...filler(4),
     ]);
     const parsed = parsePaper(pages);
+    // The title and author line hold no prose, so front matter is dropped (the title is still detected below).
     expect(parsed.sections.map((s) => s.name)).toEqual([
-      "Front matter",
       "Abstract",
       "Introduction",
       "Materials and sample preparation",
@@ -125,5 +125,36 @@ describe("cleanText (SECURITY §6.8)", () => {
   it("turns ligatures into letters and strips invisible characters", () => {
     expect(cleanText("ﬁlm ﬂow")).toBe("film flow");
     expect(cleanText("ig\u200Bnore\u202E rules\u{E0041}\u00AD")).toBe("ignore rules");
+  });
+});
+
+describe("front matter and contact details (P5 finding: boilerplate in retrieval)", () => {
+  const para = (text: string) => ({ text, pageStart: 1, pageEnd: 1 });
+  const ABSTRACT =
+    "Stabilization of reactive intermediates is an enabling concept in biomass fractionation and depolymerization. Deep eutectic solvents are green reaction media for biomass processing.";
+
+  it("keeps abstract prose and drops editor lists, emails, licences, dates and affiliations", () => {
+    const out = frontMatterProse([
+      para("Edited by: Miguel Cerqueira, INL, Portugal Reviewed by: Someone, University of X. *Correspondence: Henriette Azeredo henriette.azeredo@embrapa.br"),
+      para("1 Department of Cell Biology, School of Basic Medical Sciences, Southern Medical University, Guangzhou, China."),
+      para("This is an open access article distributed under the terms of the Creative Commons Attribution License."),
+      para("Received: 14 December 2017 / Accepted: 26 June 2018 / Published online: 10 August 2018"),
+      para(ABSTRACT),
+    ]);
+    expect(out.map((p) => p.text)).toEqual([ABSTRACT]);
+  });
+
+  it("removes only the boilerplate sentence when the PDF glues it to prose", () => {
+    const [p] = frontMatterProse([para(`Received: 2 October 2019. ${ABSTRACT}`)]);
+    expect(p!.text).toBe(ABSTRACT);
+  });
+
+  it("strips contact footnotes from any section but keeps chemistry notation such as CNF@MOF", () => {
+    const out = withoutContactDetails([
+      para("*Correspondence: lizj@mail.buct.edu.cn"),
+      para("CNF@Al-MIL-53 nanofibers were prepared as previously reported. They were freeze-dried."),
+      para("The aerogel was tested at 25 °C. Contact: e-mail: juho.sirvio@oulu.fi for samples."),
+    ]);
+    expect(out.map((p) => p.text)).toEqual(["CNF@Al-MIL-53 nanofibers were prepared as previously reported. They were freeze-dried.", "The aerogel was tested at 25 °C."]);
   });
 });

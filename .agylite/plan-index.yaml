@@ -1,10 +1,10 @@
 schema_version: 1
 plan_path: docs/IMPLEMENTATION_PLAN.md
-plan_sha256: 57068f21eff41196f6f897d78d3ddf1954d45320688e4a800ffd50d0c129c6eb
-plan_size: 28257
-plan_mtime_ns: 1793908618354051103
-built: '2026-11-05T19:56:58+00:00'
-current_phase: P5
+plan_sha256: 5582b254ef4126cdbd28b601857d11fa580b5f9bbb27fa6fbe8dd32b9fec67a2
+plan_size: 28194
+plan_mtime_ns: 1793910207589343382
+built: '2026-11-05T20:24:46+00:00'
+current_phase: P6
 phases:
 - phase_id: P1
   phase_name: Foundations and platform check
@@ -56,8 +56,8 @@ phases:
   last_updated: null
   evidence_pointer: docs/evidence/P1.md
   section:
-    start: 1978
-    end: 5080
+    start: 1943
+    end: 5045
 - phase_id: P2
   phase_name: Paper ingestion
   status: VERIFIED
@@ -112,8 +112,8 @@ phases:
   last_updated: null
   evidence_pointer: docs/evidence/P2.md
   section:
-    start: 5080
-    end: 8103
+    start: 5045
+    end: 8068
 - phase_id: P3
   phase_name: Retrieval and evaluation
   status: VERIFIED
@@ -156,8 +156,8 @@ phases:
   last_updated: null
   evidence_pointer: docs/evidence/P3.md
   section:
-    start: 8103
-    end: 10413
+    start: 8068
+    end: 10378
 - phase_id: P4
   phase_name: Answer generation
   status: VERIFIED
@@ -204,20 +204,19 @@ phases:
   last_updated: null
   evidence_pointer: docs/evidence/P4.md
   section:
-    start: 10413
-    end: 13051
+    start: 10378
+    end: 13016
 - phase_id: P5
   phase_name: UI foundation and chat
-  status: READY_FOR_VERIFICATION
+  status: VERIFIED
   objective: The calm, minimal, desktop-first and mobile-ready chat experience with the citation side panel and bottom sheet
     (DESIGN.md). Can start in parallel with P2–P4 against a mocked API.
-  active_tasks:
-  - T-5.1
+  active_tasks: []
   tasks:
   - id: T-5.1
     title: Design tokens (colour, type, spacing, radius) as CSS variables + Tailwind config; light/dark, with dark following
       the system setting and a toggle
-    status: READY_FOR_VERIFICATION
+    status: VERIFIED
   - id: T-5.2
     title: 'App shell: history sidebar (desktop) / drawer (mobile), header, main column ≤ 720 px'
     status: VERIFIED
@@ -245,8 +244,8 @@ phases:
   last_updated: null
   evidence_pointer: docs/evidence/P5.md
   section:
-    start: 13051
-    end: 15184
+    start: 13016
+    end: 15121
 - phase_id: P6
   phase_name: Library and chat history
   status: PLANNED
@@ -278,8 +277,8 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 15184
-    end: 16440
+    start: 15121
+    end: 16377
 - phase_id: P7
   phase_name: PDF uploads
   status: PLANNED
@@ -319,8 +318,8 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 16440
-    end: 18263
+    start: 16377
+    end: 18200
 - phase_id: P8
   phase_name: Hardening and demo launch
   status: PLANNED
@@ -364,8 +363,8 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 18263
-    end: 20399
+    start: 18200
+    end: 20336
 - phase_id: P9
   phase_name: Paid MVP (after the deal)
   status: INTENTIONALLY_DEFERRED
@@ -403,5 +402,5 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 20399
-    end: 22216
+    start: 20336
+    end: 22153

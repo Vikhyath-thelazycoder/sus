@@ -6,6 +6,8 @@ import type { AppEnv } from "../types";
 import { parseJson } from "../security/errors";
 import { cleanText } from "../../shared/text";
 import { answer, defaultSteps, type AnswerEvent, type AnswerResult, type Steps, type Turn } from "../rag/answer";
+import type { Passage } from "../rag/search";
+import { parseAuthors } from "./papers";
 
 /**
  * POST /api/chat → Server-Sent Events (T-4.7). The client sends only the chat ID and the new question; history is
@@ -17,7 +19,7 @@ const schema = z.strictObject({
 });
 
 const CACHE_TTL = 24 * 60 * 60;
-const CACHE_VERSION = "v1"; // bump when the prompt or retrieval changes
+const CACHE_VERSION = "v2"; // bump when the prompt, retrieval or the indexed papers change (v2: front matter cleaned)
 
 /** Only questions with no history from owners with no uploads are cached, so an entry is public-only (SECURITY §8). */
 export async function cacheKey(question: string): Promise<string> {
@@ -26,30 +28,20 @@ export async function cacheKey(question: string): Promise<string> {
   return `ans:${CACHE_VERSION}:public:${[...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("")}`;
 }
 
-function parseAuthors(json: string | null): string[] {
-  try {
-    const v: unknown = JSON.parse(json ?? "[]");
-    return Array.isArray(v) ? v.filter((a): a is string => typeof a === "string").slice(0, 20) : [];
-  } catch {
-    return [];
-  }
-}
-
 /** What the citation panel shows: stored passage text and metadata from D1, never model text (SECURITY §7.2). */
-const sourcesOut = (r: AnswerResult) =>
-  r.sources.map((s) => ({
-    n: s.n,
-    paperId: s.paperId,
-    title: s.title,
-    year: s.year,
-    doi: s.doi,
-    authors: parseAuthors(s.authors),
-    section: s.section,
-    pageStart: s.pageStart,
-    pageEnd: s.pageEnd,
-    text: s.text.slice(s.text.indexOf("\n") + 1),
-    upload: s.ownerId !== "public",
-  }));
+export const toClientSource = (s: Passage) => ({
+  n: s.n,
+  paperId: s.paperId,
+  title: s.title,
+  year: s.year,
+  doi: s.doi,
+  authors: parseAuthors(s.authors),
+  section: s.section,
+  pageStart: s.pageStart,
+  pageEnd: s.pageEnd,
+  text: s.text.slice(s.text.indexOf("\n") + 1),
+  upload: s.ownerId !== "public",
+});
 
 export function chatRoutes(steps: Steps = defaultSteps) {
   const chat = new Hono<AppEnv>();
@@ -119,7 +111,7 @@ export function chatRoutes(steps: Steps = defaultSteps) {
           notFound: result.notFound,
           cached: Boolean(result.cached),
           content: result.content,
-          sources: sourcesOut(result),
+          sources: result.sources.map(toClientSource),
         });
       } catch (err) {
         console.error(JSON.stringify({ level: "error", event: "chat_failed", error: String(err) }));

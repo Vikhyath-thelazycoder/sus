@@ -2,7 +2,7 @@
 @import "@fontsource-variable/inter";
 @import "@fontsource-variable/source-serif-4";
 
-/* Design tokens from docs/DESIGN.md. Dark follows the system unless the toggle sets data-theme on <html>. */
+/* Design tokens from DESIGN.md. Dark follows the system unless the toggle sets data-theme on <html>. */
 :root {
   --bg: #faf8f3;
   --surface: #ffffff;

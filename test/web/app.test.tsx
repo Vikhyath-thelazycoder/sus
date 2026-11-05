@@ -40,14 +40,29 @@ const done = (over: Partial<Done> = {}) => ({
   ...over,
 });
 
-/** Mock /api/chat with a list of SSE events (or an HTTP status), and record feedback calls. */
-function mockApi(reply: object[] | number) {
-  const calls: { url: string; body: unknown }[] = [];
+/** Mock /api/chat with a list of SSE events (or an HTTP status), and record every call. History starts empty. */
+function mockApi(reply: object[] | number, extra: Record<string, unknown> = {}) {
+  const calls: { url: string; method: string; body: unknown }[] = [];
+  const created: object[] = []; // chats the "server" created, as /api/chats would list them
   vi.stubGlobal(
     "fetch",
     vi.fn(async (url: string, init?: RequestInit) => {
-      calls.push({ url, body: init?.body ? JSON.parse(String(init.body)) : null });
-      if (url.includes("/feedback")) return new Response(null, { status: 204 });
+      const method = init?.method ?? "GET";
+      calls.push({ url, method, body: init?.body ? JSON.parse(String(init.body)) : null });
+      if (url.includes("/feedback") || method === "PATCH" || method === "DELETE")
+        return new Response(null, { status: 204 });
+      if (url in extra) return Response.json(extra[url]);
+      if (url === "/api/chats") return Response.json({ chats: created });
+      if (url === "/api/chat") {
+        const body = JSON.parse(String(init!.body)) as { question: string; chatId?: string };
+        if (!body.chatId)
+          created.push({
+            id: "11111111-1111-4111-8111-111111111111",
+            title: body.question.slice(0, 80),
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+          });
+      }
       if (typeof reply === "number") return new Response("{}", { status: reply });
       return new Response(sse(reply), { headers: { "Content-Type": "text/event-stream" } });
     }),
@@ -69,6 +84,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  window.history.replaceState(null, "", "/");
 });
 
 describe("chat view (T-5.3, T-5.5)", () => {
@@ -79,17 +95,30 @@ describe("chat view (T-5.3, T-5.5)", () => {
     const list = screen.getByRole("list", { name: "Suggested questions" });
     await user.click(within(list).getAllByRole("button")[0]!);
     await screen.findByText(/Nanoplastics peak/);
-    expect(calls[0]!.body).toMatchObject({ question: expect.stringContaining("gut enzymes") });
+    expect(calls.find((c) => c.url === "/api/chat")!.body).toMatchObject({
+      question: expect.stringContaining("gut enzymes"),
+    });
   });
 
   it("streams tokens, then shows citations, the sources row, actions and the disclaimer", async () => {
-    mockApi([{ type: "status", step: "searching" }, { type: "status", step: "writing" }, { type: "token", text: "Nanoplastics peak " }, { type: "token", text: "after about two hours [1]." }, done()]);
+    mockApi([
+      { type: "status", step: "searching" },
+      { type: "status", step: "writing" },
+      { type: "token", text: "Nanoplastics peak " },
+      { type: "token", text: "after about two hours [1]." },
+      done(),
+    ]);
     await askQuestion();
     expect(await screen.findByRole("button", { name: "Source 1" })).toBeTruthy();
-    expect(screen.getByRole("list", { name: "Sources" }).textContent).toContain("Oligomer nanoparticle release from PLA");
+    expect(screen.getByRole("list", { name: "Sources" }).textContent).toContain(
+      "Oligomer nanoparticle release from PLA",
+    );
     expect(screen.getByRole("button", { name: "Copy answer" })).toBeTruthy();
     expect(screen.getByText("AI answers can be wrong. Check the cited sources.")).toBeTruthy();
-    expect(screen.getByRole("navigation", { name: "Chat history" }).textContent).toContain("How fast do gut enzymes break PLA?");
+    expect(screen.getByRole("navigation", { name: "Chat history" }).textContent).toContain(
+      "How fast do gut enzymes break PLA?",
+    );
+    expect(screen.getByRole("navigation", { name: "Chat history" }).textContent).toContain("Today");
   });
 
   it("sends the chat ID with follow-up questions", async () => {
@@ -98,11 +127,19 @@ describe("chat view (T-5.3, T-5.5)", () => {
     await screen.findByRole("button", { name: "Source 1" });
     await user.type(screen.getByLabelText("Your question"), "And at home?{Enter}");
     await waitFor(() => expect(calls.filter((c) => c.url === "/api/chat")).toHaveLength(2));
-    expect(calls[1]!.body).toEqual({ question: "And at home?", chatId: "11111111-1111-4111-8111-111111111111" });
+    expect(calls.filter((c) => c.url === "/api/chat")[1]!.body).toEqual({
+      question: "And at home?",
+      chatId: "11111111-1111-4111-8111-111111111111",
+    });
   });
 
   it("replaces a rejected draft", async () => {
-    mockApi([{ type: "token", text: "Bad draft [9]" }, { type: "replace", text: "" }, { type: "token", text: "Good [1]." }, done({ content: "Good [1]." })]);
+    mockApi([
+      { type: "token", text: "Bad draft [9]" },
+      { type: "replace", text: "" },
+      { type: "token", text: "Good [1]." },
+      done({ content: "Good [1]." }),
+    ]);
     await askQuestion();
     await screen.findByText(/Good/);
     expect(screen.queryByText(/Bad draft/)).toBeNull();
@@ -188,5 +225,206 @@ describe("theme (T-5.1)", () => {
     expect(document.documentElement.dataset.theme).toBe("dark");
     expect(localStorage.getItem("sustainiq-theme")).toBe("dark");
     expect(screen.getByRole("button", { name: "Switch to light theme" })).toBeTruthy();
+  });
+});
+
+const SAVED = {
+  id: "33333333-3333-4333-8333-333333333333",
+  title: "PLA in the gut",
+  createdAt: Date.now(),
+  updatedAt: Date.now(),
+};
+const OLD = {
+  id: "44444444-4444-4444-8444-444444444444",
+  title: "Old chitin chat",
+  createdAt: 0,
+  updatedAt: Date.now() - 30 * 24 * 3600 * 1000,
+};
+const savedChat = {
+  chat: { id: SAVED.id, title: SAVED.title },
+  messages: [
+    {
+      id: "m1",
+      role: "user",
+      content: "Does PLA break down in the gut?",
+      status: "ok",
+      feedback: 0,
+      createdAt: 1,
+    },
+    {
+      id: "m2",
+      role: "assistant",
+      content: "Yes, within hours [1].",
+      status: "ok",
+      feedback: -1,
+      createdAt: 2,
+      sources: [source(1)],
+    },
+  ],
+};
+
+describe("saved history (T-6.4)", () => {
+  it("lists saved chats by date and reopens one with its citations and feedback", async () => {
+    mockApi([], { "/api/chats": { chats: [SAVED, OLD] }, [`/api/chats/${SAVED.id}`]: savedChat });
+    const user = userEvent.setup();
+    render(<App />);
+    const nav = screen.getByRole("navigation", { name: "Chat history" });
+    await within(nav).findByText("PLA in the gut");
+    expect(
+      within(nav)
+        .getAllByRole("heading")
+        .map((h) => h.textContent),
+    ).toEqual(["Today", "Older"]);
+    await user.click(within(nav).getByRole("button", { name: "PLA in the gut" }));
+    expect(await screen.findByText("Does PLA break down in the gut?")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Not helpful" }).getAttribute("aria-pressed")).toBe("true");
+    await user.click(screen.getByRole("button", { name: "Source 1" }));
+    expect(
+      within(await screen.findByRole("dialog")).getByText(
+        "Peak PLA nanoplastics formation after only two hours.",
+      ),
+    ).toBeTruthy();
+  });
+
+  it("follow-ups in a reopened chat continue the same server chat", async () => {
+    const calls = mockApi([done({ chatId: SAVED.id })], {
+      "/api/chats": { chats: [SAVED] },
+      [`/api/chats/${SAVED.id}`]: savedChat,
+    });
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(await screen.findByRole("button", { name: "PLA in the gut" }));
+    await screen.findByText("Does PLA break down in the gut?");
+    await user.type(screen.getByLabelText("Your question"), "And PBAT?{Enter}");
+    await waitFor(() =>
+      expect(calls.find((c) => c.url === "/api/chat")?.body).toEqual({
+        question: "And PBAT?",
+        chatId: SAVED.id,
+      }),
+    );
+  });
+
+  it("renames and deletes the open chat", async () => {
+    const calls = mockApi([], { "/api/chats": { chats: [SAVED] }, [`/api/chats/${SAVED.id}`]: savedChat });
+    vi.stubGlobal(
+      "confirm",
+      vi.fn(() => true),
+    );
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(await screen.findByRole("button", { name: "PLA in the gut" }));
+    await user.click(await screen.findByRole("button", { name: "Rename chat" }));
+    const input = screen.getByRole("textbox", { name: "Chat title" });
+    await user.clear(input);
+    await user.type(input, "Gut enzymes{Enter}");
+    expect(calls.find((c) => c.method === "PATCH")).toMatchObject({
+      url: `/api/chats/${SAVED.id}`,
+      body: { title: "Gut enzymes" },
+    });
+    expect(screen.getByRole("button", { name: "Gut enzymes" })).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: "Delete chat" }));
+    await waitFor(() => expect(calls.find((c) => c.method === "DELETE")?.url).toBe(`/api/chats/${SAVED.id}`));
+    expect(screen.queryByRole("button", { name: "Gut enzymes" })).toBeNull();
+    expect(screen.getByRole("heading", { name: "What would you like to research?" })).toBeTruthy();
+  });
+});
+
+const papers = [
+  {
+    id: "p_" + "1".repeat(24),
+    title: "Bacterial Cellulose as a Raw Material for Food Packaging",
+    authors: ["H. Azeredo"],
+    year: 2019,
+    journal: "Front. Sustain. Food Syst.",
+    doi: "10.3389/fsufs.2019.00007",
+    license: "cc-by",
+    sourceUrl: "https://example.org/bc.pdf",
+    topic: "packaging",
+    pages: 14,
+    upload: false,
+    verified: true,
+  },
+  {
+    id: "p_" + "2".repeat(24),
+    title: "Pseudomonas Species as Producers of PHA",
+    authors: ["J. Mozejko"],
+    year: 2019,
+    journal: "J. Polym. Environ.",
+    doi: "10.1007/x",
+    license: "cc-by",
+    sourceUrl: null,
+    topic: "biopolymers",
+    pages: 16,
+    upload: false,
+    verified: true,
+  },
+  {
+    id: "p_" + "3".repeat(24),
+    title: "<img src=x onerror=alert(1)> my notes",
+    authors: [],
+    year: null,
+    journal: null,
+    doi: null,
+    license: null,
+    sourceUrl: null,
+    topic: null,
+    pages: 3,
+    upload: true,
+    verified: false,
+  },
+];
+
+describe("library (T-6.2)", () => {
+  const detail = {
+    paper: papers[0],
+    summary: { name: "Abstract", text: "BC is a promising packaging material." },
+    sections: [
+      { name: "Abstract", pageStart: 1, pageEnd: 1 },
+      { name: "Results", pageStart: 2, pageEnd: 9 },
+    ],
+  };
+  const open = async () => {
+    const calls = mockApi([done()], { "/api/papers": { papers }, [`/api/papers/${papers[0]!.id}`]: detail });
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getAllByRole("button", { name: "Library" })[0]!);
+    await screen.findByText("Pseudomonas Species as Producers of PHA");
+    return { user, calls };
+  };
+
+  it("searches and filters by topic, and labels uploads (hostile titles stay text)", async () => {
+    const { user } = await open();
+    const list = () => screen.getAllByRole("listitem").map((li) => li.textContent ?? "");
+    expect(list()).toHaveLength(3);
+    expect(document.querySelector("main img")).toBeNull();
+    await user.type(screen.getByRole("searchbox", { name: "Search papers" }), "cellulose 2019");
+    expect(list()).toHaveLength(1);
+    await user.clear(screen.getByRole("searchbox", { name: "Search papers" }));
+    await user.click(screen.getByRole("button", { name: "Biopolymers" }));
+    expect(list().map((t) => t.slice(0, 20))).toEqual(["Pseudomonas Species "]);
+    await user.click(screen.getByRole("button", { name: "Your uploads" }));
+    expect(list()[0]).toContain("Your upload · unverified");
+    expect(list()[0]).toContain("<img src=x onerror=alert(1)> my notes");
+  });
+
+  it("opens paper detail with abstract, sections and links, and asks about the paper", async () => {
+    const { user, calls } = await open();
+    await user.click(screen.getByRole("button", { name: /Bacterial Cellulose/ }));
+    expect(await screen.findByText("BC is a promising packaging material.")).toBeTruthy();
+    expect(window.location.hash).toBe(`#/library/${papers[0]!.id}`);
+    expect(screen.getByRole("link", { name: /doi.org/ }).getAttribute("href")).toBe(
+      "https://doi.org/10.3389/fsufs.2019.00007",
+    );
+    expect(screen.getByRole("link", { name: /Open the PDF/ }).getAttribute("rel")).toBe(
+      "noopener noreferrer nofollow",
+    );
+    expect(screen.getByText("pp. 2–9")).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: "Ask about this paper" }));
+    await waitFor(() =>
+      expect(calls.find((c) => c.url === "/api/chat")?.body).toEqual({
+        question: 'What are the main findings of "Bacterial Cellulose as a Raw Material for Food Packaging"?',
+      }),
+    );
+    expect(await screen.findByText(/Nanoplastics peak/)).toBeTruthy();
   });
 });

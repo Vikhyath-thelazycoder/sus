@@ -1,6 +1,7 @@
 import { cleanText } from "../text";
 import type { Line, Paragraph, ParsedPaper, RawPage, Section } from "./types";
 import { buildLines, orderLines, removeHeadersFooters } from "./layout";
+import { splitSentences } from "../chunker";
 
 const NUMBER_PREFIX = String.raw`(?:(?:\d+(?:\.\d+){0,3}|[IVX]+|[A-H])\.?\s+)?`;
 const KNOWN_HEADING = new RegExp(
@@ -18,6 +19,40 @@ const NUMBERED_HEADING = /^\d+(\.\d+){0,3}\.?\s+[A-Z][^.]{2,80}$/;
 const STOP = /^(references|bibliography|literature cited)$/i;
 /** Boilerplate sections that add noise to search. */
 const SKIP = /^(acknowledge?ments?|funding|author contributions?|conflicts? of interest|competing interests?|declaration of competing interest|data availability( statement)?|supplementary (materials?|information)|abbreviations|keywords|highlights)$/i;
+
+/**
+ * Front matter mixes real prose (abstracts or introductions without a heading) with author lists, affiliations,
+ * editor lists, contact emails and licence lines. Sentences carrying a boilerplate marker are removed, affiliation
+ * lists are removed whole, and only paragraphs with enough prose left are kept.
+ */
+const FRONT_BOILERPLATE =
+  /\S@\S|©|\bcopyright\b|creative commons|\bopen access\b|\blicen[cs]ed?\b|\b(received|accepted|revised|published(?: online)?):?\s+\d|\bedited by\b|\breviewed by\b|\bcorrespondence\b|^citation:|specialty section|\borcid\b|\*?e-?mail:/i;
+/** "1 Department of …", "Key Laboratory of …, University …": an affiliation list, not prose. */
+const AFFILIATION = /^(\d{1,2}\s*|[a-z]\s+|\*\s*)?(department|dept\.|key laboratory|laboratory|institute|school|faculty|college|centre|center|division|university|embrapa)\b/i;
+export const FRONT_PROSE_MIN_CHARS = 100;
+
+/** Contact footnotes ("*Correspondence: name@uni.edu") can sit on any page; they carry personal data, not content. */
+const CONTACT = /\S@\S+\.[a-z]{2,}|\bcorrespondence\b|\be-?mail:/i;
+
+export function withoutContactDetails(paragraphs: Paragraph[]): Paragraph[] {
+  return paragraphs.flatMap((p) => {
+    if (!CONTACT.test(p.text)) return [p];
+    const text = splitSentences(p.text)
+      .filter((s) => !CONTACT.test(s))
+      .join(" ");
+    return text.length >= 30 ? [{ ...p, text }] : [];
+  });
+}
+
+export function frontMatterProse(paragraphs: Paragraph[]): Paragraph[] {
+  return paragraphs.flatMap((p) => {
+    if (AFFILIATION.test(p.text)) return [];
+    const text = splitSentences(p.text)
+      .filter((s) => !FRONT_BOILERPLATE.test(s) && !AFFILIATION.test(s))
+      .join(" ");
+    return text.length >= FRONT_PROSE_MIN_CHARS ? [{ ...p, text }] : [];
+  });
+}
 
 /** "Smith, J. A.," / "Aam BB, Heggset EB" / "[12] Shaw, M. H." — how bibliography entries start. */
 const REFERENCE_ENTRY = /^(\[?\d{1,3}[\].]?\s*)?[A-Z][A-Za-z'’-]+,?\s+([A-Z]\.\s?){1,3}|^(\[?\d{1,3}[\].]?\s*)?[A-Z][A-Za-z'’-]+\s+[A-Z]{1,3},/;
@@ -151,7 +186,10 @@ export function parsePaper(pages: RawPage[]): ParsedPaper {
 
   const sections: Section[] = groups
     .filter((g) => !SKIP.test(g.name))
-    .map((g) => ({ name: g.name.slice(0, 120), paragraphs: toParagraphs(g.lines) }))
+    .map((g) => {
+      const paragraphs = toParagraphs(g.lines);
+      return { name: g.name.slice(0, 120), paragraphs: g.name === "Front matter" ? frontMatterProse(paragraphs) : withoutContactDetails(paragraphs) };
+    })
     .filter((s) => s.paragraphs.length > 0)
     .map((s) => ({ ...s, pageStart: s.paragraphs[0]!.pageStart, pageEnd: s.paragraphs.at(-1)!.pageEnd }));
 

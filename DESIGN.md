@@ -1,3 +1,11 @@
+---
+# Read by `agylite design check`: the approved palette uses one warm neutral family in light mode, green-tinted
+# neutrals in dark mode and a desaturated sage accent, which the heuristic counts as 5 grey families (limit 1).
+# Approved by the owner on 2026-11-06 (P5 evidence, decision D-015). Raise only; never lower.
+design_check_overrides:
+  grey_families: 5
+---
+
 # Design — SustainIQ
 
 Visual and interaction direction (spec §20.6, §26–27).
@@ -69,6 +77,6 @@ Minimal and functional only: panel/sheet slide 200 ms ease-out, drawer 200 ms, f
 
 ## Reference sources
 
-- Product direction: [../PROJECT_PLAN.md](../PROJECT_PLAN.md) §7.
+- Product direction: [PROJECT_PLAN.md](PROJECT_PLAN.md) §8.
 - Peers for the feel: Perplexity, Claude, Elicit (feel only; no copying of layout, brand or assets).
 - No client brand guidelines yet; ask on the Google Meet (logo, colours, name usage).
