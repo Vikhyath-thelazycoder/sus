@@ -13,7 +13,7 @@ INTENTIONALLY_DEFERRED. `agylite plan index` keeps a compact index in `.agylite/
 
 **Scope:** P1–P8 build the **demo** (Render free web service at https://sustainiq-demo.onrender.com with data on Cloudflare, Groq, no login; D-012). P9 is the **paid MVP** on Cloudflare Workers Paid, deferred until the client accepts the deal.
 
-**Progress (2026-11-06):** P1 ✅ verified · P2 ✅ verified (20 papers, 881 chunks, 881 vectors) · P3 ✅ verified (hybrid + fused rerank: recall@6 1.00, MRR 0.944, ~0.85 s server-side) · P4 ✅ verified (35/35 faithful, 5/5 declines, 6/6 injection; first token ~3 s on Render) · P5 ✅ verified (chat UI, citation panel/sheet, AA contrast; design check override D-015) · **next: P6**. Changes from the first draft: no LangGraph in the demo (D-010), Groq models updated (D-011), demo hosted on Render (D-012), gpt-oss-20b removed from the answer chain (D-013).
+**Progress (2026-11-06):** P1 ✅ verified · P2 ✅ verified (20 papers, 881 chunks, 881 vectors) · P3 ✅ verified (hybrid + fused rerank: recall@6 1.00, MRR 0.944, ~0.85 s server-side) · P4 ✅ verified (35/35 faithful, 5/5 declines, 6/6 injection; first token ~3 s on Render) · P5 ✅ verified (chat UI, citation panel/sheet, AA contrast; design check override D-015) · P6 built and tested locally (library, saved history; front matter cleaned, re-ingested); deploy awaits owner approval · **next: P7**. Changes from the first draft: no LangGraph in the demo (D-010), Groq models updated (D-011), demo hosted on Render (D-012), gpt-oss-20b removed from the answer chain (D-013).
 
 **Definition of done for every task:** `agylite verify` passes (tests, types, lint, build), the acceptance column is met, and the SEC items it touches have their tests.
 
@@ -92,15 +92,15 @@ Objective: The calm, minimal, desktop-first and mobile-ready chat experience wit
 | T-5.6 | Accessibility pass: WCAG AA contrast, focus-visible, labels, reduced motion | VERIFIED | T-5.4 | design/accessibility | — | DESIGN.md accessibility | testing/accessibility checks | No AA failures |
 
 ## P6 · Library and chat history
-Status: PLANNED · Depends: P4, P5 · Paths: src/worker/routes/papers.ts, src/worker/routes/chats.ts, src/web/pages/** · Flags: security, testing · Evidence: —
+Status: READY_FOR_VERIFICATION · Depends: P4, P5 · Paths: src/worker/routes/papers.ts, src/worker/routes/chats.ts, src/web/pages/**, src/web/App.tsx, src/shared/pdf/structure.ts · Flags: security, testing · Evidence: docs/evidence/P6.md
 Objective: Browse the paper library and return to past conversations, each strictly scoped to its owner.
 
 | ID | Task | Status | Depends | Capabilities | Security | Design | Testing | Acceptance |
 |---|---|---|---|---|---|---|---|---|
-| T-6.1 | `GET /api/papers` (public + own), `GET /api/papers/:id` with sections | PLANNED | T-2.6 | engineering/backend | Owner-scoped SQL, 404 for others (SEC §3.2) | — | SEC §13 #1 | Other owners' papers return 404 |
-| T-6.2 | Library page: search, topic filters, paper cards, paper detail | PLANNED | T-6.1, T-5.2 | design/frontend | Titles rendered as text | DESIGN.md | Component tests | Filters and search work on mobile and desktop |
-| T-6.3 | Chat history API: list, open, rename, delete (D1, owner-scoped) | PLANNED | T-4.7 | engineering/backend | SEC §3.2 | — | SEC §13 #1 | History survives reloads; others' chats return 404 |
-| T-6.4 | History sidebar wired to the API; new chat; grouping by date | PLANNED | T-6.3, T-5.2 | design/frontend | — | DESIGN.md | Component tests | Past chats reopen with their citations |
+| T-6.1 | `GET /api/papers` (public + own), `GET /api/papers/:id` with sections | VERIFIED | T-2.6 | engineering/backend | Owner-scoped SQL, 404 for others (SEC §3.2) | — | SEC §13 #1 | Other owners' papers return 404 |
+| T-6.2 | Library page: search, topic filters, paper cards, paper detail | READY_FOR_VERIFICATION | T-6.1, T-5.2 | design/frontend | Titles rendered as text | DESIGN.md | Component tests | Filters and search work on mobile and desktop |
+| T-6.3 | Chat history API: list, open, rename, delete (D1, owner-scoped) | VERIFIED | T-4.7 | engineering/backend | SEC §3.2 | — | SEC §13 #1 | History survives reloads; others' chats return 404 |
+| T-6.4 | History sidebar wired to the API; new chat; grouping by date | READY_FOR_VERIFICATION | T-6.3, T-5.2 | design/frontend | — | DESIGN.md | Component tests | Past chats reopen with their citations |
 
 ## P7 · PDF uploads
 Status: PLANNED · Depends: P2, P6 · Paths: src/web/upload/**, src/worker/routes/upload.ts, src/worker/cron.ts · Flags: security, testing · Evidence: —
@@ -117,6 +117,11 @@ Objective: Users upload their own PDFs (5 × 100 pages), parsed in the browser, 
 ## P8 · Hardening and demo launch
 Status: PLANNED · Depends: P4, P6, P7 · Paths: src/worker/security/**, test/security/** · Flags: security, testing · Evidence: —
 Objective: Every [DEMO] item in SECURITY.md done, abuse limits on, full test suite green, live demo link ready for the client.
+
+**Carried in from P4–P6 (owner rule: nothing hard-coded in P8, every limit, key, ID and threshold comes from config/env):**
+- Groq free tier: 200,000 tokens/day per model (≈ 40–45 answers/day each) plus 8,000 tokens/min. Read the budgets from config, show "busy" before the quota runs out, and run evals on a separate key so they never use up the demo's quota (P6 evidence).
+- Groundedness check on answers (RAG §5.11): the validator proves `[n]` exists, not that it supports the claim (q06 mis-citation, P6 evidence).
+- Move remaining constants (production resource IDs in scripts, `RETRIEVAL` settings, cache TTL) into config.
 
 | ID | Task | Status | Depends | Capabilities | Security | Design | Testing | Acceptance |
 |---|---|---|---|---|---|---|---|---|

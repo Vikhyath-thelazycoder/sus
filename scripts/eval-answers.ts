@@ -142,29 +142,37 @@ export async function runAnswerEval(env: Env, golden: { questions: Gold[]; unans
     const r = await ask(env, u.question);
     const declined = r.notFound || r.status === "declined";
     negatives.push({ id: u.id, status: r.status, declined, answer: r.content });
-    console.log(`${u.id} ${declined ? "declined ✓" : "ANSWERED ✗"} ${r.status}`);
+    console.log(`${u.id} ${r.status === "error" ? "UNAVAILABLE (not measured)" : declined ? "declined ✓" : "ANSWERED ✗"}`);
   }
-  const injections = [];
+  const injections: { id: string; test: string; pass: boolean | null; status: string; answer: string }[] = [];
   for (const c of only ? [] : injectionCases(env)) {
     const r = await c.run();
-    injections.push({ id: c.id, test: c.test, pass: c.pass(r), status: r.status, answer: r.content });
-    console.log(`${c.id} ${c.pass(r) ? "pass" : "FAIL"} ${c.test}`);
+    // A "busy" reply would trivially pass a "doesn't say HACKED" check, so it counts as not measured.
+    const pass = r.status === "error" ? null : c.pass(r);
+    injections.push({ id: c.id, test: c.test, pass, status: r.status, answer: r.content });
+    console.log(`${c.id} ${pass === null ? "UNAVAILABLE (not measured)" : pass ? "pass" : "FAIL"} ${c.test}`);
   }
 
+  // "error" = every model was rate limited: those questions were not measured and are left out of every share.
+  const measured = rows.filter((r) => r.status !== "error");
+  const negMeasured = negatives.filter((n) => n.status !== "error");
+  const injMeasured = injections.filter((i) => i.pass !== null);
   const judged = rows.filter((r) => r.verdict);
   const share = (n: number, d: number) => (d ? `${n}/${d} (${Math.round((100 * n) / d)}%)` : "-");
   const summary = {
     answerable: rows.length,
-    answeredWithCitations: share(rows.filter((r) => r.status === "ok" && !r.notFound).length, rows.length),
-    saidNotFound: rows.filter((r) => r.notFound).length,
+    unavailable: rows.length - measured.length + negatives.length - negMeasured.length + injections.length - injMeasured.length,
+    answeredWithCitations: share(measured.filter((r) => r.status === "ok" && !r.notFound).length, measured.length),
+    saidNotFound: measured.filter((r) => r.notFound).length,
     faithful: share(judged.filter((r) => r.verdict!.faithful).length, judged.length),
-    correctYes: share(judged.filter((r) => r.verdict!.correct === "yes").length, rows.length),
+    notJudged: measured.filter((r) => r.status === "ok" && !r.notFound && !r.verdict).map((r) => r.id),
+    correctYes: share(judged.filter((r) => r.verdict!.correct === "yes").length, judged.length),
     correctPartial: judged.filter((r) => r.verdict!.correct === "partial").length,
-    correctDeclinesOnUnanswerable: share(negatives.filter((n) => n.declined).length, negatives.length),
-    injectionPass: share(injections.filter((i) => i.pass).length, injections.length),
+    correctDeclinesOnUnanswerable: share(negMeasured.filter((n) => n.declined).length, negMeasured.length),
+    injectionPass: share(injMeasured.filter((i) => i.pass).length, injMeasured.length),
     retriedForCitations: rows.filter((r) => r.status === "unverified").length,
-    models: Object.fromEntries([...new Set(rows.map((r) => r.model))].map((m) => [m ?? "-", rows.filter((r) => r.model === m).length])),
-    p50ms: [...rows.map((r) => r.ms)].sort((a, b) => a - b)[Math.floor(rows.length / 2)] ?? 0,
+    models: Object.fromEntries([...new Set(measured.map((r) => r.model))].map((m) => [m ?? "-", measured.filter((r) => r.model === m).length])),
+    p50ms: [...measured.map((r) => r.ms)].sort((a, b) => a - b)[Math.floor(measured.length / 2)] ?? 0,
   };
   console.log("\n", summary);
   return { at: new Date().toISOString(), summary, rows, negatives, injections };
