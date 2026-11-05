@@ -1,9 +1,9 @@
 schema_version: 1
 plan_path: docs/IMPLEMENTATION_PLAN.md
-plan_sha256: d6add4b589c8f3d9dd529131bff662a4528dc5b2a16cc215781b8bb4549bea3a
-plan_size: 28045
-plan_mtime_ns: 1793907132084281420
-built: '2026-11-05T19:43:09+00:00'
+plan_sha256: 57068f21eff41196f6f897d78d3ddf1954d45320688e4a800ffd50d0c129c6eb
+plan_size: 28257
+plan_mtime_ns: 1793908618354051103
+built: '2026-11-05T19:56:58+00:00'
 current_phase: P5
 phases:
 - phase_id: P1
@@ -56,8 +56,8 @@ phases:
   last_updated: null
   evidence_pointer: docs/evidence/P1.md
   section:
-    start: 1850
-    end: 4952
+    start: 1978
+    end: 5080
 - phase_id: P2
   phase_name: Paper ingestion
   status: VERIFIED
@@ -112,8 +112,8 @@ phases:
   last_updated: null
   evidence_pointer: docs/evidence/P2.md
   section:
-    start: 4952
-    end: 7975
+    start: 5080
+    end: 8103
 - phase_id: P3
   phase_name: Retrieval and evaluation
   status: VERIFIED
@@ -156,8 +156,8 @@ phases:
   last_updated: null
   evidence_pointer: docs/evidence/P3.md
   section:
-    start: 7975
-    end: 10285
+    start: 8103
+    end: 10413
 - phase_id: P4
   phase_name: Answer generation
   status: VERIFIED
@@ -204,47 +204,49 @@ phases:
   last_updated: null
   evidence_pointer: docs/evidence/P4.md
   section:
-    start: 10285
-    end: 12923
+    start: 10413
+    end: 13051
 - phase_id: P5
   phase_name: UI foundation and chat
-  status: PLANNED
+  status: READY_FOR_VERIFICATION
   objective: The calm, minimal, desktop-first and mobile-ready chat experience with the citation side panel and bottom sheet
     (DESIGN.md). Can start in parallel with P2–P4 against a mocked API.
-  active_tasks: []
+  active_tasks:
+  - T-5.1
   tasks:
   - id: T-5.1
     title: Design tokens (colour, type, spacing, radius) as CSS variables + Tailwind config; light/dark, with dark following
       the system setting and a toggle
-    status: PLANNED
+    status: READY_FOR_VERIFICATION
   - id: T-5.2
     title: 'App shell: history sidebar (desktop) / drawer (mobile), header, main column ≤ 720 px'
-    status: PLANNED
+    status: VERIFIED
   - id: T-5.3
     title: 'Chat view: input, suggested questions, streaming answer, inline `[n]`, sources row, copy, thumbs up/down'
-    status: PLANNED
+    status: VERIFIED
   - id: T-5.4
     title: 'Citation panel (desktop) / bottom sheet (mobile): stored passage, highlight, title, authors, year, page, DOI,
       Curated / Your upload badge'
-    status: PLANNED
+    status: VERIFIED
   - id: T-5.5
     title: 'All states: empty, loading skeletons, error, "couldn''t find", rate-limited, busy'
-    status: PLANNED
+    status: VERIFIED
   - id: T-5.6
     title: 'Accessibility pass: WCAG AA contrast, focus-visible, labels, reduced motion'
-    status: PLANNED
+    status: VERIFIED
   dependencies:
   - P1
   affected_paths:
   - src/web/**
+  - migrations/0002_feedback.sql
   security_flags: true
   design_flags: true
   testing_flags: true
   last_updated: null
-  evidence_pointer: null
+  evidence_pointer: docs/evidence/P5.md
   section:
-    start: 12923
-    end: 14973
+    start: 13051
+    end: 15184
 - phase_id: P6
   phase_name: Library and chat history
   status: PLANNED
@@ -276,8 +278,8 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 14973
-    end: 16229
+    start: 15184
+    end: 16440
 - phase_id: P7
   phase_name: PDF uploads
   status: PLANNED
@@ -317,8 +319,8 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 16229
-    end: 18052
+    start: 16440
+    end: 18263
 - phase_id: P8
   phase_name: Hardening and demo launch
   status: PLANNED
@@ -362,8 +364,8 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 18052
-    end: 20188
+    start: 18263
+    end: 20399
 - phase_id: P9
   phase_name: Paid MVP (after the deal)
   status: INTENTIONALLY_DEFERRED
@@ -401,5 +403,5 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 20188
-    end: 22005
+    start: 20399
+    end: 22216
