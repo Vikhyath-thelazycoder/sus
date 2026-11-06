@@ -172,10 +172,11 @@ export function App() {
     [updateChat],
   );
 
-  const ask = async (question: string, chat: Chat = active) => {
+  const ask = async (question: string, chat: Chat = active, attachments?: string[]) => {
     const turn: Turn = {
       id: crypto.randomUUID(),
       question,
+      attachments,
       text: "",
       step: "searching",
       state: "streaming",
@@ -430,7 +431,7 @@ export function App() {
       {/* Icon rail 768–1023 px */}
       <aside className="hidden w-(--spacing-rail) shrink-0 flex-col items-center gap-1 bg-surface pt-3 md:flex lg:hidden">
         <IconButton ref={railMenu} label="Open chat history" icon="menu" onClick={() => setDrawer(true)} />
-        <IconButton label="New chat" icon="plus" onClick={() => startNewChat()} />
+        <IconButton label="New chat" icon="compose" onClick={() => startNewChat()} />
         <IconButton
           label="Library"
           icon="library"
@@ -474,12 +475,23 @@ export function App() {
             className="md:hidden"
             onClick={() => setDrawer(true)}
           />
+          {view.kind !== "chat" && (
+            <button
+              type="button"
+              onClick={() => go(view.kind === "paper" ? "#/library" : "")}
+              aria-label={view.kind === "paper" ? "Back to the library" : "Back to the chat"}
+              className="inline-flex min-h-(--spacing-touch) items-center gap-1.5 rounded-control px-2 text-small font-medium text-muted hover:bg-accent-soft hover:text-text focus-visible:outline-2 focus-visible:outline-accent"
+            >
+              <Icon name="back" className="size-4" />
+              {view.kind === "paper" ? "Library" : "Chat"}
+            </button>
+          )}
           <p className="flex-1 truncate px-1 text-small text-muted">
-            <span className="font-semibold text-text md:hidden">SustainIQ</span>
+            {view.kind === "chat" && <span className="font-semibold text-text md:hidden">SustainIQ</span>}
             <span className="hidden md:inline">{headerTitle}</span>
           </p>
           <IconButton label="Library" icon="library" className="md:hidden" onClick={() => go("#/library")} />
-          <IconButton label="New chat" icon="plus" className="md:hidden" onClick={() => startNewChat()} />
+          <IconButton label="New chat" icon="compose" className="md:hidden" onClick={() => startNewChat()} />
           <IconButton
             label={`Switch to ${effectiveTheme() === "dark" ? "light" : "dark"} theme`}
             icon={effectiveTheme() === "dark" ? "sun" : "moon"}
@@ -509,9 +521,10 @@ export function App() {
             </p>
           ) : (
             <Conversation
+              key={active.localId}
               turns={active.turns}
               busy={busy}
-              onAsk={(q) => void ask(q)}
+              onAsk={(q, files) => void ask(q, active, files)}
               onRetry={retry}
               onCite={openCitation}
               onFeedback={feedback}

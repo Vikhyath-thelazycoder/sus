@@ -59,12 +59,13 @@ Every rule below must be in place before the matching feature ships. This file i
 - State-changing routes accept only `POST`/`DELETE` with `Content-Type: application/json`, and check that `Origin` equals our host. This works with `SameSite=Lax` to block CSRF.
 - Response headers:
   ```
-  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; object-src 'none'
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; object-src 'none'
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=()
   Strict-Transport-Security: max-age=31536000; includeSubDomains
   ```
+- `'wasm-unsafe-eval'` lets the self-hosted OCR engine (tesseract.js, for scanned PDFs) compile WebAssembly. It doesn't allow `eval` or any other origin.
   If pdf.js needs a worker script or wasm, serve it from `'self'` and add only `worker-src 'self' blob:`. Never add `'unsafe-eval'` without a written reason.
 
 ## 4. Query injection (SQL, FTS5, vector filters)

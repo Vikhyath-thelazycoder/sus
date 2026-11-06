@@ -5,7 +5,7 @@ import type { ParsedUpload, ParseStep, UploadErrorCode } from "./parse";
 /** Upload flow (T-7.3): parse in a Web Worker → create (quota) → chunk batches (server embeds) → finish. */
 export type UploadStep = ParseStep | "indexing";
 export type UploadFailure =
-  UploadErrorCode | "type" | "quota" | "paused" | "timeout" | "network" | "rate-limited";
+  UploadErrorCode | "type" | "quota" | "paused" | "timeout" | "network" | "rate-limited" | "cancelled";
 
 export class UploadFailed extends Error {
   constructor(readonly reason: UploadFailure) {
@@ -18,7 +18,7 @@ export const FAILURE_COPY: Record<UploadFailure, string> = {
   "not-pdf": "That file isn't a PDF.",
   "too-big": `PDFs can be up to ${UPLOAD.maxFileBytes / 1024 / 1024} MB.`,
   "too-many-pages": `PDFs can be up to ${UPLOAD.maxPages} pages.`,
-  scanned: "This PDF looks like a scan with no text layer, so it can't be read.",
+  scanned: "No readable text was found in this PDF, even in its page images.",
   "too-much-text": "This PDF has more text than the demo can index.",
   unreadable: "This PDF couldn't be read. Try another file.",
   timeout: "Reading this PDF took too long. Try a smaller file.",
@@ -26,13 +26,18 @@ export const FAILURE_COPY: Record<UploadFailure, string> = {
   paused: "Uploads are paused right now. Please try again later.",
   "rate-limited": "That was a lot of uploading at once. Try again in a minute.",
   network: "The upload didn't finish. Check your connection and try again.",
+  cancelled: "Upload cancelled.",
 };
 
-/** Parse off the main thread; the worker is terminated on timeout so a hostile PDF can't hang the tab. */
+/**
+ * Parse off the main thread. The worker is terminated if it makes no progress for `timeoutMs` (each OCR page counts
+ * as progress, so long scans finish), so a hostile PDF can't hang the tab.
+ */
 export function parseInWorker(
   file: File,
-  onStep: (s: ParseStep) => void,
+  onStep: (s: ParseStep, done?: number, total?: number) => void,
   timeoutMs: number = UPLOAD.parseTimeoutMs,
+  signal?: AbortSignal,
 ): Promise<ParsedUpload> {
   return new Promise((resolve, reject) => {
     const worker = new Worker(new URL("./parse.worker.ts", import.meta.url), { type: "module" });
@@ -41,16 +46,24 @@ export function parseInWorker(
       worker.terminate();
       fn();
     };
-    const timer = setTimeout(() => done(() => reject(new UploadFailed("timeout"))), timeoutMs);
+    let timer: ReturnType<typeof setTimeout>;
+    const arm = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => done(() => reject(new UploadFailed("timeout"))), timeoutMs);
+    };
+    arm();
+    signal?.addEventListener("abort", () => done(() => reject(new UploadFailed("cancelled"))));
     worker.onmessage = (e: MessageEvent) => {
       const m = e.data as { sustainiq?: true } & (
-        | { type: "step"; step: ParseStep }
+        | { type: "step"; step: ParseStep; done?: number; total?: number }
         | { type: "done"; result: ParsedUpload }
         | { type: "error"; code: UploadErrorCode }
       );
       if (!m?.sustainiq) return; // pdf.js's own "ready" message
-      if (m.type === "step") onStep(m.step);
-      else if (m.type === "done") done(() => resolve(m.result));
+      if (m.type === "step") {
+        arm();
+        onStep(m.step, m.done, m.total);
+      } else if (m.type === "done") done(() => resolve(m.result));
       else done(() => reject(new UploadFailed(m.code)));
     };
     worker.onerror = () => done(() => reject(new UploadFailed("unreadable")));

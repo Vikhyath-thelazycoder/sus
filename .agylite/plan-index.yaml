@@ -1,10 +1,10 @@
 schema_version: 1
 plan_path: docs/IMPLEMENTATION_PLAN.md
-plan_sha256: 63d4e0aa69a63909e45a0cc5be964e19483ff7a1aa13476028b4c0b602cd953d
-plan_size: 30775
-plan_mtime_ns: 1793930027912808261
-built: '2026-11-06T01:53:47+00:00'
-current_phase: P8
+plan_sha256: 1cefa421ddfb02b3499fdaf50c23b131dfffa9a4b69ec9e60a62fab021811632
+plan_size: 32280
+plan_mtime_ns: 1793934376074960684
+built: '2026-11-06T03:06:16+00:00'
+current_phase: P7
 phases:
 - phase_id: P1
   phase_name: Foundations and platform check
@@ -283,10 +283,12 @@ phases:
     end: 16566
 - phase_id: P7
   phase_name: PDF uploads
-  status: VERIFIED
+  status: IN_PROGRESS
   objective: Users upload their own PDFs (5 × 100 pages), parsed in the browser, re-validated on the server, private to them,
     deleted after 7 days.
-  active_tasks: []
+  active_tasks:
+  - T-7.6
+  - T-7.7
   tasks:
   - id: T-7.1
     title: Browser parsing in a Web Worker with pdf.js (scripting off, magic-byte check, size/page caps, timeout) using the
@@ -307,6 +309,14 @@ phases:
     title: 'Cleanup as a **Cloudflare Worker cron** (free; data lives on Cloudflare; Render''s free tier has no cron): expire
       uploads after 7 days; orphan-vector cleanup; "delete my data" endpoint + button'
     status: VERIFIED
+  - id: T-7.6
+    title: OCR for scanned PDFs in the browser (self-hosted tesseract.js; text-less pages only); Ready waits until the upload
+      is searchable; topic guard allows questions about own uploads
+    status: READY_FOR_VERIFICATION
+  - id: T-7.7
+    title: 'Claude/ChatGPT-style chat: centred new-chat box, + to attach PDFs as chips in the question box (only upload point),
+      question bubble, labelled back buttons'
+    status: READY_FOR_VERIFICATION
   dependencies:
   - P2
   - P6
@@ -323,7 +333,7 @@ phases:
   evidence_pointer: docs/evidence/P7.md
   section:
     start: 16566
-    end: 18474
+    end: 19236
 - phase_id: P8
   phase_name: Hardening and demo launch
   status: PLANNED
@@ -367,8 +377,8 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 18474
-    end: 21240
+    start: 19236
+    end: 22002
 - phase_id: P9
   phase_name: Paid MVP (after the deal)
   status: INTENTIONALLY_DEFERRED
@@ -406,5 +416,5 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 21240
-    end: 23057
+    start: 22002
+    end: 23819

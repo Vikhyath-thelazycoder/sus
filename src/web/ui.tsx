@@ -18,6 +18,9 @@ const paths = {
   library: "M5 4h4v16H5zM10 4h4v16h-4zM15.5 4.5l3.8 1 -3.6 14.5 -3.9-1z",
   edit: "M4 20h4L19 9l-4-4L4 16zM14 6l4 4",
   trash: "M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13",
+  file: "M7 3h7l5 5v13H7zM14 3v5h5",
+  back: "M19 12H5M11 6l-6 6 6 6",
+  compose: "M12 4H5v15h15v-7M18 3l3 3-9 9H9v-3z",
 } as const;
 
 export function Icon({ name, className = "size-5" }: { name: keyof typeof paths; className?: string }) {
@@ -71,7 +74,8 @@ export function Badge({ children, tone = "accent" }: { children: ReactNode; tone
 }
 
 export function Skeleton({ className = "" }: { className?: string }) {
-  return <div aria-hidden="true" className={`animate-pulse rounded-control bg-border ${className}`} />;
+  // Loading skeletons are a DESIGN.md state; the pulse stops under prefers-reduced-motion (index.css).
+  return <div aria-hidden="true" className={`animate-pulse rounded-control bg-border ${className}`} />; // taste-skill-ignore
 }
 
 export function useMediaQuery(query: string): boolean {

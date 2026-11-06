@@ -51,9 +51,9 @@ const code = async (p: Promise<unknown>) => {
 describe("browser PDF parsing (T-7.1)", () => {
   it("parses a text PDF into sections and chunks the server will accept", async () => {
     const steps: string[] = [];
-    const r = await parseUpload(makePdf(3), "C:\\Users\\me\\Desktop\\pha_notes.pdf", getDocument, (s) =>
-      steps.push(s),
-    );
+    const r = await parseUpload(makePdf(3), "C:\\Users\\me\\Desktop\\pha_notes.pdf", getDocument, {
+      onStep: (s) => steps.push(s),
+    });
     expect(steps).toEqual(["reading", "splitting"]);
     expect(r.pages).toBe(3);
     expect(r.chunks.length).toBeGreaterThan(0);
@@ -97,6 +97,38 @@ describe("browser PDF parsing (T-7.1)", () => {
     expect(
       await code(parseUpload(new TextEncoder().encode("%PDF-1.4\ngarbage"), "broken.pdf", getDocument)),
     ).toMatch(/unreadable|scanned/);
+  });
+
+  it("reads image-only pages with OCR (scanned PDFs) and reports progress per page", async () => {
+    const steps: string[] = [];
+    const ocrd: number[] = [];
+    const ocr = async (page: { pageNumber: number }) => {
+      ocrd.push(page.pageNumber);
+      // What the browser OCR returns: positioned words in PDF coordinates.
+      return Array.from({ length: 30 }, (_, i) =>
+        `Line ${i} of a scanned page about heart disease prediction with machine learning.`
+          .split(" ")
+          .map((str, j) => ({ str, x: 50 + j * 40, y: 760 - i * 22, width: 36, size: 10 })),
+      ).flat();
+    };
+    const r = await parseUpload(
+      makePdf(2, () => ""),
+      "scan.pdf",
+      getDocument,
+      { onStep: (s, d, t) => steps.push(t ? `${s} ${d}/${t}` : s), ocr: ocr as never },
+    );
+    expect(ocrd).toEqual([1, 2]);
+    expect(steps).toEqual(["reading", "ocr 0/2", "ocr 1/2", "ocr 2/2", "splitting"]);
+    expect(r.chunks.map((c) => c.text).join(" ")).toContain("heart disease prediction");
+  });
+
+  it("only OCRs the pages that have no text in a mixed PDF", async () => {
+    const ocrd: number[] = [];
+    const pdf = makePdf(3, (p, i) => (p === 2 ? "" : `Page ${p} line ${i}: text layer present here.`));
+    await parseUpload(pdf, "mixed.pdf", getDocument, {
+      ocr: (async (page: { pageNumber: number }) => (ocrd.push(page.pageNumber), [])) as never,
+    });
+    expect(ocrd).toEqual([2]);
   });
 
   it("titles from the file name never keep a path", () => {

@@ -105,6 +105,11 @@ export class RestVectorize {
       contentType: "application/x-ndjson",
     });
   }
+  describe() {
+    return this.call<{ vectorCount: number; processedUpToDatetime: string | null; processedUpToMutation: string | null }>(
+      `/vectorize/v2/indexes/${this.index}/info`,
+    );
+  }
   deleteByIds(ids: string[]) {
     return this.call<{ mutationId: string }>(`/vectorize/v2/indexes/${this.index}/delete_by_ids`, {
       method: "POST",

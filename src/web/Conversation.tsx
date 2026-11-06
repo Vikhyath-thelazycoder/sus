@@ -1,7 +1,10 @@
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type DragEvent, type FormEvent, type ReactNode } from "react";
+import { UPLOAD } from "../shared/limits";
 import type { Done, Source } from "./api";
 import { AnswerText } from "./AnswerText";
 import { Icon, IconButton, Skeleton } from "./ui";
+import { FAILURE_COPY } from "./upload/client";
+import { useAttachments, type Attachment, type UploadDeps } from "./upload/useAttachments";
 
 export type TurnError = "rate_limited" | "busy" | "failed";
 export interface Turn {
@@ -14,6 +17,8 @@ export interface Turn {
   error?: TurnError;
   done?: Done;
   feedback: 1 | -1 | 0;
+  /** Titles of PDFs attached with this question (shown on the question; not stored with saved chats). */
+  attachments?: string[];
 }
 
 export const SUGGESTIONS = [
@@ -32,14 +37,17 @@ const ERROR_COPY: Record<TurnError, string> = {
 interface Props {
   turns: Turn[];
   busy: boolean;
-  onAsk: (question: string) => void;
+  onAsk: (question: string, attachments?: string[]) => void;
   onRetry: (turn: Turn) => void;
   onCite: (source: Source, opener: HTMLElement) => void;
   onFeedback: (turn: Turn, value: 1 | -1 | 0) => void;
+  /** Injected in tests. */
+  uploadDeps?: UploadDeps;
 }
 
-export function Conversation({ turns, busy, onAsk, onRetry, onCite, onFeedback }: Props) {
+export function Conversation({ turns, busy, onAsk, onRetry, onCite, onFeedback, uploadDeps }: Props) {
   const endRef = useRef<HTMLDivElement>(null);
+  const attachments = useAttachments(uploadDeps);
   const last = turns.at(-1);
   useEffect(() => {
     endRef.current?.scrollIntoView?.({ block: "end" });
@@ -55,47 +63,54 @@ export function Conversation({ turns, busy, onAsk, onRetry, onCite, onFeedback }
         ? ERROR_COPY[last.error ?? "failed"]
         : "Answer ready.";
 
+  const composer = <Composer busy={busy} onAsk={onAsk} attachments={attachments} />;
+
+  // A new chat looks like Claude/ChatGPT: greeting and the question box in the middle, suggestions under it.
+  if (turns.length === 0) return <Empty onAsk={onAsk}>{composer}</Empty>;
+
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto w-full max-w-(--spacing-column) px-4 py-8 md:px-6">
-          {turns.length === 0 ? (
-            <Empty onAsk={onAsk} />
-          ) : (
-            turns.map((t) => <TurnView key={t.id} turn={t} {...{ onRetry, onCite, onFeedback }} />)
-          )}
+          {turns.map((t) => (
+            <TurnView key={t.id} turn={t} {...{ onRetry, onCite, onFeedback }} />
+          ))}
           <div ref={endRef} />
         </div>
       </div>
       <p className="sr-only" aria-live="polite">
         {status}
       </p>
-      <Composer busy={busy} onAsk={onAsk} />
+      <div className="bg-bg px-4 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:px-6">{composer}</div>
     </div>
   );
 }
 
-function Empty({ onAsk }: { onAsk: (q: string) => void }) {
+function Empty({ onAsk, children }: { onAsk: (q: string) => void; children: ReactNode }) {
   return (
-    <section className="motion-fade pt-[8vh] md:pt-[14vh]">
-      <h1 className="text-h2 font-semibold md:text-h1">What would you like to research?</h1>
-      <p className="mt-2 text-muted">
-        Answers from curated research papers on sustainable materials, with the sources cited.
-      </p>
-      <ul className="mt-8 grid gap-2 sm:grid-cols-2" aria-label="Suggested questions">
-        {SUGGESTIONS.map((s) => (
-          <li key={s}>
-            <button
-              type="button"
-              onClick={() => onAsk(s)}
-              className="min-h-(--spacing-touch) w-full rounded-(--radius-card) border border-control bg-surface px-4 py-3 text-left leading-ui transition-colors hover:border-accent focus-visible:outline-2 focus-visible:outline-accent"
-            >
-              {s}
-            </button>
-          </li>
-        ))}
-      </ul>
-    </section>
+    <div className="min-h-0 flex-1 overflow-y-auto">
+      <section className="motion-fade mx-auto flex min-h-full w-full max-w-(--spacing-column) flex-col justify-center px-4 py-8 md:px-6">
+        <h1 className="text-center text-h1 leading-tight font-semibold">What would you like to research?</h1>
+        <p className="mt-2 text-center text-muted">
+          Answers from curated papers on sustainable materials, with every source cited. Add your own PDF with
+          +.
+        </p>
+        <div className="mt-8">{children}</div>
+        <ul className="mt-6 grid gap-2 sm:grid-cols-2" aria-label="Suggested questions">
+          {SUGGESTIONS.map((s) => (
+            <li key={s}>
+              <button
+                type="button"
+                onClick={() => onAsk(s)}
+                className="min-h-(--spacing-touch) w-full rounded-(--radius-card) border border-border bg-surface px-4 py-3 text-left leading-ui transition-colors hover:border-control focus-visible:outline-2 focus-visible:outline-accent"
+              >
+                {s}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </section>
+    </div>
   );
 }
 
@@ -112,8 +127,26 @@ function TurnView({
 
   return (
     <article className="motion-fade pb-12 last:pb-4">
-      <h2 className="text-body leading-ui text-muted">{turn.question}</h2>
-      <div className="mt-3">
+      {/* The question as a soft bubble on the right; the answer stays plain document text (DESIGN.md). */}
+      <div className="flex justify-end">
+        <div className="max-w-[85%] rounded-(--radius-card) bg-accent-soft px-4 py-2.5">
+          {turn.attachments?.length ? (
+            <ul className="mb-2 flex flex-wrap justify-end gap-1.5" aria-label="Attached PDFs">
+              {turn.attachments.map((t, i) => (
+                <li
+                  key={i}
+                  className="flex max-w-full items-center gap-1.5 rounded-control bg-surface px-2 py-1 text-caption"
+                >
+                  <Icon name="file" className="size-3.5 shrink-0 text-muted" />
+                  <span className="truncate">{t}</span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          <h2 className="text-body leading-ui break-words whitespace-pre-wrap">{turn.question}</h2>
+        </div>
+      </div>
+      <div className="mt-5">
         {turn.state === "error" ? (
           <div role="alert" className="rounded-(--radius-card) border border-border bg-surface p-4">
             <p className={turn.error === "failed" ? "text-danger" : undefined}>
@@ -215,18 +248,108 @@ function Actions({ turn, onFeedback }: { turn: Turn; onFeedback: Props["onFeedba
   );
 }
 
-function Composer({ busy, onAsk }: { busy: boolean; onAsk: (q: string) => void }) {
+const STEP_COPY: Record<string, string> = {
+  reading: "Reading",
+  ocr: "Reading text from page images",
+  splitting: "Splitting",
+  indexing: "Indexing",
+};
+
+function chipStatus(a: Attachment): string {
+  if (a.state === "ready") return `Ready · ${a.pages} ${a.pages === 1 ? "page" : "pages"}`;
+  if (a.state === "error") return FAILURE_COPY[a.reason] ?? FAILURE_COPY.unreadable;
+  if (a.step === "indexing" && a.total && a.done >= a.total) return "Making it searchable…";
+  const count = a.total ? ` ${a.done} of ${a.total}` : "";
+  return `${STEP_COPY[a.step]}${count}…`;
+}
+
+function AttachmentChip({ a, onRemove }: { a: Attachment; onRemove: () => void }) {
+  const pct = a.state === "working" && a.total ? Math.round((100 * a.done) / a.total) : null;
+  return (
+    <li className="flex max-w-full min-w-0 items-center gap-2 rounded-control border border-border bg-bg py-1.5 pr-1 pl-2.5 sm:max-w-[20rem]">
+      <span
+        className={`flex size-8 shrink-0 items-center justify-center rounded-control ${a.state === "error" ? "text-danger" : "bg-accent-soft"}`}
+      >
+        <Icon name={a.state === "ready" ? "check" : "file"} className="size-4" />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-small font-medium">
+          {a.state === "ready" ? a.title : a.name}
+        </span>
+        <span className={`block truncate text-caption ${a.state === "error" ? "text-danger" : "text-muted"}`}>
+          {chipStatus(a)}
+        </span>
+        {pct !== null && (
+          <span className="mt-1 block h-1 overflow-hidden rounded-full bg-border" aria-hidden="true">
+            <span className="block h-full bg-accent transition-[width]" style={{ width: `${pct}%` }} />
+          </span>
+        )}
+      </span>
+      <IconButton
+        label={
+          a.state === "working" ? `Cancel ${a.name}` : `Remove ${a.state === "ready" ? a.title : a.name}`
+        }
+        icon="close"
+        className="size-9"
+        onClick={onRemove}
+      />
+    </li>
+  );
+}
+
+function Composer({
+  busy,
+  onAsk,
+  attachments,
+}: {
+  busy: boolean;
+  onAsk: Props["onAsk"];
+  attachments: ReturnType<typeof useAttachments>;
+}) {
   const [value, setValue] = useState("");
+  const [over, setOver] = useState(false);
+  const fileInput = useRef<HTMLInputElement>(null);
+  const { items, add, remove, take, working } = attachments;
+
   const submit = (e?: FormEvent) => {
     e?.preventDefault();
     const q = value.trim();
-    if (!q || busy) return;
-    onAsk(q);
+    if (!q || busy || working) return;
+    const titles = take();
+    onAsk(q, titles.length ? titles : undefined);
     setValue("");
   };
+  const addFiles = (files: FileList | null | undefined) => {
+    for (const f of Array.from(files ?? [])) void add(f);
+    if (fileInput.current) fileInput.current.value = "";
+  };
+  const onDrop = (e: DragEvent) => {
+    e.preventDefault();
+    setOver(false);
+    addFiles(e.dataTransfer.files);
+  };
+
   return (
-    <form onSubmit={submit} className="bg-bg px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:px-6">
-      <div className="mx-auto flex max-w-(--spacing-column) items-end gap-2 rounded-(--radius-card) border border-control bg-surface p-1.5 focus-within:border-accent">
+    <form
+      onSubmit={submit}
+      onDragOver={(e) => {
+        e.preventDefault();
+        setOver(true);
+      }}
+      onDragLeave={() => setOver(false)}
+      onDrop={onDrop}
+      className="mx-auto w-full max-w-(--spacing-column)"
+    >
+      <div
+        className={`rounded-(--radius-card) border bg-surface transition-colors focus-within:border-accent ${over ? "border-accent bg-accent-soft" : "border-control"}`}
+      >
+        {items.length > 0 && (
+          <ul aria-label="Attached PDFs" aria-live="polite" className="flex flex-wrap gap-2 px-2.5 pt-2.5">
+            {items.map((a) => (
+              <AttachmentChip key={a.id} a={a} onRemove={() => remove(a)} />
+            ))}
+          </ul>
+        )}
         <label htmlFor="question" className="sr-only">
           Your question
         </label>
@@ -239,18 +362,42 @@ function Composer({ busy, onAsk }: { busy: boolean; onAsk: (q: string) => void }
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) submit(e);
           }}
-          placeholder="Ask about biopolymers, green chemistry, packaging…"
-          className="field-sizing-content max-h-40 min-h-(--spacing-touch) flex-1 resize-none bg-transparent px-2.5 py-2.5 leading-ui outline-none placeholder:text-muted"
+          placeholder={
+            items.length
+              ? "Ask about your PDF or the library…"
+              : "Ask about biopolymers, green chemistry, packaging…"
+          }
+          className="field-sizing-content block max-h-48 min-h-14 w-full resize-none bg-transparent px-4 pt-3.5 pb-1 leading-ui outline-none placeholder:text-muted"
         />
-        <button
-          type="submit"
-          aria-label="Send question"
-          disabled={busy || !value.trim()}
-          className="inline-flex size-(--spacing-touch) shrink-0 items-center justify-center rounded-control bg-accent text-on-accent transition-opacity focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-40"
-        >
-          <Icon name="send" />
-        </button>
+        <div className="flex items-center justify-between gap-2 p-1.5">
+          <input
+            ref={fileInput}
+            type="file"
+            accept="application/pdf,.pdf"
+            multiple
+            className="sr-only"
+            tabIndex={-1}
+            aria-hidden="true"
+            onChange={(e) => addFiles(e.target.files)}
+          />
+          <IconButton label="Add a PDF" icon="plus" onClick={() => fileInput.current?.click()} />
+          <button
+            type="submit"
+            aria-label="Send question"
+            disabled={busy || working || !value.trim()}
+            title={working ? "Wait for your PDF to finish indexing" : undefined}
+            className="inline-flex size-(--spacing-touch) shrink-0 items-center justify-center rounded-control bg-accent text-on-accent transition-opacity focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-40"
+          >
+            <Icon name="send" />
+          </button>
+        </div>
       </div>
+      {items.length > 0 && (
+        <p className="mt-2 text-center text-caption text-muted">
+          Only you can see your PDFs; they're deleted after 7 days (up to {UPLOAD.maxPdfs} PDFs,{" "}
+          {UPLOAD.maxPages} pages). Don't upload confidential documents.
+        </p>
+      )}
     </form>
   );
 }

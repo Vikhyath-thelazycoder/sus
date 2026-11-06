@@ -20,7 +20,10 @@ Visual and interaction direction (spec §20.6, §26–27).
 ## Component principles
 
 - Few components, reused everywhere: `Button`, `IconButton`, `Input`, `Card`, `Badge`, `Sheet` (side panel / bottom sheet), `Drawer`, `Skeleton`, `Toast`.
-- The answer is plain text on the page (no bubble); the user question sits above it in muted text.
+- The answer is plain text on the page (no bubble). The user's question sits above it in a soft `--accent-soft` bubble on the right, with any attached PDFs shown as small chips (Claude/ChatGPT style, owner request 2026-11-06).
+- **New chat:** greeting and the question box centred on the page, suggestions under it; once a question is asked, the box docks at the bottom.
+- **Question box:** text on top, a toolbar row under it: **+ (Add a PDF)** on the left, send on the right. Attached PDFs appear as chips inside the box (name, progress, ✓ Ready, × remove); sending waits until they are ready. Uploading happens only here (the Library shows uploads but has no upload panel).
+- **Back:** the header shows a labelled back button on the Library ("← Chat") and on a paper ("← Library"). Icon-only "New chat" uses the compose icon, so it never looks like the + that adds a PDF.
 - Citations are small superscript-style pills `[2]` in the accent colour; the panel is the only place details appear.
 - One primary action per screen (send, upload).
 
@@ -63,7 +66,7 @@ Contrast target: WCAG AA (4.5:1 for text, 3:1 for UI elements); verified in T-5.
 
 - **Streaming:** text appears as it is written; a subtle "Searching papers…" status first, then "Writing…".
 - **Citations:** hover (desktop) highlights the pill; click/tap opens the panel; Esc or swipe down closes it.
-- **States:** empty (greeting + 3–4 suggestions), loading (skeletons), "I couldn't find this in the papers" (with a suggestion to rephrase or upload), rate-limited ("You've asked a lot quickly — try again in a minute"), busy (free quota), errors (plain words, no codes), upload progress (Reading → Splitting → Indexing).
+- **States:** empty (greeting + 3–4 suggestions), loading (skeletons), "I couldn't find this in the papers" (with a suggestion to rephrase or upload), rate-limited ("You've asked a lot quickly — try again in a minute"), busy (free quota), errors (plain words, no codes), upload progress (Reading → Reading text from page images n of N, for scanned PDFs → Splitting → Indexing n of N → Making it searchable).
 - **Feedback:** thumbs up/down under each answer; copy button.
 - **Disclaimers:** small muted line under answers: "AI answers can be wrong. Check the cited sources."
 
@@ -74,6 +77,10 @@ WCAG 2.2 AA: contrast, visible focus rings in the accent colour, full keyboard n
 ## Motion
 
 Minimal and functional only: panel/sheet slide 200 ms ease-out, drawer 200 ms, fade-in for new answers 150 ms. No decorative animation. All motion is disabled under `prefers-reduced-motion`.
+
+## Design checks (2026-11-06)
+
+`agylite design check` PASS. Taste lint: 0 FAIL, 0 WARN (skeleton pulse kept: it is a DESIGN.md loading state and stops under reduced motion). Taste inspect findings kept on purpose, because they are marketing-site rules that conflict with this calm app: no photos/video, no display-size headline or entrance animations (see Visual direction and Motion); the 1 px outline is the composer's `--control-border` (WCAG 1.4.11); the warm background is the approved palette (D-015); the muted subtitle is secondary text (6.2:1).
 
 ## Reference sources
 

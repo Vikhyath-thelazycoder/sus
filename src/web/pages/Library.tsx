@@ -9,7 +9,7 @@ import {
   type PaperDetail,
 } from "../api";
 import { Badge, Icon, Skeleton } from "../ui";
-import { UploadPanel } from "../upload/UploadPanel";
+import { UPLOAD } from "../../shared/limits";
 
 /** Library (T-6.2): curated papers and the viewer's own uploads, with search and topic filters, and a detail view. */
 
@@ -73,7 +73,12 @@ export function Library({ onOpen }: { onOpen: (id: string) => void }) {
           The open-access papers answers come from{hasUploads ? ", plus your uploads" : ""}.
         </p>
 
-        {papers && <UploadPanel used={used} onUploaded={() => void load()} onOpen={onOpen} />}
+        <p className="mt-3 text-small text-muted">
+          {used.pdfs
+            ? `Your uploads: ${used.pdfs} of ${UPLOAD.maxPdfs} PDFs, ${used.pages} of ${UPLOAD.maxPages} pages. `
+            : ""}
+          To add your own PDF, use + in the chat box.
+        </p>
 
         <label htmlFor="library-search" className="sr-only">
           Search papers
@@ -146,7 +151,7 @@ export function Library({ onOpen }: { onOpen: (id: string) => void }) {
           </ul>
         )}
 
-        <section aria-labelledby="your-data" className="mt-12 border-t border-border pt-6">
+        <section aria-labelledby="your-data" className="mt-16">
           <h2 id="your-data" className="text-h3 font-semibold">
             Your data
           </h2>
@@ -203,15 +208,8 @@ export function PaperView({
   return (
     <div className="min-h-0 flex-1 overflow-y-auto">
       <article className="mx-auto w-full max-w-(--spacing-column) px-4 py-6 md:px-6">
-        <button
-          type="button"
-          onClick={onBack}
-          className="-ml-2 inline-flex min-h-(--spacing-touch) items-center gap-1 rounded-control px-2 text-small text-muted hover:text-text focus-visible:outline-2 focus-visible:outline-accent"
-        >
-          ← Library
-        </button>
         {failed ? (
-          <p role="alert" className="mt-6">
+          <p role="alert" className="mt-2">
             This paper isn't available.
           </p>
         ) : !p ? (
@@ -222,7 +220,7 @@ export function PaperView({
           </div>
         ) : (
           <>
-            <div className="mt-4 flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2">
               {p.upload ? <Badge tone="muted">Your upload · unverified</Badge> : <Badge>Curated</Badge>}
               {topicLabel(p.topic) && <Badge tone="muted">{topicLabel(p.topic)}</Badge>}
             </div>

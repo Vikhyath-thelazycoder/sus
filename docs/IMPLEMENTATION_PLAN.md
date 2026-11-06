@@ -103,7 +103,7 @@ Objective: Browse the paper library and return to past conversations, each stric
 | T-6.4 | History sidebar wired to the API; new chat; grouping by date | VERIFIED | T-6.3, T-5.2 | design/frontend | — | DESIGN.md | Component tests | Past chats reopen with their citations |
 
 ## P7 · PDF uploads
-Status: VERIFIED · Depends: P2, P6 · Paths: src/web/upload/**, src/worker/routes/upload.ts, src/worker/cron.ts, src/shared/limits.ts, migrations/0003_vector_tombstones.sql · Flags: security, testing · Evidence: docs/evidence/P7.md
+Status: IN_PROGRESS · Depends: P2, P6 · Paths: src/web/upload/**, src/worker/routes/upload.ts, src/worker/cron.ts, src/shared/limits.ts, migrations/0003_vector_tombstones.sql · Flags: security, testing · Evidence: docs/evidence/P7.md
 Objective: Users upload their own PDFs (5 × 100 pages), parsed in the browser, re-validated on the server, private to them, deleted after 7 days.
 
 | ID | Task | Status | Depends | Capabilities | Security | Design | Testing | Acceptance |
@@ -113,6 +113,8 @@ Objective: Users upload their own PDFs (5 × 100 pages), parsed in the browser, 
 | T-7.3 | Upload UI: drag-and-drop, progress (Reading → Splitting → Indexing), limits and "don't upload confidential documents" notice | VERIFIED | T-7.1, T-5.2 | design/frontend | SEC §12 #21 | DESIGN.md | Visual check on a phone | Upload works on desktop and mobile |
 | T-7.4 | Own uploads searchable only by their owner; "Your upload (unverified)" labels | VERIFIED | T-7.2, T-3.4 | engineering/ai-systems | SEC §12 #10 | DESIGN.md | SEC §13 #4 | User A never sees user B's upload |
 | T-7.5 | Cleanup as a **Cloudflare Worker cron** (free; data lives on Cloudflare; Render's free tier has no cron): expire uploads after 7 days; orphan-vector cleanup; "delete my data" endpoint + button | VERIFIED | T-7.2 | engineering/backend | SEC §12 #16 | — | SEC §13 #23 | Deleted text is never found again |
+| T-7.6 | OCR for scanned PDFs in the browser (self-hosted tesseract.js; text-less pages only); Ready waits until the upload is searchable; topic guard allows questions about own uploads | READY_FOR_VERIFICATION | T-7.1 | engineering/frontend | — | — | — | The owner's 4-page image-only PDF uploads, gets its real title, and questions about it are answered with citations right after Ready |
+| T-7.7 | Claude/ChatGPT-style chat: centred new-chat box, + to attach PDFs as chips in the question box (only upload point), question bubble, labelled back buttons | READY_FOR_VERIFICATION | T-7.3 | design/frontend | — | — | — | Upload works from the chat box at 1280/768/375 px; Library and paper pages have back buttons; Agylite design check and Taste lint pass |
 
 ## P8 · Hardening and demo launch
 Status: PLANNED · Depends: P4, P6, P7 · Paths: src/worker/security/**, test/security/** · Flags: security, testing · Evidence: —
@@ -260,3 +262,9 @@ P1 ──► P2 ──► P3 ──► P4 ──┐
 | 2026-11-06 | T-7.4: READY_FOR_VERIFICATION → VERIFIED (evidence: docs/evidence/P7.md) |
 | 2026-11-06 | T-7.5: READY_FOR_VERIFICATION → VERIFIED (evidence: docs/evidence/P7.md) |
 | 2026-11-06 | P7: READY_FOR_VERIFICATION → VERIFIED (roll-up from T-7.5) |
+| 2026-11-06 | T-7.6 added to P7 PDF uploads: OCR for scanned PDFs in the browser (self-hosted tesseract.js; text-less pages only); Ready waits until the upload is searchable; topic guard allows questions about own uploads (phase reopened) |
+| 2026-11-06 | T-7.7 added to P7 PDF uploads: Claude/ChatGPT-style chat: centred new-chat box, + to attach PDFs as chips in the question box (only upload point), question bubble, labelled back buttons |
+| 2026-11-06 | T-7.6: PLANNED → IN_PROGRESS |
+| 2026-11-06 | T-7.6: IN_PROGRESS → READY_FOR_VERIFICATION (evidence: docs/evidence/P7.md) |
+| 2026-11-06 | T-7.7: PLANNED → IN_PROGRESS |
+| 2026-11-06 | T-7.7: IN_PROGRESS → READY_FOR_VERIFICATION (evidence: docs/evidence/P7.md) |

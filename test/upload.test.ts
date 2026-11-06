@@ -14,7 +14,7 @@ const B = "b7b7b7b7-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
 /** In-memory Workers AI and Vectorize; the fake index applies the same `$in` owner filter Vectorize does. */
 function fakes(overrides: Partial<Record<string, unknown>> = {}) {
   const vectors = new Map<string, { values: number[]; metadata: { owner_id: string } }>();
-  const state = { failDeletes: 0 };
+  const state = { failDeletes: 0, lagChecks: 0, describeCalls: 0 };
   const AI = {
     run: async (_m: string, input: { text: string[] }) => ({
       data: input.text.map(() => Array(EMBED_DIMS).fill(0.01)),
@@ -27,6 +27,8 @@ function fakes(overrides: Partial<Record<string, unknown>> = {}) {
       if (state.failDeletes-- > 0) throw new Error("vectorize down");
       ids.forEach((id) => vectors.delete(id));
     },
+    // Vectorize applies writes in batches: report "processed up to" in the past while `lagChecks` lasts.
+    describe: async () => ({ processedUpToDatetime: new Date(state.describeCalls++ < state.lagChecks ? 0 : Date.now() + 1).toISOString() }),
     query: async (_v: number[], o: { filter: { owner_id: { $in: string[] } } }) => ({
       matches: [...vectors]
         .filter(([, v]) => o.filter.owner_id.$in.includes(v.metadata.owner_id))
@@ -170,6 +172,16 @@ describe("uploads: server re-validation (T-7.2, SECURITY §5.1)", () => {
     ).toBe(400);
     expect(await count("SELECT count(*) AS n FROM chunks")).toBe(0);
     expect(f.vectors.size).toBe(0);
+  });
+
+  it("'finish' waits until Vectorize has applied the vectors, so Ready means a question can find it", async () => {
+    const id = ((await (await as(A, "POST", "/api/uploads", create())).json()) as { paperId: string }).paperId;
+    await as(A, "POST", `/api/uploads/${id}/chunks`, { chunks: [chunk(0)] });
+    f.state.lagChecks = 1;
+    const t0 = Date.now();
+    expect((await as(A, "POST", `/api/uploads/${id}/finish`)).status).toBe(204);
+    expect(f.state.describeCalls).toBe(2);
+    expect(Date.now() - t0).toBeGreaterThanOrEqual(UPLOAD.searchablePollMs - 50);
   });
 
   it("won't let another owner add to, finish or delete an upload (404)", async () => {

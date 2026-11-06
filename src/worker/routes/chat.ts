@@ -72,7 +72,13 @@ export function chatRoutes(steps: Steps = defaultSteps) {
         .run();
     }
 
-    const hasUploads = await db.prepare("SELECT 1 AS x FROM papers WHERE owner_id = ?1 LIMIT 1").bind(ownerId).first();
+    // Titles of the owner's live uploads: the topic guard lets questions about them through (any subject).
+    const { results: own } = await db
+      .prepare("SELECT title FROM papers WHERE owner_id = ?1 AND status = 'ready' AND expires_at > ?2 ORDER BY created_at DESC LIMIT 5")
+      .bind(ownerId, now)
+      .all<{ title: string }>();
+    const uploads = own.map((r) => r.title);
+    const hasUploads = uploads.length || (await db.prepare("SELECT 1 AS x FROM papers WHERE owner_id = ?1 LIMIT 1").bind(ownerId).first());
     const key = !history.length && !hasUploads ? await cacheKey(question) : null;
 
     return streamSSE(c, async (stream) => {
@@ -85,7 +91,7 @@ export function chatRoutes(steps: Steps = defaultSteps) {
           result = { ...(JSON.parse(hit) as AnswerResult), cached: true };
           await send({ type: "token", text: result.content });
         } else {
-          result = await answer(c.env, { question, history, ownerId, signal: c.req.raw.signal }, send, steps);
+          result = await answer(c.env, { question, history, ownerId, uploads, signal: c.req.raw.signal }, send, steps);
           if (key && result.status === "ok") await c.env.CACHE.put(key, JSON.stringify(result), { expirationTtl: CACHE_TTL });
         }
 

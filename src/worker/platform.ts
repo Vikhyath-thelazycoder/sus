@@ -40,3 +40,9 @@ export async function upsertVectors(env: Env, vectors: { id: string; values: num
 export async function deleteVectors(env: Env, ids: string[]) {
   for (let i = 0; i < ids.length; i += 100) await env.VECTORIZE.deleteByIds(ids.slice(i, i + 100));
 }
+
+/** Up to when Vectorize has applied queued writes: it applies them in batches, seconds to a minute after upsert. */
+export async function vectorsProcessedAt(env: Env): Promise<number> {
+  const info = (await env.VECTORIZE.describe()) as { processedUpToDatetime?: string | number | null };
+  return info.processedUpToDatetime ? new Date(info.processedUpToDatetime).getTime() : 0;
+}

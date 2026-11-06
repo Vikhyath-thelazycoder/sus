@@ -156,6 +156,7 @@ export const deleteChat = (id: string) =>
   json<void>(`/api/chats/${encodeURIComponent(id)}`, { method: "DELETE" });
 export const listPapers = () => json<{ papers: Paper[] }>("/api/papers").then((r) => r.papers);
 export const getPaper = (id: string) => json<PaperDetail>(`/api/papers/${encodeURIComponent(id)}`);
-export const deleteUpload = (id: string) => json<void>(`/api/uploads/${encodeURIComponent(id)}`, { method: "DELETE" });
+export const deleteUpload = (id: string) =>
+  json<void>(`/api/uploads/${encodeURIComponent(id)}`, { method: "DELETE" });
 /** "Delete my data": uploads, vectors, chats and messages for this browser's identity. */
 export const deleteMyData = () => json<void>("/api/me/delete", { method: "POST" });

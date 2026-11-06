@@ -5,7 +5,7 @@ import type { AppEnv } from "../types";
 import { parseJson } from "../security/errors";
 import { cleanText } from "../../shared/text";
 import { UPLOAD } from "../../shared/limits";
-import { deleteVectors, embed, upsertVectors } from "../platform";
+import { deleteVectors, embed, upsertVectors, vectorsProcessedAt } from "../platform";
 import { purgePapers } from "../cron";
 import { chunkId, sectionId } from "./admin-papers";
 
@@ -156,6 +156,13 @@ uploads.post("/uploads/:id/chunks", async (c) => {
 
 uploads.post("/uploads/:id/finish", async (c) => {
   const id = paperIdParam(c.req.param("id"));
+  if (!(await ownProcessing(c.env, id, c.get("ownerId")))) throw notFound();
+  // Only call it ready once a question can find it: wait (bounded) until Vectorize has applied the vectors.
+  const since = Date.now();
+  while (Date.now() - since < UPLOAD.searchableWaitMs) {
+    if ((await vectorsProcessedAt(c.env).catch(() => 0)) >= since) break;
+    await new Promise((r) => setTimeout(r, UPLOAD.searchablePollMs));
+  }
   const res = await c.env.DB.prepare(
     `UPDATE papers SET status = 'ready'
      WHERE id = ?1 AND owner_id = ?2 AND status = 'processing' AND EXISTS (SELECT 1 FROM chunks WHERE paper_id = ?1)`,

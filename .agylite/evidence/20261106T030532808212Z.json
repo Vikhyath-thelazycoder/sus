@@ -1,0 +1,145 @@
+{
+ "schema_version": 1,
+ "mode": "tests-and-browser",
+ "task": null,
+ "result": "PASSED",
+ "impact": null,
+ "checks": [
+  {
+   "command": [
+    "npm",
+    "run",
+    "test"
+   ],
+   "exit_code": 0,
+   "result": "PASSED",
+   "duration_ms": 4804,
+   "diagnosis": [],
+   "kind": "test",
+   "name": "test",
+   "reason": "full suite: full suite requested",
+   "tests": [],
+   "at": "2026-11-06T03:05:25Z"
+  },
+  {
+   "command": [
+    "npm",
+    "run",
+    "typecheck"
+   ],
+   "exit_code": 0,
+   "result": "PASSED",
+   "duration_ms": 1867,
+   "diagnosis": [],
+   "kind": "typecheck",
+   "name": "typecheck",
+   "reason": "typecheck check for the project",
+   "tests": [],
+   "at": "2026-11-06T03:05:27Z"
+  },
+  {
+   "command": [
+    "npm",
+    "run",
+    "lint"
+   ],
+   "exit_code": 0,
+   "result": "PASSED",
+   "duration_ms": 1352,
+   "diagnosis": [],
+   "kind": "lint",
+   "name": "lint",
+   "reason": "lint check for the project",
+   "tests": [],
+   "at": "2026-11-06T03:05:28Z"
+  },
+  {
+   "command": [
+    "/Users/vikhyathmgowda007/.agylite/core/bin/python",
+    "-m",
+    "compileall",
+    "-q",
+    "-x",
+    "(^|/)(\\.|node_modules|venv)",
+    "."
+   ],
+   "exit_code": 0,
+   "result": "PASSED",
+   "duration_ms": 169,
+   "diagnosis": [],
+   "kind": "build",
+   "name": "compileall",
+   "reason": "build check for the project",
+   "tests": [],
+   "at": "2026-11-06T03:05:28Z"
+  },
+  {
+   "command": [
+    "npm",
+    "run",
+    "build"
+   ],
+   "exit_code": 0,
+   "result": "PASSED",
+   "duration_ms": 2571,
+   "diagnosis": [],
+   "kind": "build",
+   "name": "build",
+   "reason": "build check for the project",
+   "tests": [],
+   "at": "2026-11-06T03:05:31Z"
+  },
+  {
+   "command": [
+    "/Users/vikhyathmgowda007/.agylite/core/bin/python",
+    "-m",
+    "agylite.cli",
+    "browser-check",
+    "--project",
+    "/Users/vikhyathmgowda007/Developer/sustainIQ",
+    "--url",
+    "http://localhost:8799/"
+   ],
+   "exit_code": 0,
+   "result": "PASSED",
+   "duration_ms": 1621,
+   "diagnosis": [],
+   "defects": [],
+   "artifacts": [
+    {
+     "path": ".agylite/evidence/browser/20261106T030531Z/screenshot-1440.png",
+     "sha256": "4dece6c5c6162bba48648c0223391f76376ae9709dac618d5968aaaf453b9cbb"
+    },
+    {
+     "path": ".agylite/evidence/browser/20261106T030531Z/screenshot-768.png",
+     "sha256": "aae98077dd5d8f9c2a7f72b223edad88159df1f48469e8bbda2ac2a403ae7a44"
+    },
+    {
+     "path": ".agylite/evidence/browser/20261106T030531Z/screenshot-390.png",
+     "sha256": "f57fe4777f6a3c15be2f4ce451e62287a6ff47f0a64c760e97a1053012d6c61d"
+    },
+    {
+     "path": ".agylite/evidence/browser/20261106T030531Z/console.json",
+     "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+     "path": ".agylite/evidence/browser/20261106T030531Z/network.json",
+     "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+     "path": ".agylite/evidence/browser/20261106T030531Z/flows.json",
+     "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+     "path": ".agylite/evidence/browser/20261106T030531Z/report.json"
+    }
+   ],
+   "kind": "browser",
+   "name": "browser check",
+   "reason": "browser check requested",
+   "tests": [],
+   "at": "2026-11-06T03:05:32Z"
+  }
+ ],
+ "at": "2026-11-06T03:05:32Z"
+}
