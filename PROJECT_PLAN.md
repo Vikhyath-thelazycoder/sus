@@ -14,25 +14,25 @@ Related docs: [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) (phases
 
 ---
 
-## 2. Status (updated 2026-11-05)
+## 2. Status (updated 2026-11-06)
 
 | Phase | Status | Result |
 |---|---|---|
-| P1 Foundations and platform check | ✅ Verified | Secure app shell; Cloudflare D1 (FTS5), Vectorize, Workers AI and KV for dev + production; security headers, signed anonymous cookie, CSRF guard, admin token; Groq checked (models updated). [Evidence](docs/evidence/P1.md) |
-| P2 Paper ingestion | ✅ Verified | **20 curated CC BY papers → 881 chunks → 881 vectors** (5 papers per topic); demo moved to Render. [Evidence](docs/evidence/P2.md) |
-| P3 Retrieval and evaluation | ⏳ Next | Hybrid search + RRF + reranker, measured on a golden set |
-| P4 Answer generation | Planned | Streaming cited answers, citation validation, "I couldn't find this" |
-| P5 UI and chat | Planned | Calm sage-green design, citation panel / bottom sheet |
-| P6 Library and history | Planned | |
-| P7 PDF uploads | Planned | |
-| P8 Hardening and demo launch | Planned | |
-| P9 Paid MVP | On hold until the deal | |
+| P1 Foundations and platform check | ✅ Verified | Secure app shell; Cloudflare D1 (FTS5), Vectorize, Workers AI and KV for dev + production; security headers, signed anonymous cookie, CSRF guard, admin token. [Evidence](docs/evidence/P1.md) |
+| P2 Paper ingestion | ✅ Verified | 20 curated CC BY papers → 881 chunks → 881 vectors. [Evidence](docs/evidence/P2.md) |
+| P3 Retrieval and evaluation | ✅ Verified | Hybrid + fused rerank: recall@6 1.00, MRR 0.944. [Evidence](docs/evidence/P3.md) |
+| P4 Answer generation | ✅ Verified | Streamed, cited answers; 35/35 faithful, declines and injection tests pass. [Evidence](docs/evidence/P4.md) |
+| P5 UI and chat | ✅ Verified | Calm sage design, citation panel / bottom sheet, WCAG AA. [Evidence](docs/evidence/P5.md) |
+| P6 Library and history | ✅ Verified (live) | Library search/filters, paper pages, saved chats (rename, delete). [Evidence](docs/evidence/P6.md) |
+| P7 PDF uploads | ✅ Live; 3 small tuning tasks left | Upload from the chat box (+), parsed in the browser, **OCR for scanned PDFs**, private, 7-day expiry, cleanup cron, delete my data. [Evidence](docs/evidence/P7.md) |
+| P8 Hardening and demo launch | ⏸ After the client demos (owner rule) | Rate limits, Turnstile, logging, full security suite |
+| P9 Paid MVP | On hold until the deal | Includes production OCR (§6.6) |
 
 **Live:**
-- **Demo:** https://sustainiq-demo.onrender.com (Render free, Singapore). Sleeps after 15 min idle; the first visit then takes 30–60 s.
-- **Production path:** https://sustainiq.sustainiq.workers.dev (Cloudflare Worker, same code, kept deployed for the MVP).
+- **Demo:** https://sustainiq-demo.onrender.com (Render free, Singapore). Sleeps after 15 min idle; the first visit then takes 30–60 s. Deploys are started with the Render API (a push to `main` does not deploy).
+- **Cloudflare Worker `sustainiq`:** runs only the daily upload cleanup (cron 03:17 UTC). It has no public URL while the demo is on Render (`workers_dev = false`).
 - **Code:** https://github.com/Vikhyath-thelazycoder/sus (public; consider making it private, since this is client work).
-- **Quality gate:** `agylite verify` passes; 72 tests (Workers runtime + Node).
+- **Quality gate:** `agylite verify` passes; 178 tests.
 
 **Changes from the original plan (all recorded in the decision log):**
 1. **LangGraph is not in the demo** (D-010). It fit on size (502 KB) but used 14 ms median / 82 ms p90 CPU per request against the Workers free plan's 10 ms. The pipeline runs as plain functions; LangGraph returns in the MVP for agents.
@@ -57,10 +57,10 @@ Related docs: [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) (phases
 | Orchestration | **Demo: plain TypeScript functions.** **MVP: LangGraph** on the paid plan for agents. (D-010) |
 | RAG engine | Our own: Workers AI `bge-m3` → **Vectorize** (meaning) + **D1 FTS5** (keyword/BM25) → **RRF** → Workers AI `bge-reranker-base`. |
 | Papers | **20 curated open-access CC BY papers** (OpenAlex), plus user uploads. |
-| Uploads | Parsed in the browser (pdf.js). 5 PDFs × 100 pages per user, private to the uploader, deleted after 7 days. |
+| Uploads | Added with **+ in the chat box**. Parsed in the browser (pdf.js); scanned pages read with **OCR in the browser** (tesseract.js, self-hosted; D-016). 5 PDFs × 100 pages per user, private to the uploader, deleted after 7 days. Questions about your own upload are allowed whatever its subject (D-017). |
 | Look | Minimal, calm: **warm off-white + sage green**, dark mode. Desktop-first, fully mobile-friendly. |
 | Citations UI | Click `[n]` → **side panel** (desktop) / **bottom sheet** (mobile) with passage, title, authors, year, page, DOI. |
-| Screens | Chat with cited answers · Paper library · Upload PDF · Chat history sidebar. |
+| Screens | Chat with cited answers (Claude/ChatGPT style) · Paper library · Chat history sidebar. Upload lives in the chat box. |
 | Login | **None in the demo.** Signed anonymous cookie; chat history in D1. |
 | Off-topic | Polite decline with a suggested on-topic question. |
 
@@ -163,6 +163,42 @@ Vectorize vector ID = `chunks.id` (`p_<hash>:c<idx>`); metadata `{ owner_id, pap
 
 ---
 
+### 6.5 User uploads and OCR (demo, as built)
+
+1. The user picks a PDF with **+** in the chat box. The browser checks it (PDF, ≤ 25 MB, ≤ 100 pages).
+2. **pdf.js** reads the text. Pages with almost no text (scans) are drawn at ≈ 300 dpi and read by **tesseract.js** (self-hosted in `/ocr/`, nothing sent to another site). A second quick pass catches large titles. Words go through the same column-ordering code as normal PDFs.
+3. The same structure parser and chunker as curated papers; then the server re-validates, embeds and stores (5 PDFs / 100 pages per user, atomic quota).
+4. "Ready" waits until the passages are searchable (Vectorize applies new vectors ~30 s after writing).
+
+**Measured on the owner's 4-page scanned paper:**
+
+| | Result |
+|---|---|
+| OCR | 13–22 s (varies with machine load); title found; 97–98% of words correct |
+| Upload → cited answer, live | 80 s in total, mostly the "searchable" wait |
+| Tuned OCR (T-7.8, not shipped yet) | 14.1 s vs 21.8 s, 97.1% vs 98.0% of words |
+| Keyword search vs Vectorize on a new upload | keyword finds it at 1 s, Vectorize at ~31 s (T-7.9 uses this to drop the wait) |
+
+**Options checked and not used in the demo (D-016):**
+- **Llama 3.2 11B Vision on Workers AI:** 29–116 s per page, and it invented a repeating line on 1 of 4 pages.
+- **PyMuPDF:** pdf.js already does the same; PyMuPDF is Python and AGPL-licensed.
+- **OpenCV pre-processing:** about 10 MB more to download; it doesn't help clean scans.
+- **Supabase pgvector:** its one gain (no index lag) is solved by T-7.9 without a migration.
+
+### 6.6 OCR in production (proposed, decide with the client after the demos: D-018, T-9.8)
+
+| Step | Choice | Why |
+|---|---|---|
+| Text PDFs | pdf.js in the browser (as now) | Instant and free |
+| Scanned pages, option A | **Self-hosted PaddleOCR** (Apache-2.0) on our own server (small VM in Mumbai or Cloudflare Containers) | Documents never leave our servers; fixed cost (est. $20–50/month CPU); very good accuracy; handles rotation, skew and tables |
+| Scanned pages, option B | **Google Document AI** or **Azure Read**, ~$1.50 per 1,000 pages | No server to run; fast; best on messy scans; data-protection agreement needed |
+| Complex tables (optional) | Mistral OCR 4, ~$4 per 1,000 pages (half in batch) | Strongest on tables |
+| Fallback | tesseract.js in the browser (today's code) | Uploads still work if the OCR service is down |
+| Processing | PDF briefly in R2, OCR in a background job (Cloudflare Queues/Workflows) | Users keep chatting; big PDFs don't hit time limits |
+| Not used | Llama Vision (slow, invents text), Surya/Marker (licence limits), PyMuPDF (AGPL) | |
+
+**Leaning:** option A, because "your documents stay with us" fits SustainIQ's privacy promise. Benchmark PaddleOCR on the owner's scan first (free, on a laptop). Going server-side changes SECURITY.md ("the server never parses user PDFs") and the privacy notice. Prices are from vendor or aggregator pages in Nov 2026; confirm them before budgeting.
+
 ## 7. How a question is answered (query pipeline: P3–P4)
 
 ```
@@ -205,7 +241,7 @@ Each step is a plain TypeScript function with its own tests; a small runner call
 
 **Desktop:** history sidebar · answer column (≤ 720 px) · citation side panel. **Mobile:** history drawer, citation bottom sheet, input fixed at the bottom, 44 px touch targets.
 
-**Screens:** Home (greeting + suggested questions) · Chat (streaming answer, `[n]`, sources row, copy, thumbs) · Citation panel (highlighted passage, paper details, DOI, Curated / Your upload badge) · Library (search, topic filters, paper detail) · Upload (drag and drop, progress, limits) · all empty/loading/error/rate-limited states.
+**Screens:** New chat (greeting, question box in the middle, suggestions) · Chat (your question as a soft bubble with attached PDFs, plain-text streaming answer, `[n]`, sources row, copy, thumbs) · Question box (**+** to attach PDFs as chips with progress → Ready, × to remove) · Citation panel (highlighted passage, paper details, DOI, Curated / Your upload badge) · Library (search, topic filters, paper detail, delete upload, delete my data) · labelled **← Chat / ← Library** back buttons · all empty/loading/error/rate-limited states.
 
 ---
 
@@ -262,6 +298,7 @@ npm run deploy                      # build + wrangler deploy → sustainiq.sust
 - **OpenAI** first in the fallback chain (optionally OpenAI embeddings, which means re-embedding everything).
 - **Login** (magic link / Google) replaces the anonymous ID (SECURITY §10).
 - **Big PDFs** (300–400 pages) processed server-side with **Cloudflare Queues**.
+- **Production OCR** for scanned PDFs (§6.6): self-hosted PaddleOCR or Google Document AI / Azure Read, tesseract.js as fallback.
 - **Better tables:** Docling/GROBID or `toMarkdown`, tested on the table-heavy papers.
 - **LangGraph agents** for multi-paper research questions.
 - Tracing (Langfuse), privacy notice; extras only if asked: paper comparison, property-table extraction, BibTeX export, live OpenAlex / Semantic Scholar search.
@@ -281,5 +318,9 @@ npm run deploy                      # build + wrangler deploy → sustainiq.sust
 | Free Vectorize space fills up | 881 of ~4,880 used; upload caps, 7-day expiry, orphan cleanup |
 | "Zero errors" expectation | Promise measured accuracy, citations and "I don't know", not perfection |
 | Public GitHub repo for client work | Make it private (Render needs repo access re-granted if so) |
+| Browser OCR is slow on phones (≈ 3 s/page on a laptop, more on phones) | T-7.8 tuning for the demo; production OCR service (§6.6) |
+| New uploads take ~30 s to be found by meaning search | "Making it searchable" wait today; T-7.9 drops it with keyword-first search |
+| Vague questions about an upload sometimes get "couldn't find" | Ask specific questions in the demo; answers only come from the sources by design |
+| Poor scans (photos, crooked pages) read badly | T-7.10 warning; production OCR handles skew and rotation |
 | ~~LangGraph over the free limits~~ | Resolved: not in the demo (D-010) |
 | ~~Rate-limiting binding not on the free plan~~ | Demo on Render uses in-memory + D1 counters |

@@ -187,3 +187,42 @@ decisions:
   supersedes: null
   status: ACTIVE
   tags: []
+- decision_id: D-016
+  date: '2026-11-06'
+  kind: architecture
+  topic: OCR for scanned PDFs (demo)
+  decision: 'Demo: tesseract.js in the upload Web Worker, self-hosted, only for text-less pages; Llama 3.2 Vision, OpenCV,
+    PyMuPDF and Supabase pgvector not used'
+  reason: 'Measured on the owner''s 4-page scan: tesseract 14-22 s, 97-98% of reference words; Llama 3.2 11B Vision 29-116
+    s per page and invented a repeating line on 1 of 4 pages; PyMuPDF is Python and AGPL; OpenCV adds ~10 MB for no gain on
+    clean scans; pgvector''s only gain (no index lag) is solved by keyword-first search'
+  alternatives: []
+  impact: ''
+  supersedes: null
+  status: ACTIVE
+  tags: []
+- decision_id: D-017
+  date: '2026-11-06'
+  kind: security
+  topic: Topic guard with uploads
+  decision: When the owner has live uploads, the topic guard blocks only hazards and override attempts, not off-subject questions
+  reason: A user's own PDF can be on any subject (the owner's test paper is on heart disease); answers still come only from
+    the sources, so unrelated questions find nothing
+  alternatives: []
+  impact: ''
+  supersedes: null
+  status: ACTIVE
+  tags: []
+- decision_id: D-018
+  date: '2026-11-06'
+  kind: architecture
+  topic: OCR in production (proposed)
+  decision: 'Production: pdf.js for text PDFs; scanned pages via self-hosted PaddleOCR (if documents must stay in-house) or
+    Google Document AI / Azure Read (~USD 1.50 per 1,000 pages); tesseract.js as fallback; background job via Cloudflare Queues/Workflows'
+  reason: Browser OCR is slow on phones and weaker on poor scans; to be benchmarked and decided with the client after the
+    demos
+  alternatives: []
+  impact: ''
+  supersedes: null
+  status: ACTIVE
+  tags: []

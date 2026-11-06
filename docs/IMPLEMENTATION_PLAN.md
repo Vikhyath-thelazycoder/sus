@@ -13,7 +13,7 @@ INTENTIONALLY_DEFERRED. `agylite plan index` keeps a compact index in `.agylite/
 
 **Scope:** P1–P8 build the **demo** (Render free web service at https://sustainiq-demo.onrender.com with data on Cloudflare, Groq, no login; D-012). P9 is the **paid MVP** on Cloudflare Workers Paid, deferred until the client accepts the deal.
 
-**Progress (2026-11-06):** P1 ✅ verified · P2 ✅ verified (20 papers, 881 chunks, 881 vectors) · P3 ✅ verified (hybrid + fused rerank: recall@6 1.00, MRR 0.944, ~0.85 s server-side) · P4 ✅ verified (35/35 faithful, 5/5 declines, 6/6 injection; first token ~3 s on Render) · P5 ✅ verified (chat UI, citation panel/sheet, AA contrast; design check override D-015) · P6 built and tested locally (library, saved history; front matter cleaned, re-ingested); deploy awaits owner approval · **next: P7**. Changes from the first draft: no LangGraph in the demo (D-010), Groq models updated (D-011), demo hosted on Render (D-012), gpt-oss-20b removed from the answer chain (D-013).
+**Progress (2026-11-06, end of day):** P1–P6 ✅ verified · P7 uploads ✅ live (T-7.1–7.6 verified; scanned-PDF OCR live). T-7.7 (chat-style UI) is live, but its live UI check is still open. T-7.8–7.10 are planned demo tuning (faster OCR, no searchable wait, OCR quality warning) · P8 hardening **waits until after the client demos** (owner rule) · P9 after the deal, now including production OCR (T-9.8, D-018). Changes from the first draft: no LangGraph in the demo (D-010), Groq models updated (D-011), demo hosted on Render (D-012), gpt-oss-20b removed from the answer chain (D-013), browser OCR for the demo (D-016), topic guard relaxed for own uploads (D-017).
 
 **Definition of done for every task:** `agylite verify` passes (tests, types, lint, build), the acceptance column is met, and the SEC items it touches have their tests.
 
@@ -113,8 +113,11 @@ Objective: Users upload their own PDFs (5 × 100 pages), parsed in the browser, 
 | T-7.3 | Upload UI: drag-and-drop, progress (Reading → Splitting → Indexing), limits and "don't upload confidential documents" notice | VERIFIED | T-7.1, T-5.2 | design/frontend | SEC §12 #21 | DESIGN.md | Visual check on a phone | Upload works on desktop and mobile |
 | T-7.4 | Own uploads searchable only by their owner; "Your upload (unverified)" labels | VERIFIED | T-7.2, T-3.4 | engineering/ai-systems | SEC §12 #10 | DESIGN.md | SEC §13 #4 | User A never sees user B's upload |
 | T-7.5 | Cleanup as a **Cloudflare Worker cron** (free; data lives on Cloudflare; Render's free tier has no cron): expire uploads after 7 days; orphan-vector cleanup; "delete my data" endpoint + button | VERIFIED | T-7.2 | engineering/backend | SEC §12 #16 | — | SEC §13 #23 | Deleted text is never found again |
-| T-7.6 | OCR for scanned PDFs in the browser (self-hosted tesseract.js; text-less pages only); Ready waits until the upload is searchable; topic guard allows questions about own uploads | READY_FOR_VERIFICATION | T-7.1 | engineering/frontend | — | — | — | The owner's 4-page image-only PDF uploads, gets its real title, and questions about it are answered with citations right after Ready |
+| T-7.6 | OCR for scanned PDFs in the browser (self-hosted tesseract.js; text-less pages only); Ready waits until the upload is searchable; topic guard allows questions about own uploads | VERIFIED | T-7.1 | engineering/frontend | — | — | — | The owner's 4-page image-only PDF uploads, gets its real title, and questions about it are answered with citations right after Ready |
 | T-7.7 | Claude/ChatGPT-style chat: centred new-chat box, + to attach PDFs as chips in the question box (only upload point), question bubble, labelled back buttons | READY_FOR_VERIFICATION | T-7.3 | design/frontend | — | — | — | Upload works from the chat box at 1280/768/375 px; Library and paper pages have back buttons; Agylite design check and Taste lint pass |
+| T-7.8 | Tune OCR: extra title pass on page 1 only, 2000 px render | PLANNED | T-7.6 | engineering/frontend | — | — | — | Measured: owner's 4-page scan 21.8 s -> 14.1 s, reference-word recall 98.0% -> 97.1%, same title and 18 passages |
+| T-7.9 | Ready without the Vectorize wait: owner-uploads keyword list added to fusion, finish no longer waits | PLANNED | T-7.6 | engineering/ai-systems | — | — | — | A question asked 1 s after Ready is answered from the new upload (keyword finds it at 1 s; Vectorize at ~31 s) |
+| T-7.10 | Per-page OCR quality warning from tesseract confidence | PLANNED | T-7.6 | engineering/frontend | — | — | — | A badly read page shows a plain warning on the chip instead of failing silently |
 
 ## P8 · Hardening and demo launch
 Status: PLANNED · Depends: P4, P6, P7 · Paths: src/worker/security/**, test/security/** · Flags: security, testing · Evidence: —
@@ -148,6 +151,7 @@ Objective: Turn the demo into the client's production MVP on Cloudflare Workers 
 | T-9.5 | Optional Python parsing service (Docling/GROBID) if T-2.5 found table problems | INTENTIONALLY_DEFERRED | T-2.5 | engineering/ai-systems | SEC §12 #7 | — | Table fixtures | Only if needed |
 | T-9.6 | Reintroduce LangGraph (paid plan) and build an agent for multi-paper research questions | INTENTIONALLY_DEFERRED | — | engineering/ai-systems | Tool allowlist, budgets (RAG §7) | — | Agent evals | Client decision |
 | T-9.7 | Tracing (Langfuse), privacy notice, dependency scanning, SEC §14 MVP checklist | INTENTIONALLY_DEFERRED | — | engineering/security | SEC §14 [MVP] | — | — | Client decision |
+| T-9.8 | Production OCR: self-hosted PaddleOCR or Google Document AI / Azure Read for scanned pages, tesseract.js fallback, background job (Queues/Workflows); benchmark first (D-018) | INTENTIONALLY_DEFERRED | — | engineering/backend | — | — | — | Client chooses provider; benchmark on the owner's scan recorded; SECURITY.md and privacy notice updated |
 
 ---
 
@@ -268,3 +272,9 @@ P1 ──► P2 ──► P3 ──► P4 ──┐
 | 2026-11-06 | T-7.6: IN_PROGRESS → READY_FOR_VERIFICATION (evidence: docs/evidence/P7.md) |
 | 2026-11-06 | T-7.7: PLANNED → IN_PROGRESS |
 | 2026-11-06 | T-7.7: IN_PROGRESS → READY_FOR_VERIFICATION (evidence: docs/evidence/P7.md) |
+| 2026-11-06 | T-7.8 added to P7 PDF uploads: Tune OCR: extra title pass on page 1 only, 2000 px render |
+| 2026-11-06 | T-7.9 added to P7 PDF uploads: Ready without the Vectorize wait: owner-uploads keyword list added to fusion, finish no longer waits |
+| 2026-11-06 | T-7.10 added to P7 PDF uploads: Per-page OCR quality warning from tesseract confidence |
+| 2026-11-06 | T-9.8 added to P9 Paid MVP (after the deal): Production OCR: self-hosted PaddleOCR or Google Document AI / Azure Read for scanned pages, tesseract.js fallback, background job (Queues/Workflows); benchmark first (D-018) |
+| 2026-11-06 | T-7.6: READY_FOR_VERIFICATION → VERIFIED (evidence: docs/evidence/P7.md) |
+| 2026-11-06 | T-9.8: PLANNED → INTENTIONALLY_DEFERRED |

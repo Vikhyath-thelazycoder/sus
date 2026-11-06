@@ -13,14 +13,10 @@ verification:
   mode: tests-and-browser
   browser_verification: enabled
   simulator_recording_loop: disabled
-  last:
-    task: null
-    result: PASSED
-    evidence: .agylite/evidence/20261106T030532808212Z.json
-    at: '2026-11-06T03:05:32+00:00'
-  last_task:
-    task: T-7.5
+  last: &id001
+    task: T-7.6
     result: VERIFIED
     evidence: docs/evidence/P7.md
-    at: '2026-11-06T01:53:47+00:00'
-updated: '2026-11-06T03:05:32+00:00'
+    at: '2026-11-06T03:54:38+00:00'
+  last_task: *id001
+updated: '2026-11-06T03:54:38+00:00'

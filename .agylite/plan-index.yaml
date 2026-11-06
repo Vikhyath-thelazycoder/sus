@@ -1,9 +1,9 @@
 schema_version: 1
 plan_path: docs/IMPLEMENTATION_PLAN.md
-plan_sha256: 1cefa421ddfb02b3499fdaf50c23b131dfffa9a4b69ec9e60a62fab021811632
-plan_size: 32280
-plan_mtime_ns: 1793934376074960684
-built: '2026-11-06T03:06:16+00:00'
+plan_sha256: 962aabee5c1d188a3351af641720e1567ec5922d09d1fd84bc8a64eefe2edff8
+plan_size: 34115
+plan_mtime_ns: 1793937291577313369
+built: '2026-11-06T03:54:51+00:00'
 current_phase: P7
 phases:
 - phase_id: P1
@@ -287,7 +287,6 @@ phases:
   objective: Users upload their own PDFs (5 × 100 pages), parsed in the browser, re-validated on the server, private to them,
     deleted after 7 days.
   active_tasks:
-  - T-7.6
   - T-7.7
   tasks:
   - id: T-7.1
@@ -312,11 +311,20 @@ phases:
   - id: T-7.6
     title: OCR for scanned PDFs in the browser (self-hosted tesseract.js; text-less pages only); Ready waits until the upload
       is searchable; topic guard allows questions about own uploads
-    status: READY_FOR_VERIFICATION
+    status: VERIFIED
   - id: T-7.7
     title: 'Claude/ChatGPT-style chat: centred new-chat box, + to attach PDFs as chips in the question box (only upload point),
       question bubble, labelled back buttons'
     status: READY_FOR_VERIFICATION
+  - id: T-7.8
+    title: 'Tune OCR: extra title pass on page 1 only, 2000 px render'
+    status: PLANNED
+  - id: T-7.9
+    title: 'Ready without the Vectorize wait: owner-uploads keyword list added to fusion, finish no longer waits'
+    status: PLANNED
+  - id: T-7.10
+    title: Per-page OCR quality warning from tesseract confidence
+    status: PLANNED
   dependencies:
   - P2
   - P6
@@ -333,7 +341,7 @@ phases:
   evidence_pointer: docs/evidence/P7.md
   section:
     start: 16566
-    end: 19236
+    end: 19944
 - phase_id: P8
   phase_name: Hardening and demo launch
   status: PLANNED
@@ -377,8 +385,8 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 19236
-    end: 22002
+    start: 19944
+    end: 22710
 - phase_id: P9
   phase_name: Paid MVP (after the deal)
   status: INTENTIONALLY_DEFERRED
@@ -407,6 +415,10 @@ phases:
   - id: T-9.7
     title: Tracing (Langfuse), privacy notice, dependency scanning, SEC §14 MVP checklist
     status: INTENTIONALLY_DEFERRED
+  - id: T-9.8
+    title: 'Production OCR: self-hosted PaddleOCR or Google Document AI / Azure Read for scanned pages, tesseract.js fallback,
+      background job (Queues/Workflows); benchmark first (D-018)'
+    status: INTENTIONALLY_DEFERRED
   dependencies:
   - P8
   affected_paths: []
@@ -416,5 +428,5 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 22002
-    end: 23819
+    start: 22710
+    end: 24882
