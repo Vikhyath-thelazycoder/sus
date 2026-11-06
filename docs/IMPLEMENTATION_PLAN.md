@@ -103,7 +103,7 @@ Objective: Browse the paper library and return to past conversations, each stric
 | T-6.4 | History sidebar wired to the API; new chat; grouping by date | VERIFIED | T-6.3, T-5.2 | design/frontend | — | DESIGN.md | Component tests | Past chats reopen with their citations |
 
 ## P7 · PDF uploads
-Status: READY_FOR_VERIFICATION · Depends: P2, P6 · Paths: src/web/upload/**, src/worker/routes/upload.ts, src/worker/cron.ts, src/shared/limits.ts, migrations/0003_vector_tombstones.sql · Flags: security, testing · Evidence: docs/evidence/P7.md
+Status: VERIFIED · Depends: P2, P6 · Paths: src/web/upload/**, src/worker/routes/upload.ts, src/worker/cron.ts, src/shared/limits.ts, migrations/0003_vector_tombstones.sql · Flags: security, testing · Evidence: docs/evidence/P7.md
 Objective: Users upload their own PDFs (5 × 100 pages), parsed in the browser, re-validated on the server, private to them, deleted after 7 days.
 
 | ID | Task | Status | Depends | Capabilities | Security | Design | Testing | Acceptance |
@@ -112,7 +112,7 @@ Objective: Users upload their own PDFs (5 × 100 pages), parsed in the browser, 
 | T-7.2 | `POST /api/upload` in batches: zod re-validation, server IDs and embeddings, **atomic** quota check (5 PDFs / 100 pages) | VERIFIED | T-7.1, T-2.6 | engineering/backend, engineering/security | SEC §5.1, §12 #3 | — | SEC §13 #13, #14, #19 | 10 parallel uploads at 4/5 → exactly 1 succeeds |
 | T-7.3 | Upload UI: drag-and-drop, progress (Reading → Splitting → Indexing), limits and "don't upload confidential documents" notice | VERIFIED | T-7.1, T-5.2 | design/frontend | SEC §12 #21 | DESIGN.md | Visual check on a phone | Upload works on desktop and mobile |
 | T-7.4 | Own uploads searchable only by their owner; "Your upload (unverified)" labels | VERIFIED | T-7.2, T-3.4 | engineering/ai-systems | SEC §12 #10 | DESIGN.md | SEC §13 #4 | User A never sees user B's upload |
-| T-7.5 | Cleanup as a **Cloudflare Worker cron** (free; data lives on Cloudflare; Render's free tier has no cron): expire uploads after 7 days; orphan-vector cleanup; "delete my data" endpoint + button | READY_FOR_VERIFICATION | T-7.2 | engineering/backend | SEC §12 #16 | — | SEC §13 #23 | Deleted text is never found again |
+| T-7.5 | Cleanup as a **Cloudflare Worker cron** (free; data lives on Cloudflare; Render's free tier has no cron): expire uploads after 7 days; orphan-vector cleanup; "delete my data" endpoint + button | VERIFIED | T-7.2 | engineering/backend | SEC §12 #16 | — | SEC §13 #23 | Deleted text is never found again |
 
 ## P8 · Hardening and demo launch
 Status: PLANNED · Depends: P4, P6, P7 · Paths: src/worker/security/**, test/security/** · Flags: security, testing · Evidence: —
@@ -258,3 +258,5 @@ P1 ──► P2 ──► P3 ──► P4 ──┐
 | 2026-11-06 | T-7.2: READY_FOR_VERIFICATION → VERIFIED (evidence: docs/evidence/P7.md) |
 | 2026-11-06 | T-7.3: READY_FOR_VERIFICATION → VERIFIED (evidence: docs/evidence/P7.md) |
 | 2026-11-06 | T-7.4: READY_FOR_VERIFICATION → VERIFIED (evidence: docs/evidence/P7.md) |
+| 2026-11-06 | T-7.5: READY_FOR_VERIFICATION → VERIFIED (evidence: docs/evidence/P7.md) |
+| 2026-11-06 | P7: READY_FOR_VERIFICATION → VERIFIED (roll-up from T-7.5) |
