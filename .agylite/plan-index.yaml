@@ -1,9 +1,9 @@
 schema_version: 1
 plan_path: docs/IMPLEMENTATION_PLAN.md
-plan_sha256: 5b706957eb2c013b322269f11f3e89ff2aaf07ab962fdc54335f516090b63450
-plan_size: 37883
-plan_mtime_ns: 1793939585743894569
-built: '2026-11-06T04:33:05+00:00'
+plan_sha256: 23cd52e09282842c54d14e574024bee5ac61dfcafc81a5fceaadaeae66c49ecb
+plan_size: 38197
+plan_mtime_ns: 1793941487866453881
+built: '2026-11-06T05:04:47+00:00'
 current_phase: P7
 phases:
 - phase_id: P1
@@ -288,10 +288,6 @@ phases:
     deleted after 7 days.
   active_tasks:
   - T-7.7
-  - T-7.8
-  - T-7.9
-  - T-7.11
-  - T-7.12
   tasks:
   - id: T-7.1
     title: Browser parsing in a Web Worker with pdf.js (scripting off, magic-byte check, size/page caps, timeout) using the
@@ -322,10 +318,10 @@ phases:
     status: READY_FOR_VERIFICATION
   - id: T-7.8
     title: 'Tune OCR: extra title pass on page 1 only, 2000 px render'
-    status: READY_FOR_VERIFICATION
+    status: VERIFIED
   - id: T-7.9
     title: 'Ready without the Vectorize wait: owner-uploads keyword list added to fusion, finish no longer waits'
-    status: READY_FOR_VERIFICATION
+    status: VERIFIED
   - id: T-7.10
     title: Per-page OCR quality warning from tesseract confidence
     status: PLANNED
@@ -333,11 +329,11 @@ phases:
     title: 'Chat-scoped uploads: a PDF added in a chat is searched only in that chat (papers.chat_id, Vectorize metadata index,
       owner+chat scope in search and D1 re-check, chat created on first upload). **Deleting a chat asks the user** whether
       to also delete the PDFs uploaded in it'
-    status: READY_FOR_VERIFICATION
+    status: VERIFIED
   - id: T-7.12
     title: 'Use-the-library toggle per chat: PDFs only / library only / both; proposed default (not yet confirmed by the owner):
       library off when a PDF is attached, on when none'
-    status: READY_FOR_VERIFICATION
+    status: VERIFIED
   - id: T-7.13
     title: 'Upload button in the Library: personal library PDFs (not tied to a chat), used in any chat with the library on'
     status: PLANNED
@@ -360,7 +356,7 @@ phases:
   evidence_pointer: docs/evidence/P7.md
   section:
     start: 17710
-    end: 22493
+    end: 22437
 - phase_id: P8
   phase_name: Hardening and demo launch
   status: PLANNED
@@ -404,8 +400,8 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 22493
-    end: 25259
+    start: 22437
+    end: 25203
 - phase_id: P9
   phase_name: Paid MVP (after the deal)
   status: INTENTIONALLY_DEFERRED
@@ -447,5 +443,5 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 25259
-    end: 27431
+    start: 25203
+    end: 27375
