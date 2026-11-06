@@ -1,9 +1,9 @@
 schema_version: 1
 plan_path: docs/IMPLEMENTATION_PLAN.md
-plan_sha256: 2a54c2d784701754b1abbb66b887a8b9ce71522eb88f5cad3ade393e91ad9a70
-plan_size: 39853
-plan_mtime_ns: 1793975809406429955
-built: '2026-11-06T14:36:49+00:00'
+plan_sha256: 43d2331a93bcd94a6e35d3c23aea654d44dbc615788b557a26583f39edf6ae5a
+plan_size: 39918
+plan_mtime_ns: 1793977989681833189
+built: '2026-11-06T15:13:09+00:00'
 current_phase: P7
 phases:
 - phase_id: P1
@@ -56,8 +56,8 @@ phases:
   last_updated: null
   evidence_pointer: docs/evidence/P1.md
   section:
-    start: 4827
-    end: 7929
+    start: 4892
+    end: 7994
 - phase_id: P2
   phase_name: Paper ingestion
   status: VERIFIED
@@ -112,8 +112,8 @@ phases:
   last_updated: null
   evidence_pointer: docs/evidence/P2.md
   section:
-    start: 7929
-    end: 10952
+    start: 7994
+    end: 11017
 - phase_id: P3
   phase_name: Retrieval and evaluation
   status: VERIFIED
@@ -156,8 +156,8 @@ phases:
   last_updated: null
   evidence_pointer: docs/evidence/P3.md
   section:
-    start: 10952
-    end: 13262
+    start: 11017
+    end: 13327
 - phase_id: P4
   phase_name: Answer generation
   status: VERIFIED
@@ -204,8 +204,8 @@ phases:
   last_updated: null
   evidence_pointer: docs/evidence/P4.md
   section:
-    start: 13262
-    end: 15900
+    start: 13327
+    end: 15965
 - phase_id: P5
   phase_name: UI foundation and chat
   status: VERIFIED
@@ -244,8 +244,8 @@ phases:
   last_updated: null
   evidence_pointer: docs/evidence/P5.md
   section:
-    start: 15900
-    end: 18005
+    start: 15965
+    end: 18070
 - phase_id: P6
   phase_name: Library and chat history
   status: VERIFIED
@@ -279,8 +279,8 @@ phases:
   last_updated: null
   evidence_pointer: docs/evidence/P6.md
   section:
-    start: 18005
-    end: 19330
+    start: 18070
+    end: 19395
 - phase_id: P7
   phase_name: PDF uploads
   status: IN_PROGRESS
@@ -358,8 +358,8 @@ phases:
   last_updated: null
   evidence_pointer: docs/evidence/P7.md
   section:
-    start: 19330
-    end: 24102
+    start: 19395
+    end: 24167
 - phase_id: P8
   phase_name: Hardening and demo launch
   status: PLANNED
@@ -403,8 +403,8 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 24102
-    end: 26868
+    start: 24167
+    end: 26933
 - phase_id: P9
   phase_name: Paid MVP (after the deal)
   status: INTENTIONALLY_DEFERRED
@@ -446,5 +446,5 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 26868
-    end: 29040
+    start: 26933
+    end: 29105

@@ -23,10 +23,10 @@ INTENTIONALLY_DEFERRED. `agylite plan index` keeps a compact index in `.agylite/
 - **Fix:** the demo server sends `Cache-Control: no-cache` for the page, so a reload after a deploy gets the new code. An open tab with the old code had failed uploads with "The upload didn't finish".
 - Uploads made before migration `0004` have no chat, so they count as personal-library PDFs.
 
-**Done this evening (2026-11-06), checked locally, not deployed yet:** T-7.14 several PDFs per chat (queued one at a time, chat file list), T-7.13 Upload button in the Library, T-7.10 OCR "may be misread" warning. Local browser check at 1280/768/375 light and 375 dark passed ([evidence](evidence/P7.md)).
+**Done this evening (2026-11-06), deployed (`dcda18f`) and live-checked by Claude, waiting for the owner to confirm:** T-7.14 several PDFs per chat (queued one at a time, chat file list), T-7.13 Upload button in the Library, T-7.10 OCR "may be misread" warning. Local browser check at 1280/768/375 light and 375 dark passed ([evidence](evidence/P7.md)).
 
 **Next session, start here:**
-1. **Owner deploys to Render** (no migration, no Vectorize change this time), then the **live check** closes T-7.7, T-7.10, T-7.13, T-7.14 and P7: attach 3 PDFs at once in a new chat, ask, see "PDFs in this chat"; upload from the Library and ask in another chat with the library on; at 1280/768/375 px.
+1. **Owner's own live check** closes T-7.7, T-7.10, T-7.13, T-7.14 and P7 (Claude's Playwright run passed; one run right after the deploy failed once and didn't repeat, see evidence): attach 3 PDFs at once in a new chat, ask, see "PDFs in this chat"; upload from the Library and ask in another chat with the library on.
 2. **T-7.10 threshold** (confidence 60) is not measured on a bad scan; tune it if it warns too often or never.
 3. **Open decisions. Don't assume them:**
    - **"Use the library" default:** built as proposed (off when the chat has a PDF, on when it has none), **not yet confirmed by the owner**. Changing it is one rule each in `src/worker/routes/chat.ts` and `src/web/Conversation.tsx`.
