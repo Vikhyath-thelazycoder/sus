@@ -16,6 +16,8 @@ import { parseAuthors } from "./papers";
 const schema = z.strictObject({
   chatId: z.uuid().optional(),
   question: z.string().trim().min(1).max(1000),
+  /** "Use the library" switch (T-7.12); saved with the chat. Left out = the saved choice, else on unless the chat has PDFs. */
+  useLibrary: z.boolean().optional(),
 });
 
 const CACHE_TTL = 24 * 60 * 60;
@@ -47,16 +49,21 @@ export function chatRoutes(steps: Steps = defaultSteps) {
   const chat = new Hono<AppEnv>();
 
   chat.post("/chat", async (c) => {
-    const { chatId: requested, question } = await parseJson(c, schema);
+    const { chatId: requested, question, useLibrary } = await parseJson(c, schema);
     const ownerId = c.get("ownerId");
     const db = c.env.DB;
     const now = Date.now();
 
     let chatId = requested;
     let history: Turn[] = [];
+    let saved: number | null = null;
     if (chatId) {
-      const found = await db.prepare("SELECT id FROM chats WHERE id = ?1 AND owner_id = ?2").bind(chatId, ownerId).first();
+      const found = await db
+        .prepare("SELECT use_library FROM chats WHERE id = ?1 AND owner_id = ?2")
+        .bind(chatId, ownerId)
+        .first<{ use_library: number | null }>();
       if (!found) throw new HTTPException(404, { message: "Not found" });
+      saved = found.use_library;
       const { results } = await db
         .prepare(
           "SELECT role, content FROM messages WHERE chat_id = ?1 AND owner_id = ?2 AND status = 'ok' ORDER BY created_at DESC LIMIT 10",
@@ -64,6 +71,12 @@ export function chatRoutes(steps: Steps = defaultSteps) {
         .bind(chatId, ownerId)
         .all<Turn>();
       history = results.reverse();
+      // A chat made for an upload (POST /api/chats) is titled by its first question.
+      if (!history.length)
+        await db
+          .prepare("UPDATE chats SET title = ?1 WHERE id = ?2 AND owner_id = ?3 AND NOT EXISTS (SELECT 1 FROM messages WHERE chat_id = ?2)")
+          .bind(cleanText(question).slice(0, 80), chatId, ownerId)
+          .run();
     } else {
       chatId = crypto.randomUUID();
       await db
@@ -71,15 +84,23 @@ export function chatRoutes(steps: Steps = defaultSteps) {
         .bind(chatId, ownerId, cleanText(question).slice(0, 80), now)
         .run();
     }
+    if (useLibrary !== undefined)
+      await db.prepare("UPDATE chats SET use_library = ?1 WHERE id = ?2 AND owner_id = ?3").bind(useLibrary ? 1 : 0, chatId, ownerId).run();
 
-    // Titles of the owner's live uploads: the topic guard lets questions about them through (any subject).
+    // The live uploads in scope: this chat's PDFs, plus library uploads when the library is on. Their titles let the
+    // topic guard pass questions about them (any subject).
     const { results: own } = await db
-      .prepare("SELECT title FROM papers WHERE owner_id = ?1 AND status = 'ready' AND expires_at > ?2 ORDER BY created_at DESC LIMIT 5")
-      .bind(ownerId, now)
-      .all<{ title: string }>();
-    const uploads = own.map((r) => r.title);
+      .prepare(
+        "SELECT title, chat_id FROM papers WHERE owner_id = ?1 AND status = 'ready' AND expires_at > ?2 AND (chat_id = ?3 OR chat_id IS NULL) ORDER BY created_at DESC LIMIT 20",
+      )
+      .bind(ownerId, now, chatId)
+      .all<{ title: string; chat_id: string | null }>();
+    const chatPdfs = own.filter((r) => r.chat_id === chatId);
+    // Proposed default (not yet confirmed by the owner): library off when the chat has a PDF, on when it has none.
+    const library = useLibrary ?? (saved === null ? !chatPdfs.length : saved === 1);
+    const uploads = own.filter((r) => r.chat_id === chatId || library).map((r) => r.title);
     const hasUploads = uploads.length || (await db.prepare("SELECT 1 AS x FROM papers WHERE owner_id = ?1 LIMIT 1").bind(ownerId).first());
-    const key = !history.length && !hasUploads ? await cacheKey(question) : null;
+    const key = !history.length && !hasUploads && library ? await cacheKey(question) : null;
 
     return streamSSE(c, async (stream) => {
       const send = (e: AnswerEvent | { type: "done" | "error"; [k: string]: unknown }) =>
@@ -91,7 +112,12 @@ export function chatRoutes(steps: Steps = defaultSteps) {
           result = { ...(JSON.parse(hit) as AnswerResult), cached: true };
           await send({ type: "token", text: result.content });
         } else {
-          result = await answer(c.env, { question, history, ownerId, uploads, signal: c.req.raw.signal }, send, steps);
+          result = await answer(
+            c.env,
+            { question, history, ownerId, uploads, chatId, library, signal: c.req.raw.signal },
+            send,
+            steps,
+          );
           if (key && result.status === "ok") await c.env.CACHE.put(key, JSON.stringify(result), { expirationTtl: CACHE_TTL });
         }
 
@@ -116,6 +142,7 @@ export function chatRoutes(steps: Steps = defaultSteps) {
           status: result.status,
           notFound: result.notFound,
           cached: Boolean(result.cached),
+          useLibrary: library,
           content: result.content,
           sources: result.sources.map(toClientSource),
         });

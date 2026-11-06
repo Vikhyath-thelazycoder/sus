@@ -21,6 +21,8 @@ export interface Done {
   status: "ok" | "declined" | "unverified" | "error";
   notFound: boolean;
   cached: boolean;
+  /** Whether the library was searched for this answer (T-7.12). */
+  useLibrary?: boolean;
   content: string;
   sources: Source[];
 }
@@ -64,7 +66,7 @@ export function sseParser(onEvent: (e: ChatEvent) => void) {
 }
 
 export async function askQuestion(
-  body: { question: string; chatId?: string },
+  body: { question: string; chatId?: string; useLibrary?: boolean },
   onEvent: (e: ChatEvent) => void,
   signal?: AbortSignal,
 ) {
@@ -104,6 +106,8 @@ export interface ChatSummary {
   title: string;
   createdAt: number;
   updatedAt: number;
+  /** PDFs uploaded in this chat (T-7.11). */
+  pdfs?: number;
 }
 export interface StoredMessage {
   id: string;
@@ -147,13 +151,19 @@ async function json<T>(path: string, init: RequestInit = {}): Promise<T> {
 
 export const listChats = () => json<{ chats: ChatSummary[] }>("/api/chats").then((r) => r.chats);
 export const getChat = (id: string) =>
-  json<{ chat: { id: string; title: string }; messages: StoredMessage[] }>(
+  json<{
+    chat: { id: string; title: string; useLibrary: boolean | null; pdfs: number };
+    messages: StoredMessage[];
+  }>(
     `/api/chats/${encodeURIComponent(id)}`,
   );
 export const renameChat = (id: string, title: string) =>
   json<void>(`/api/chats/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify({ title }) });
-export const deleteChat = (id: string) =>
-  json<void>(`/api/chats/${encodeURIComponent(id)}`, { method: "DELETE" });
+/** An empty chat, so PDFs attached before the first question belong to it (T-7.11). */
+export const createChat = () => json<{ id: string }>("/api/chats", { method: "POST" }).then((r) => r.id);
+/** `deletePdfs`: also delete the PDFs uploaded in the chat; otherwise they move to the personal library. */
+export const deleteChat = (id: string, deletePdfs = false) =>
+  json<void>(`/api/chats/${encodeURIComponent(id)}${deletePdfs ? "?pdfs=delete" : ""}`, { method: "DELETE" });
 export const listPapers = () => json<{ papers: Paper[] }>("/api/papers").then((r) => r.papers);
 export const getPaper = (id: string) => json<PaperDetail>(`/api/papers/${encodeURIComponent(id)}`);
 export const deleteUpload = (id: string) =>

@@ -73,24 +73,27 @@ export function toFtsQuery(q: string): string {
     .join(" OR ");
 }
 
-/** `ownOnly`: just the caller's uploads (no curated papers), so a fresh upload can't be crowded out in fusion. */
+/**
+ * Without `chatId`: the library (curated papers and the caller's uploads not tied to a chat). With `chatId`: only the
+ * PDFs uploaded in that chat (T-7.11), as its own fusion list so a fresh upload isn't crowded out (T-7.9).
+ */
 export async function keywordSearch(
   env: Env,
   query: string,
   ownerId: string,
   k: number = RETRIEVAL.searchK,
-  ownOnly = false,
+  chatId?: string,
 ): Promise<string[]> {
   const match = toFtsQuery(query);
   if (!match) return [];
-  const owners = ownOnly ? "c.owner_id = ?2" : "c.owner_id IN ('public', ?2)";
+  const scope = chatId ? "c.owner_id = ?2 AND p.chat_id = ?4" : "c.owner_id IN ('public', ?2) AND p.chat_id IS NULL";
   try {
     const { results } = await env.DB.prepare(
-      `SELECT c.id FROM chunks_fts JOIN chunks c ON c.seq = chunks_fts.rowid
-       WHERE chunks_fts MATCH ?1 AND ${owners}
+      `SELECT c.id FROM chunks_fts JOIN chunks c ON c.seq = chunks_fts.rowid JOIN papers p ON p.id = c.paper_id
+       WHERE chunks_fts MATCH ?1 AND ${scope}
        ORDER BY bm25(chunks_fts) LIMIT ?3`,
     )
-      .bind(match, ownerId, k)
+      .bind(match, ownerId, k, ...(chatId ? [chatId] : []))
       .all<{ id: string }>();
     return results.map((r) => r.id);
   } catch (err) {
@@ -102,11 +105,20 @@ export async function keywordSearch(
 
 // ---------------------------------------------------------------- meaning search (SECURITY §4.3)
 
-/** The only place a Vectorize filter is built: public papers plus the caller's own uploads. */
+/** The only place Vectorize filters are built: public papers plus the caller's own uploads, or one chat's uploads. */
 export const ownerFilter = (ownerId: string) => ({ owner_id: { $in: ["public", ownerId] } });
+export const chatFilter = (ownerId: string, chatId: string) => ({ owner_id: ownerId, chat_id: chatId });
 
-export async function vectorSearch(env: Env, queryVector: number[], ownerId: string, k: number = RETRIEVAL.searchK) {
-  const res = await env.VECTORIZE.query(queryVector, { topK: k, filter: ownerFilter(ownerId) });
+/** Vectorize can't OR across fields, so the library and a chat's PDFs are two queries; D1 re-checks the scope. */
+export async function vectorSearch(
+  env: Env,
+  queryVector: number[],
+  ownerId: string,
+  k: number = RETRIEVAL.searchK,
+  chatId?: string,
+) {
+  const filter = chatId ? chatFilter(ownerId, chatId) : ownerFilter(ownerId);
+  const res = await env.VECTORIZE.query(queryVector, { topK: k, filter });
   return res.matches.map((m) => ({ id: m.id, score: m.score }));
 }
 
@@ -119,18 +131,27 @@ export function rrf(lists: string[][], k: number = RETRIEVAL.rrfK): { id: string
   return [...scores].map(([id, score]) => ({ id, score })).sort((a, b) => b.score - a.score);
 }
 
-/** Second owner layer (SECURITY §4.3): only rows that D1 says are public or the caller's own survive. */
-export async function fetchChunks(env: Env, ids: string[], ownerId: string): Promise<Map<string, ChunkRow>> {
+/**
+ * Second owner layer (SECURITY §4.3): only rows that D1 says are public or the caller's own survive, and only in
+ * scope: the PDFs of `chatId`, plus the library (curated and uploads not tied to a chat) when `library` is on.
+ */
+export async function fetchChunks(
+  env: Env,
+  ids: string[],
+  ownerId: string,
+  chatId: string | null = null,
+  library = true,
+): Promise<Map<string, ChunkRow>> {
   if (!ids.length) return new Map();
-  const marks = ids.map((_, i) => `?${i + 3}`).join(", ");
+  const marks = ids.map((_, i) => `?${i + 5}`).join(", ");
   const { results } = await env.DB.prepare(
     `SELECT c.id, c.paper_id, c.section_id, c.idx, c.text, c.page_start, c.page_end, c.owner_id,
             s.name AS section, p.title, p.year, p.doi, p.authors
      FROM chunks c JOIN sections s ON s.id = c.section_id JOIN papers p ON p.id = c.paper_id
      WHERE c.id IN (${marks}) AND c.owner_id IN ('public', ?1) AND p.owner_id = c.owner_id AND p.status = 'ready'
-       AND (p.expires_at IS NULL OR p.expires_at > ?2)`,
+       AND (p.expires_at IS NULL OR p.expires_at > ?2) AND (p.chat_id = ?3 OR (?4 = 1 AND p.chat_id IS NULL))`,
   )
-    .bind(ownerId, Date.now(), ...ids)
+    .bind(ownerId, Date.now(), chatId, library ? 1 : 0, ...ids)
     .all<ChunkRow>();
   return new Map(results.map((r) => [r.id, r]));
 }
@@ -217,6 +238,10 @@ export interface RetrieveOptions {
   maxContextTokens?: number;
   /** Skip neighbour expansion and passage building (the eval only needs the ranking). */
   rankingOnly?: boolean;
+  /** Also search the PDFs uploaded in this chat (T-7.11). */
+  chatId?: string;
+  /** Search the library (curated papers and uploads not tied to a chat); default on (T-7.12). */
+  library?: boolean;
 }
 
 export interface RetrieveResult {
@@ -241,27 +266,41 @@ export async function retrieve(env: Env, query: string, ownerId: string, opts: R
     }
   };
 
+  const { chatId } = opts;
+  const library = opts.library ?? true;
+  const none = Promise.resolve([] as string[]);
   const wantVector = mode !== "keyword";
   const wantKeyword = mode !== "vector";
-  const [vector, keyword, ownKeyword] = await Promise.all([
+  const [vector, keyword, chatKeyword] = await Promise.all([
     wantVector
-      ? timed("vector", embed(env, [query]).then(([v]) => vectorSearch(env, v!, ownerId, searchK)))
+      ? timed(
+          "vector",
+          embed(env, [query]).then(async ([v]) => {
+            const [lib, own] = await Promise.all([
+              library ? vectorSearch(env, v!, ownerId, searchK) : [],
+              chatId ? vectorSearch(env, v!, ownerId, searchK, chatId) : [],
+            ]);
+            // Same query vector, so cosine scores compare across the two queries.
+            return [...new Map([...lib, ...own].sort((a, b) => b.score - a.score).map((m) => [m.id, m])).values()];
+          }),
+        )
       : Promise.resolve([]),
-    wantKeyword ? timed("keyword", keywordSearch(env, query, ownerId, searchK)) : Promise.resolve([]),
-    // The caller's own uploads as a third list: keyword search sees a new upload at once, Vectorize ~30 s later (T-7.9).
-    mode === "hybrid" || mode === "rerank"
-      ? timed("ownKeyword", keywordSearch(env, query, ownerId, searchK, true))
-      : Promise.resolve([]),
+    wantKeyword && library ? timed("keyword", keywordSearch(env, query, ownerId, searchK)) : none,
+    // The chat's own PDFs as their own list: keyword search sees a new upload at once, Vectorize ~30 s later (T-7.9).
+    wantKeyword && chatId ? timed("chatKeyword", keywordSearch(env, query, ownerId, searchK, chatId)) : none,
   ]);
 
   const fused =
     mode === "vector"
       ? vector.slice(0, fuseTop)
       : mode === "keyword"
-        ? keyword.slice(0, fuseTop).map((id, i) => ({ id, score: 1 / (i + 1) }))
-        : rrf([vector.map((v) => v.id), keyword, ownKeyword]).slice(0, fuseTop);
+        ? rrf([keyword, chatKeyword]).slice(0, fuseTop)
+        : // The chat's PDFs count twice: the user attached them for this chat, and right after upload they aren't in
+          // Vectorize yet, so otherwise a curated chunk top of the vector list would tie them (T-7.9).
+          rrf([vector.map((v) => v.id), keyword, chatKeyword, chatKeyword]).slice(0, fuseTop);
 
-  const rows = await timed("d1", fetchChunks(env, fused.map((f) => f.id), ownerId));
+  const scope = [chatId ?? null, library] as const;
+  const rows = await timed("d1", fetchChunks(env, fused.map((f) => f.id), ownerId, ...scope));
   let hits: Hit[] = fused.flatMap((f) => {
     const row = rows.get(f.id);
     return row ? [{ ...row, score: f.score }] : [];
@@ -281,6 +320,6 @@ export async function retrieve(env: Env, query: string, ownerId: string, opts: R
   if (opts.rankingOnly) return { hits, passages: [], timings };
   const top = mode === "rerank" ? hits : hits.slice(0, rerankTop);
   const neighbourIds = top.flatMap((h) => [`${h.paper_id}:c${h.idx - 1}`, `${h.paper_id}:c${h.idx + 1}`]);
-  const neighbours = await timed("neighbours", fetchChunks(env, [...new Set(neighbourIds)], ownerId));
+  const neighbours = await timed("neighbours", fetchChunks(env, [...new Set(neighbourIds)], ownerId, ...scope));
   return { hits, passages: buildPassages(top, neighbours, opts.maxContextTokens), timings };
 }

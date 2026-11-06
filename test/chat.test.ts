@@ -26,11 +26,11 @@ const source: Passage = {
 
 /** The route with fake steps; counts model calls so cache hits are visible. */
 function harness() {
-  const calls = { generate: 0, rewriteHistory: [] as number[] };
+  const calls = { generate: 0, rewriteHistory: [] as number[], scopes: [] as unknown[] };
   const steps: Steps = {
     guard: async () => "ok",
     rewrite: async (_e, q, h) => (calls.rewriteHistory.push(h.length), q),
-    retrieve: async () => [source],
+    retrieve: async (_e, _q, _o, scope) => (calls.scopes.push(scope), [source]),
     generate: async (_e, _m, onToken) => {
       calls.generate++;
       await onToken("PLA composts [1].");
@@ -152,3 +152,41 @@ describe("feedback (T-5.3)", () => {
   });
 });
 
+
+describe("library switch per chat (T-7.12)", () => {
+  const ownerOf = async (chatId: string) =>
+    (await env.DB.prepare("SELECT owner_id FROM chats WHERE id = ?1").bind(chatId).first<{ owner_id: string }>())!.owner_id;
+  const addPdf = (owner: string, chatId: string) =>
+    env.DB.prepare(
+      "INSERT INTO papers (id, owner_id, title, status, created_at, expires_at, chat_id) VALUES (?1, ?2, 'My PDF', 'ready', 0, ?3, ?4)",
+    )
+      .bind(`p_${crypto.randomUUID().replaceAll("-", "").slice(0, 24)}`, owner, Date.now() + 60_000, chatId)
+      .run();
+
+  it("defaults to on without PDFs, off once the chat has one; an explicit choice is saved and wins", async () => {
+    const { ask, calls } = harness();
+    const first = await ask({ question: "Does PLA compost? (library test 1)" });
+    const chatId = first.done.chatId as string;
+    expect(calls.scopes.at(-1)).toEqual({ chatId, library: true });
+    expect(first.done.useLibrary).toBe(true);
+
+    await addPdf(await ownerOf(chatId), chatId);
+    await ask({ question: "And my PDF?", chatId }, first.cookie!);
+    expect(calls.scopes.at(-1)).toEqual({ chatId, library: false });
+
+    await ask({ question: "Both please", chatId, useLibrary: true }, first.cookie!);
+    expect(calls.scopes.at(-1)).toEqual({ chatId, library: true });
+    await ask({ question: "Still both?", chatId }, first.cookie!);
+    expect(calls.scopes.at(-1)).toEqual({ chatId, library: true });
+    expect(await env.DB.prepare("SELECT use_library FROM chats WHERE id = ?1").bind(chatId).first("use_library")).toBe(1);
+  });
+
+  it("never caches an answer given with the library off", async () => {
+    const { ask, calls } = harness();
+    const q = "Is PHA marine degradable? (library test 2)";
+    await ask({ question: q, useLibrary: false });
+    await ask({ question: q, useLibrary: false });
+    expect(calls.generate).toBe(2);
+    expect(await env.CACHE.get(await cacheKey(q))).toBeNull();
+  });
+});

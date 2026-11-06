@@ -102,8 +102,10 @@ const failureFor = (status: number): UploadFailure =>
 export async function sendUpload(
   parsed: ParsedUpload,
   onProgress: (done: number, total: number) => void,
+  chatId: string,
 ): Promise<string> {
   const created = await send("/api/uploads", {
+    chatId,
     title: parsed.title,
     pages: parsed.pages,
     sections: parsed.sections,

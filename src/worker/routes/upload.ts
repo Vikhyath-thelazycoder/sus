@@ -17,6 +17,8 @@ import { chunkId, sectionId } from "./admin-papers";
 const PAPER_ID = /^p_[0-9a-f]{24}$/;
 const page = z.number().int().min(1).max(UPLOAD.maxPages);
 const createSchema = z.strictObject({
+  /** The chat it is added in (T-7.11): searched only there. The client creates the chat first (POST /api/chats). */
+  chatId: z.uuid(),
   title: z.string().trim().min(1).max(300),
   pages: page,
   sections: z
@@ -70,23 +72,25 @@ export const uploads = new Hono<AppEnv>();
 uploads.post("/uploads", async (c) => {
   // Feature flag for abuse waves (SECURITY incident response); deleting stays possible.
   if (c.env.UPLOADS_ENABLED !== "true") return c.json({ error: "Uploads are paused" }, 503);
-  const { title, pages, sections } = await parseJson(c, createSchema);
+  const { chatId, title, pages, sections } = await parseJson(c, createSchema);
   if (sections.some((s) => !ordered(s, pages))) throw bad();
 
   const ownerId = c.get("ownerId");
   const db = c.env.DB;
+  if (!(await db.prepare("SELECT 1 AS x FROM chats WHERE id = ?1 AND owner_id = ?2").bind(chatId, ownerId).first()))
+    throw notFound();
   const id = newPaperId();
   const now = Date.now();
   const live = "owner_id = ?2 AND expires_at > ?5";
   // Check and take the quota in ONE statement (SECURITY §12 #3): parallel requests can't all pass a separate count.
   const taken = await db
     .prepare(
-      `INSERT INTO papers (id, owner_id, title, authors, verified, pages, status, created_at, expires_at)
-       SELECT ?1, ?2, ?3, '[]', 0, ?4, 'processing', ?5, ?6
+      `INSERT INTO papers (id, owner_id, title, authors, verified, pages, status, created_at, expires_at, chat_id)
+       SELECT ?1, ?2, ?3, '[]', 0, ?4, 'processing', ?5, ?6, ?9
        WHERE (SELECT count(*) FROM papers WHERE ${live}) < ?7
          AND (SELECT coalesce(sum(pages), 0) FROM papers WHERE ${live}) + ?4 <= ?8`,
     )
-    .bind(id, ownerId, cleanText(title), pages, now, now + UPLOAD.ttlMs, UPLOAD.maxPdfs, UPLOAD.maxPages)
+    .bind(id, ownerId, cleanText(title), pages, now, now + UPLOAD.ttlMs, UPLOAD.maxPdfs, UPLOAD.maxPages, chatId)
     .run();
   if (!taken.meta.changes) return c.json({ error: "Upload limit reached" }, 409);
 
@@ -105,10 +109,10 @@ uploads.post("/uploads", async (c) => {
 /** The caller's own upload that is still being written; anything else is a 404. */
 async function ownProcessing(env: Env, id: string, ownerId: string) {
   return env.DB.prepare(
-    "SELECT pages, (SELECT count(*) FROM sections WHERE paper_id = ?1) AS sections FROM papers WHERE id = ?1 AND owner_id = ?2 AND status = 'processing'",
+    "SELECT pages, chat_id, (SELECT count(*) FROM sections WHERE paper_id = ?1) AS sections FROM papers WHERE id = ?1 AND owner_id = ?2 AND status = 'processing'",
   )
     .bind(id, ownerId)
-    .first<{ pages: number; sections: number }>();
+    .first<{ pages: number; sections: number; chat_id: string | null }>();
 }
 
 uploads.post("/uploads/:id/chunks", async (c) => {
@@ -146,7 +150,7 @@ uploads.post("/uploads/:id/chunks", async (c) => {
   const ids = chunks.map((ch) => chunkId(id, ch.idx));
   await upsertVectors(
     c.env,
-    ids.map((vid, i) => ({ id: vid, values: vectors[i]!, metadata: { owner_id: ownerId, paper_id: id } })),
+    ids.map((vid, i) => ({ id: vid, values: vectors[i]!, metadata: { owner_id: ownerId, paper_id: id, ...(found.chat_id ? { chat_id: found.chat_id } : {}) } })),
   );
   // Deleted while this batch was embedding? Then these vectors have no rows: remove them now.
   if (!(await db.prepare("SELECT 1 AS x FROM papers WHERE id = ?1").bind(id).first()))

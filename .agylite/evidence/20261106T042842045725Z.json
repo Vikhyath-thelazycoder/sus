@@ -1,0 +1,300 @@
+{
+ "schema_version": 1,
+ "mode": "tests-and-browser",
+ "task": "T-7.11",
+ "result": "FAILED",
+ "impact": {
+  "method": "structural",
+  "changed": [
+   "1793015628-7d8b946f.pdf",
+   "docs/IMPLEMENTATION_PLAN.md",
+   "migrations/0004_chat_scoped_uploads.sql",
+   "src/web/App.tsx",
+   "src/web/Conversation.tsx",
+   "src/web/api.ts",
+   "src/web/upload/client.ts",
+   "src/web/upload/useAttachments.ts",
+   "src/worker/rag/answer.ts",
+   "src/worker/rag/search.ts",
+   "src/worker/routes/chat.ts",
+   "src/worker/routes/chats.ts",
+   "src/worker/routes/upload.ts",
+   "test/chat.test.ts",
+   "test/rag.test.ts",
+   "test/upload.test.ts",
+   "test/web/app.test.tsx",
+   "test/web/composer-upload.test.tsx"
+  ],
+  "notice": "graph-based analysis unavailable; limited structural analysis used (graph-based analysis unavailable: graphify runtime not installed (`agylite runtime install graphify`))"
+ },
+ "checks": [
+  {
+   "command": [
+    "npm",
+    "run",
+    "test",
+    "--",
+    "test/chat.test.ts",
+    "test/rag.test.ts",
+    "test/upload.test.ts",
+    "test/web/app.test.tsx",
+    "test/web/composer-upload.test.tsx",
+    "test/answer.test.ts",
+    "test/web/answer-text.test.tsx",
+    "test/web/helpers.test.ts",
+    "test/admin-papers.test.ts",
+    "test/helpers.ts",
+    "test/library.test.ts"
+   ],
+   "exit_code": 0,
+   "result": "PASSED",
+   "duration_ms": 4034,
+   "diagnosis": [],
+   "kind": "test",
+   "name": "test",
+   "reason": "11 tests affected by the change",
+   "tests": [
+    "test/chat.test.ts",
+    "test/rag.test.ts",
+    "test/upload.test.ts",
+    "test/web/app.test.tsx",
+    "test/web/composer-upload.test.tsx",
+    "test/answer.test.ts",
+    "test/web/answer-text.test.tsx",
+    "test/web/helpers.test.ts",
+    "test/admin-papers.test.ts",
+    "test/helpers.ts",
+    "test/library.test.ts"
+   ],
+   "at": "2026-11-06T04:28:13Z"
+  },
+  {
+   "command": [
+    "npm",
+    "run",
+    "typecheck"
+   ],
+   "exit_code": 0,
+   "result": "PASSED",
+   "duration_ms": 1899,
+   "diagnosis": [],
+   "kind": "typecheck",
+   "name": "typecheck",
+   "reason": "typecheck check for the project",
+   "tests": [],
+   "at": "2026-11-06T04:28:15Z"
+  },
+  {
+   "command": [
+    "npm",
+    "run",
+    "lint"
+   ],
+   "exit_code": 1,
+   "result": "FAILED",
+   "duration_ms": 1374,
+   "diagnosis": [
+    "  381:21  error  '_' is assigned a value but never used  @typescript-eslint/no-unused-vars",
+    "✖ 1 problem (1 error, 0 warnings)"
+   ],
+   "kind": "lint",
+   "name": "lint",
+   "reason": "lint check for the project",
+   "tests": [],
+   "at": "2026-11-06T04:28:16Z"
+  },
+  {
+   "command": [
+    "/Users/vikhyathmgowda007/.agylite/core/bin/python",
+    "-m",
+    "compileall",
+    "-q",
+    "-x",
+    "(^|/)(\\.|node_modules|venv)",
+    "."
+   ],
+   "exit_code": 0,
+   "result": "PASSED",
+   "duration_ms": 126,
+   "diagnosis": [],
+   "kind": "build",
+   "name": "compileall",
+   "reason": "build check for the project",
+   "tests": [],
+   "at": "2026-11-06T04:28:17Z"
+  },
+  {
+   "command": [
+    "npm",
+    "run",
+    "build"
+   ],
+   "exit_code": 0,
+   "result": "PASSED",
+   "duration_ms": 2594,
+   "diagnosis": [],
+   "kind": "build",
+   "name": "build",
+   "reason": "build check for the project",
+   "tests": [],
+   "at": "2026-11-06T04:28:19Z"
+  },
+  {
+   "command": [
+    "/Users/vikhyathmgowda007/.agylite/core/bin/python",
+    "-m",
+    "agylite.cli",
+    "design",
+    "check",
+    "--project",
+    "/Users/vikhyathmgowda007/Developer/sustainIQ"
+   ],
+   "exit_code": 0,
+   "result": "PASSED",
+   "duration_ms": 80,
+   "diagnosis": [],
+   "kind": "design",
+   "name": "design tokens",
+   "reason": "style/markup changed: src/web/App.tsx, src/web/Conversation.tsx, test/web/app.test.tsx, test/web/composer-upload.test.tsx",
+   "tests": [],
+   "at": "2026-11-06T04:28:19Z"
+  },
+  {
+   "command": [
+    "/Users/vikhyathmgowda007/.agylite/core/bin/python",
+    "-m",
+    "agylite.cli",
+    "design",
+    "taste",
+    "--project",
+    "/Users/vikhyathmgowda007/Developer/sustainIQ",
+    "lint",
+    "src/web/App.tsx",
+    "src/web/Conversation.tsx",
+    "test/web/app.test.tsx",
+    "test/web/composer-upload.test.tsx"
+   ],
+   "exit_code": 0,
+   "result": "PASSED",
+   "duration_ms": 89,
+   "diagnosis": [],
+   "kind": "design",
+   "name": "taste lint",
+   "reason": "style/markup changed: src/web/App.tsx, src/web/Conversation.tsx, test/web/app.test.tsx, test/web/composer-upload.test.tsx",
+   "tests": [],
+   "at": "2026-11-06T04:28:19Z"
+  },
+  {
+   "command": [
+    "/Users/vikhyathmgowda007/.agylite/core/bin/python",
+    "-m",
+    "agylite.cli",
+    "design",
+    "taste",
+    "--project",
+    "/Users/vikhyathmgowda007/Developer/sustainIQ",
+    "inspect",
+    "/Users/vikhyathmgowda007/Developer/sustainIQ/index.html"
+   ],
+   "exit_code": 1,
+   "result": "FAILED",
+   "duration_ms": 10825,
+   "packages_ok": 0,
+   "packages_failed": 1,
+   "diagnosis": [
+    "FAIL — fix every one of these",
+    "RESULT: 3 FAIL, 4 WARN — not done."
+   ],
+   "fails": 3,
+   "warns": 4,
+   "artifacts": [
+    {
+     "path": ".taste-skill/inspect/desktop-fold.jpg",
+     "sha256": "4ae4f76e9463d4fc0c02ebc332787f739f0e152f46df37b57e4997dbdb4c8a29"
+    },
+    {
+     "path": ".taste-skill/inspect/desktop-page-01.jpg",
+     "sha256": "f6adbe61d565d8f3f4eafa3cdbd2a2beb02679463d021f007425fb66de2f2bfb"
+    },
+    {
+     "path": ".taste-skill/inspect/mobile-fold.jpg",
+     "sha256": "7faa4d840eb1da6e028397791b07c3e2d2fa394e6df0b47944ac84264de1c7f0"
+    },
+    {
+     "path": ".taste-skill/inspect/mobile-page-01.jpg",
+     "sha256": "3acc86242ef675ba354401f87577483895381923c523452d11f97748b096c41d"
+    },
+    {
+     "path": ".taste-skill/inspect/tablet-fold.jpg",
+     "sha256": "afe78a6947b9e8511e92eb15c42364c84ff929a34a8a594c8e25d4f5e9d4a7d1"
+    },
+    {
+     "path": ".taste-skill/inspect/tablet-page-01.jpg",
+     "sha256": "590fd465c76cd8d832c4b9f32b4d418f80730d48498c3be328da6b7c4207f45f"
+    }
+   ],
+   "kind": "design",
+   "name": "taste inspect",
+   "reason": "style/markup changed: src/web/App.tsx, src/web/Conversation.tsx, test/web/app.test.tsx, test/web/composer-upload.test.tsx",
+   "tests": [],
+   "at": "2026-11-06T04:28:30Z"
+  },
+  {
+   "command": [
+    "/Users/vikhyathmgowda007/.agylite/core/bin/python",
+    "-m",
+    "agylite.cli",
+    "browser-check",
+    "--project",
+    "/Users/vikhyathmgowda007/Developer/sustainIQ"
+   ],
+   "exit_code": 1,
+   "result": "FAILED",
+   "duration_ms": 11374,
+   "diagnosis": [
+    "browser check: FAILED (http://localhost:4173/) · evidence /Users/vikhyathmgowda007/Developer/sustainIQ/.agylite/evidence/browser/20261106T042830Z",
+    "  ✗ console error: Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "  ✗ failed request: http://localhost:4173/api/chats (500)"
+   ],
+   "defects": [
+    "console error: Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "failed request: http://localhost:4173/api/chats (500)"
+   ],
+   "artifacts": [
+    {
+     "path": ".agylite/evidence/browser/20261106T042830Z/screenshot-1440.png",
+     "sha256": "c0635ff10f5741387e5f8079e651669bdac83ca0aa37c8f72b7724c94fecb1e8"
+    },
+    {
+     "path": ".agylite/evidence/browser/20261106T042830Z/screenshot-768.png",
+     "sha256": "3caced48153b977d66d30c85545cc08f0e00ffacf19d22f894dd230c6ac18b8e"
+    },
+    {
+     "path": ".agylite/evidence/browser/20261106T042830Z/screenshot-390.png",
+     "sha256": "1977a4f5ec45ba19f0908cf340bee834d3ba54acab80e2beec3888d9725e1e9a"
+    },
+    {
+     "path": ".agylite/evidence/browser/20261106T042830Z/console.json",
+     "sha256": "2472ae0a69750a63e83a7e994fdaa9310424f1e1af4322a983be18e64e2ed841"
+    },
+    {
+     "path": ".agylite/evidence/browser/20261106T042830Z/network.json",
+     "sha256": "253581adbe3d59afc687b8e81489051f75386cda6edfda1325423dd2a3b0dc01"
+    },
+    {
+     "path": ".agylite/evidence/browser/20261106T042830Z/flows.json",
+     "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+     "path": ".agylite/evidence/browser/20261106T042830Z/report.json"
+    }
+   ],
+   "kind": "browser",
+   "name": "browser check",
+   "reason": "UI changed: src/web/App.tsx, src/web/Conversation.tsx, test/web/app.test.tsx, test/web/composer-upload.test.tsx",
+   "tests": [],
+   "at": "2026-11-06T04:28:42Z"
+  }
+ ],
+ "at": "2026-11-06T04:28:42Z"
+}

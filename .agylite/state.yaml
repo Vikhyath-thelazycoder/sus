@@ -13,10 +13,14 @@ verification:
   mode: tests-and-browser
   browser_verification: enabled
   simulator_recording_loop: disabled
-  last: &id001
-    task: T-7.9
+  last:
+    task: null
     result: PASSED
-    evidence: .agylite/evidence/20261106T040942570050Z.json
-    at: '2026-11-06T04:09:42+00:00'
-  last_task: *id001
-updated: '2026-11-06T04:09:42+00:00'
+    evidence: .agylite/evidence/20261106T043249479254Z.json
+    at: '2026-11-06T04:32:49+00:00'
+  last_task:
+    task: T-7.12
+    result: FAILED
+    evidence: .agylite/evidence/20261106T043228330399Z.json
+    at: '2026-11-06T04:32:28+00:00'
+updated: '2026-11-06T04:32:49+00:00'

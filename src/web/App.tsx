@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ChatHttpError,
   askQuestion,
+  createChat,
   deleteChat,
   getChat,
   listChats,
@@ -19,8 +20,12 @@ import { Icon, IconButton } from "./ui";
 
 interface Chat {
   localId: string;
-  /** Server chat ID, known after the first answer. */
+  /** Server chat ID, known after the first answer or the first attached PDF. */
   chatId?: string;
+  /** "Use the library" as the user set it; undefined = default (T-7.12). */
+  useLibrary?: boolean;
+  /** PDFs uploaded in this chat so far. */
+  pdfs?: number;
   title: string;
   turns: Turn[];
   loading?: boolean;
@@ -172,6 +177,23 @@ export function App() {
     [updateChat],
   );
 
+  // One create per chat, however many PDFs are attached at once (T-7.11).
+  const creating = useRef(new Map<string, Promise<string>>());
+  const ensureChat = (chat: Chat): Promise<string> => {
+    if (chat.chatId) return Promise.resolve(chat.chatId);
+    let p = creating.current.get(chat.localId);
+    if (!p) {
+      p = createChat().then((id) => {
+        updateChat(chat.localId, (c) => ({ ...c, chatId: id }));
+        refreshHistory();
+        return id;
+      });
+      p.catch(() => creating.current.delete(chat.localId));
+      creating.current.set(chat.localId, p);
+    }
+    return p;
+  };
+
   const ask = async (question: string, chat: Chat = active, attachments?: string[]) => {
     const turn: Turn = {
       id: crypto.randomUUID(),
@@ -186,6 +208,7 @@ export function App() {
       ...c,
       title: c.turns.length ? c.title : question.slice(0, 80),
       turns: [...c.turns, turn],
+      pdfs: (c.pdfs ?? 0) + (attachments?.length ?? 0),
     }));
     const on = (e: ChatEvent) =>
       updateTurn(chat.localId, turn.id, (t) => {
@@ -204,8 +227,9 @@ export function App() {
         }
       });
     try {
-      let chatId = chat.chatId;
-      await askQuestion({ question, ...(chatId ? { chatId } : {}) }, (e) => {
+      let chatId = chat.chatId ?? (await creating.current.get(chat.localId)?.catch(() => undefined));
+      const { useLibrary } = chat;
+      await askQuestion({ question, ...(chatId ? { chatId } : {}), ...(useLibrary === undefined ? {} : { useLibrary }) }, (e) => {
         if (e.type === "done" && !chatId) {
           chatId = e.chatId;
           updateChat(chat.localId, (c) => ({ ...c, chatId: e.chatId }));
@@ -276,6 +300,8 @@ export function App() {
         updateChat(c.localId, (x) => ({
           ...x,
           title: r.chat.title,
+          useLibrary: r.chat.useLibrary ?? undefined,
+          pdfs: r.chat.pdfs,
           turns: turnsFromMessages(summary.id, r.messages),
           loading: false,
         })),
@@ -294,7 +320,14 @@ export function App() {
 
   const remove = async (summary: ChatSummary) => {
     if (!window.confirm(`Delete "${summary.title}"? This can't be undone.`)) return;
-    await deleteChat(summary.id).catch(() => {});
+    // Asked every time (owner decision): the chat's PDFs go with it, or move to your library.
+    const n = summary.pdfs ?? 0;
+    const deletePdfs =
+      n > 0 &&
+      window.confirm(
+        `Also delete the ${n === 1 ? "PDF" : `${n} PDFs`} uploaded in this chat?\n\nOK: delete ${n === 1 ? "it" : "them"}. Cancel: keep ${n === 1 ? "it" : "them"} in your library.`,
+      );
+    await deleteChat(summary.id, deletePdfs).catch(() => {});
     setHistory((h) => h.filter((x) => x.id !== summary.id));
     if (active.chatId === summary.id) {
       const c = newChat();
@@ -525,6 +558,10 @@ export function App() {
               turns={active.turns}
               busy={busy}
               onAsk={(q, files) => void ask(q, active, files)}
+              chatId={() => ensureChat(active)}
+              useLibrary={active.useLibrary}
+              pdfs={active.pdfs}
+              onUseLibrary={(on) => updateChat(active.localId, (c) => ({ ...c, useLibrary: on }))}
               onRetry={retry}
               onCite={openCitation}
               onFeedback={feedback}

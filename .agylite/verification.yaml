@@ -172,3 +172,15 @@ results:
   result: PASSED
   evidence: .agylite/evidence/20261106T040942570050Z.json
   at: '2026-11-06T04:09:42+00:00'
+- task: T-7.11
+  result: FAILED
+  evidence: .agylite/evidence/20261106T042842045725Z.json
+  at: '2026-11-06T04:28:42+00:00'
+- task: T-7.12
+  result: FAILED
+  evidence: .agylite/evidence/20261106T043228330399Z.json
+  at: '2026-11-06T04:32:28+00:00'
+- task: null
+  result: PASSED
+  evidence: .agylite/evidence/20261106T043249479254Z.json
+  at: '2026-11-06T04:32:49+00:00'

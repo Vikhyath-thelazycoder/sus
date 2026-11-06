@@ -327,6 +327,38 @@ describe("saved history (T-6.4)", () => {
     expect(screen.queryByRole("button", { name: "Gut enzymes" })).toBeNull();
     expect(screen.getByRole("heading", { name: "What would you like to research?" })).toBeTruthy();
   });
+
+  it("deleting a chat with PDFs asks whether to delete them too (T-7.11)", async () => {
+    for (const [keep, url] of [
+      [false, `/api/chats/${SAVED.id}?pdfs=delete`],
+      [true, `/api/chats/${SAVED.id}`],
+    ] as const) {
+      const calls = mockApi([], {
+        "/api/chats": { chats: [{ ...SAVED, pdfs: 2 }] },
+        [`/api/chats/${SAVED.id}`]: savedChat,
+      });
+      const confirm = vi.fn().mockReturnValueOnce(true).mockReturnValueOnce(!keep);
+      vi.stubGlobal("confirm", confirm);
+      const user = userEvent.setup();
+      render(<App />);
+      await user.click(await screen.findByRole("button", { name: "PLA in the gut" }));
+      await user.click(await screen.findByRole("button", { name: "Delete chat" }));
+      await waitFor(() => expect(calls.find((c) => c.method === "DELETE")?.url).toBe(url));
+      expect(confirm.mock.calls[1]![0]).toMatch(/Also delete the 2 PDFs uploaded in this chat\?/);
+      cleanup();
+    }
+  });
+
+  it("sends the library choice with the question once the user sets it (T-7.12)", async () => {
+    const calls = mockApi([done()]);
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole("switch", { name: "Use the library" }));
+    await user.type(screen.getByLabelText("Your question"), "Only my PDFs{Enter}");
+    await waitFor(() =>
+      expect(calls.find((c) => c.url === "/api/chat")?.body).toEqual({ question: "Only my PDFs", useLibrary: false }),
+    );
+  });
 });
 
 const papers = [

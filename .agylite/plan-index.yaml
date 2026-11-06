@@ -1,9 +1,9 @@
 schema_version: 1
 plan_path: docs/IMPLEMENTATION_PLAN.md
-plan_sha256: 5bf9447f982ed1ed692f4b8bd7114d810291eb6f8dd809f8cbaeab39fe0e09e2
-plan_size: 37627
-plan_mtime_ns: 1793938189188115974
-built: '2026-11-06T04:09:49+00:00'
+plan_sha256: 5b706957eb2c013b322269f11f3e89ff2aaf07ab962fdc54335f516090b63450
+plan_size: 37883
+plan_mtime_ns: 1793939585743894569
+built: '2026-11-06T04:33:05+00:00'
 current_phase: P7
 phases:
 - phase_id: P1
@@ -290,6 +290,8 @@ phases:
   - T-7.7
   - T-7.8
   - T-7.9
+  - T-7.11
+  - T-7.12
   tasks:
   - id: T-7.1
     title: Browser parsing in a Web Worker with pdf.js (scripting off, magic-byte check, size/page caps, timeout) using the
@@ -331,11 +333,11 @@ phases:
     title: 'Chat-scoped uploads: a PDF added in a chat is searched only in that chat (papers.chat_id, Vectorize metadata index,
       owner+chat scope in search and D1 re-check, chat created on first upload). **Deleting a chat asks the user** whether
       to also delete the PDFs uploaded in it'
-    status: PLANNED
+    status: READY_FOR_VERIFICATION
   - id: T-7.12
     title: 'Use-the-library toggle per chat: PDFs only / library only / both; proposed default (not yet confirmed by the owner):
       library off when a PDF is attached, on when none'
-    status: PLANNED
+    status: READY_FOR_VERIFICATION
   - id: T-7.13
     title: 'Upload button in the Library: personal library PDFs (not tied to a chat), used in any chat with the library on'
     status: PLANNED
@@ -358,7 +360,7 @@ phases:
   evidence_pointer: docs/evidence/P7.md
   section:
     start: 17710
-    end: 22463
+    end: 22493
 - phase_id: P8
   phase_name: Hardening and demo launch
   status: PLANNED
@@ -402,8 +404,8 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 22463
-    end: 25229
+    start: 22493
+    end: 25259
 - phase_id: P9
   phase_name: Paid MVP (after the deal)
   status: INTENTIONALLY_DEFERRED
@@ -445,5 +447,5 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 25229
-    end: 27401
+    start: 25259
+    end: 27431

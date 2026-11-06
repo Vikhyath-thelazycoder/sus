@@ -41,13 +41,34 @@ interface Props {
   onRetry: (turn: Turn) => void;
   onCite: (source: Source, opener: HTMLElement) => void;
   onFeedback: (turn: Turn, value: 1 | -1 | 0) => void;
+  /** The chat's server ID, creating the chat on the first attached PDF (T-7.11). */
+  chatId: () => Promise<string>;
+  /** "Use the library" as the user set it; undefined = default (T-7.12). */
+  useLibrary?: boolean;
+  /** PDFs already in this chat (sent with earlier questions or saved). */
+  pdfs?: number;
+  onUseLibrary: (on: boolean) => void;
   /** Injected in tests. */
   uploadDeps?: UploadDeps;
 }
 
-export function Conversation({ turns, busy, onAsk, onRetry, onCite, onFeedback, uploadDeps }: Props) {
+export function Conversation({
+  turns,
+  busy,
+  onAsk,
+  onRetry,
+  onCite,
+  onFeedback,
+  chatId,
+  useLibrary,
+  pdfs = 0,
+  onUseLibrary,
+  uploadDeps,
+}: Props) {
   const endRef = useRef<HTMLDivElement>(null);
-  const attachments = useAttachments(uploadDeps);
+  const attachments = useAttachments(chatId, uploadDeps);
+  // Proposed default (not yet confirmed by the owner, same rule as the server): off when the chat has a PDF.
+  const library = useLibrary ?? !(pdfs || attachments.items.some((a) => a.state !== "error"));
   const last = turns.at(-1);
   useEffect(() => {
     endRef.current?.scrollIntoView?.({ block: "end" });
@@ -63,7 +84,9 @@ export function Conversation({ turns, busy, onAsk, onRetry, onCite, onFeedback, 
         ? ERROR_COPY[last.error ?? "failed"]
         : "Answer ready.";
 
-  const composer = <Composer busy={busy} onAsk={onAsk} attachments={attachments} />;
+  const composer = (
+    <Composer busy={busy} onAsk={onAsk} attachments={attachments} library={library} onLibrary={onUseLibrary} />
+  );
 
   // A new chat looks like Claude/ChatGPT: greeting and the question box in the middle, suggestions under it.
   if (turns.length === 0) return <Empty onAsk={onAsk}>{composer}</Empty>;
@@ -301,10 +324,14 @@ function Composer({
   busy,
   onAsk,
   attachments,
+  library,
+  onLibrary,
 }: {
   busy: boolean;
   onAsk: Props["onAsk"];
   attachments: ReturnType<typeof useAttachments>;
+  library: boolean;
+  onLibrary: (on: boolean) => void;
 }) {
   const [value, setValue] = useState("");
   const [over, setOver] = useState(false);
@@ -364,7 +391,9 @@ function Composer({
           }}
           placeholder={
             items.length
-              ? "Ask about your PDF or the library…"
+              ? library
+                ? "Ask about your PDF or the library…"
+                : "Ask about your PDF…"
               : "Ask about biopolymers, green chemistry, packaging…"
           }
           className="field-sizing-content block max-h-48 min-h-14 w-full resize-none bg-transparent px-4 pt-3.5 pb-1 leading-ui outline-none placeholder:text-muted"
@@ -380,7 +409,27 @@ function Composer({
             aria-hidden="true"
             onChange={(e) => addFiles(e.target.files)}
           />
-          <IconButton label="Add a PDF" icon="plus" onClick={() => fileInput.current?.click()} />
+          <div className="flex items-center gap-1">
+            <IconButton label="Add a PDF" icon="plus" onClick={() => fileInput.current?.click()} />
+            <button
+              type="button"
+              role="switch"
+              aria-checked={library}
+              onClick={() => onLibrary(!library)}
+              title="Answer from the curated library as well as this chat's PDFs"
+              className="inline-flex min-h-(--spacing-touch) items-center gap-2 rounded-control px-2 text-small text-muted hover:text-text focus-visible:outline-2 focus-visible:outline-accent"
+            >
+              <span
+                aria-hidden="true"
+                className={`relative inline-block h-5 w-9 rounded-full transition-colors ${library ? "bg-accent" : "bg-border"}`}
+              >
+                <span
+                  className={`absolute top-0.5 left-0 size-4 rounded-full bg-surface transition-transform ${library ? "translate-x-4.5" : "translate-x-0.5"}`}
+                />
+              </span>
+              Use the library
+            </button>
+          </div>
           <button
             type="submit"
             aria-label="Send question"
@@ -394,7 +443,7 @@ function Composer({
       </div>
       {items.length > 0 && (
         <p className="mt-2 text-center text-caption text-muted">
-          Only you can see your PDFs; they're deleted after 7 days (up to {UPLOAD.maxPdfs} PDFs,{" "}
+          Only you can see your PDFs, and only in this chat; they're deleted after 7 days (up to {UPLOAD.maxPdfs} PDFs,{" "}
           {UPLOAD.maxPages} pages). Don't upload confidential documents.
         </p>
       )}

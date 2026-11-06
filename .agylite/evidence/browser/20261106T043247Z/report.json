@@ -1,0 +1,40 @@
+{
+ "schema_version": 1,
+ "url": "http://localhost:8799/",
+ "result": "PASSED",
+ "defects": [],
+ "widths": [
+  1440,
+  768,
+  390
+ ],
+ "overflow": null,
+ "flows": [],
+ "at": "20261106T043247Z",
+ "artifacts": [
+  {
+   "path": "screenshot-1440.png",
+   "sha256": "5beae92bbfa5734398ff58a2b6e3e6030e6ab66958354bffc099f89946d4b74a"
+  },
+  {
+   "path": "screenshot-768.png",
+   "sha256": "bb044cecea132103458628429e34813829f90ea1fe11bf91597124acb898e79a"
+  },
+  {
+   "path": "screenshot-390.png",
+   "sha256": "f3fca6807f4f3fd47b316eae2c4f26d7aa906493a31ad10504fc507488cc35db"
+  },
+  {
+   "path": "console.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "network.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "flows.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  }
+ ]
+}

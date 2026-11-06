@@ -17,7 +17,8 @@ export interface UploadDeps {
 }
 const DEFAULT_DEPS: UploadDeps = { parse: parseInWorker, send: sendUpload, remove: deleteUpload };
 
-export function useAttachments(deps: UploadDeps = DEFAULT_DEPS) {
+/** `chatId` gives the chat the PDFs belong to, creating it on the first attachment (T-7.11). */
+export function useAttachments(chatId: () => Promise<string>, deps: UploadDeps = DEFAULT_DEPS) {
   const [items, setItems] = useState<Attachment[]>([]);
   const aborts = useRef(new Map<string, AbortController>());
   const set = (id: string, next: Partial<Attachment> & Pick<Attachment, "state">) =>
@@ -43,7 +44,7 @@ export function useAttachments(deps: UploadDeps = DEFAULT_DEPS) {
         const parsed = await deps.parse(file, progress, undefined, abort.signal);
         if (abort.signal.aborted) return;
         progress("indexing", 0, parsed.chunks.length);
-        const paperId = await deps.send(parsed, (d, t) => progress("indexing", d, t));
+        const paperId = await deps.send(parsed, (d, t) => progress("indexing", d, t), await chatId());
         // Removed while it was indexing: give the quota back.
         if (abort.signal.aborted) return void deps.remove(paperId).catch(() => {});
         set(id, { state: "ready", paperId, title: parsed.title, pages: parsed.pages });
@@ -53,7 +54,7 @@ export function useAttachments(deps: UploadDeps = DEFAULT_DEPS) {
         aborts.current.delete(id);
       }
     },
-    [deps],
+    [deps, chatId],
   );
 
   /** Remove before sending: cancels a running upload, or deletes a finished one (like discarding an attachment). */
@@ -63,7 +64,7 @@ export function useAttachments(deps: UploadDeps = DEFAULT_DEPS) {
     setItems((xs) => xs.filter((x) => x.id !== a.id));
   };
 
-  /** After a question is sent, finished attachments stay in the library; the chips leave the composer. */
+  /** After a question is sent, finished attachments stay with the chat; the chips leave the composer. */
   const take = () => {
     const ready = items.filter((x): x is Extract<Attachment, { state: "ready" }> => x.state === "ready");
     setItems((xs) => xs.filter((x) => x.state === "working"));

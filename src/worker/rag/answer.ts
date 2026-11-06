@@ -170,7 +170,7 @@ export function checkAnswer(text: string, sourceCount: number, canary: string): 
 export interface Steps {
   guard: (env: Env, question: string, uploads?: string[]) => Promise<GuardVerdict>;
   rewrite: (env: Env, question: string, history: Turn[]) => Promise<string>;
-  retrieve: (env: Env, question: string, ownerId: string) => Promise<Passage[]>;
+  retrieve: (env: Env, question: string, ownerId: string, scope?: { chatId?: string; library?: boolean }) => Promise<Passage[]>;
   generate: (
     env: Env,
     messages: ChatMessage[],
@@ -182,7 +182,7 @@ export interface Steps {
 export const defaultSteps: Steps = {
   guard,
   rewrite,
-  retrieve: async (env, q, ownerId) => (await retrieve(env, q, ownerId)).passages,
+  retrieve: async (env, q, ownerId, scope) => (await retrieve(env, q, ownerId, scope)).passages,
   generate: (env, messages, onToken, signal) => streamChat(llmConfigFromEnv(env), messages, onToken, { signal }),
 };
 
@@ -215,7 +215,15 @@ function canaryGate(canary: string, emit: Emit) {
 
 export async function answer(
   env: Env,
-  input: { question: string; history: Turn[]; ownerId: string; signal?: AbortSignal; uploads?: string[] },
+  input: {
+    question: string;
+    history: Turn[];
+    ownerId: string;
+    signal?: AbortSignal;
+    uploads?: string[];
+    chatId?: string;
+    library?: boolean;
+  },
   emit: Emit,
   steps: Steps = defaultSteps,
 ): Promise<AnswerResult> {
@@ -234,7 +242,7 @@ export async function answer(
   }
 
   await emit({ type: "status", step: "searching" });
-  const passages = await steps.retrieve(env, standalone, input.ownerId);
+  const passages = await steps.retrieve(env, standalone, input.ownerId, { chatId: input.chatId, library: input.library });
   if (!passages.length) {
     await emit({ type: "token", text: NOT_FOUND });
     return { ...base, question: standalone, content: NOT_FOUND, status: "ok", notFound: true };

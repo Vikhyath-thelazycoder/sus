@@ -3,17 +3,22 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { generateSignedCookie } from "hono/cookie";
 import { app } from "../src/worker/index";
 import { EMBED_DIMS } from "../src/worker/platform";
-import { fetchChunks, keywordSearch, ownerFilter, retrieve } from "../src/worker/rag/search";
+import { chatFilter, fetchChunks, keywordSearch, ownerFilter, retrieve } from "../src/worker/rag/search";
 import { runCleanup } from "../src/worker/cron";
 import { UPLOAD } from "../src/shared/limits";
 import { ORIGIN } from "./helpers";
 
 const A = "a7a7a7a7-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const B = "b7b7b7b7-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+const CHAT_A = "c7c7c7c7-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+const CHAT_A2 = "c7c7c7c7-aaaa-4aaa-8aaa-aaaaaaaaaaa2";
+const CHAT_B = "c7c7c7c7-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+const chatOf = (owner: string) => (owner === A ? CHAT_A : CHAT_B);
 
 /** In-memory Workers AI and Vectorize; the fake index applies the same `$in` owner filter Vectorize does. */
 function fakes(overrides: Partial<Record<string, unknown>> = {}) {
-  const vectors = new Map<string, { values: number[]; metadata: { owner_id: string } }>();
+  type Meta = { owner_id: string; chat_id?: string };
+  const vectors = new Map<string, { values: number[]; metadata: Meta }>();
   const state = { failDeletes: 0 };
   const AI = {
     run: async (_m: string, input: { text: string[] }) => ({
@@ -21,15 +26,20 @@ function fakes(overrides: Partial<Record<string, unknown>> = {}) {
     }),
   };
   const VECTORIZE = {
-    upsert: async (vs: { id: string; values: number[]; metadata: { owner_id: string } }[]) =>
+    upsert: async (vs: { id: string; values: number[]; metadata: Meta }[]) =>
       vs.forEach((v) => vectors.set(v.id, v)),
     deleteByIds: async (ids: string[]) => {
       if (state.failDeletes-- > 0) throw new Error("vectorize down");
       ids.forEach((id) => vectors.delete(id));
     },
-    query: async (_v: number[], o: { filter: { owner_id: { $in: string[] } } }) => ({
+    // Applies the same filters Vectorize does: `$in` on owner_id, or plain equality on owner_id and chat_id.
+    query: async (_v: number[], o: { filter: { owner_id: string | { $in: string[] }; chat_id?: string } }) => ({
       matches: [...vectors]
-        .filter(([, v]) => o.filter.owner_id.$in.includes(v.metadata.owner_id))
+        .filter(([, { metadata: m }]) => {
+          const own = o.filter.owner_id;
+          return (typeof own === "string" ? m.owner_id === own : own.$in.includes(m.owner_id)) &&
+            (o.filter.chat_id === undefined || m.chat_id === o.filter.chat_id);
+        })
         .map(([id]) => ({ id, score: 1 })),
     }),
   };
@@ -54,7 +64,8 @@ async function as(owner: string, method: string, path: string, body?: unknown, b
   );
 }
 
-const create = (pages = 3, title = "My notes on PHA") => ({
+const create = (pages = 3, title = "My notes on PHA", chatId = CHAT_A) => ({
+  chatId,
   title,
   pages,
   sections: [
@@ -70,8 +81,8 @@ const chunk = (idx: number, text = `Paper: x. Section: Results.\nchunk ${idx}`, 
   pageEnd: 2,
 });
 
-async function upload(owner: string, text: string, pages = 3) {
-  const res = await as(owner, "POST", "/api/uploads", create(pages));
+async function upload(owner: string, text: string, pages = 3, chatId = chatOf(owner)) {
+  const res = await as(owner, "POST", "/api/uploads", create(pages, undefined, chatId));
   expect(res.status).toBe(201);
   const { paperId } = (await res.json()) as { paperId: string };
   expect(
@@ -97,6 +108,15 @@ beforeEach(async () => {
       env.DB.prepare(`DELETE FROM ${t}`),
     ),
   );
+  await env.DB.batch(
+    [
+      [CHAT_A, A],
+      [CHAT_A2, A],
+      [CHAT_B, B],
+    ].map(([id, owner]) =>
+      env.DB.prepare("INSERT INTO chats (id, owner_id, created_at, updated_at) VALUES (?1, ?2, 0, 0)").bind(id, owner),
+    ),
+  );
 });
 
 describe("uploads: server re-validation (T-7.2, SECURITY §5.1)", () => {
@@ -115,7 +135,7 @@ describe("uploads: server re-validation (T-7.2, SECURITY §5.1)", () => {
       .first<Record<string, string>>();
     expect(c).toMatchObject({ id: `${id}:c0`, owner_id: A });
     expect(c!.text).not.toContain("​"); // hidden characters stripped
-    expect(f.vectors.get(`${id}:c0`)?.metadata).toEqual({ owner_id: A, paper_id: id });
+    expect(f.vectors.get(`${id}:c0`)?.metadata).toEqual({ owner_id: A, paper_id: id, chat_id: CHAT_A });
   });
 
   it("rejects unknown fields, client IDs, owner fields and vectors", async () => {
@@ -175,10 +195,11 @@ describe("uploads: server re-validation (T-7.2, SECURITY §5.1)", () => {
   it("'finish' doesn't wait for Vectorize: a question right after Ready finds the upload by keyword (T-7.9)", async () => {
     const id = await upload(A, "fresh-kiwi-token");
     f.vectors.clear(); // Vectorize hasn't applied the writes yet
-    const hits = (await retrieve(f.bindings, "fresh-kiwi-token", A, { mode: "hybrid" })).hits;
+    const hits = (await retrieve(f.bindings, "fresh-kiwi-token", A, { mode: "hybrid", chatId: CHAT_A })).hits;
     expect(hits.map((h) => h.id)).toEqual([`${id}:c0`]);
-    expect((await retrieve(f.bindings, "fresh-kiwi-token", B, { mode: "hybrid" })).hits).toEqual([]);
+    expect((await retrieve(f.bindings, "fresh-kiwi-token", B, { mode: "hybrid", chatId: CHAT_B })).hits).toEqual([]);
   });
+
 
   it("won't let another owner add to, finish or delete an upload (404)", async () => {
     const id = ((await (await as(A, "POST", "/api/uploads", create())).json()) as { paperId: string })
@@ -206,7 +227,7 @@ describe("uploads: quota (SECURITY §12 #3)", () => {
     expect(await count("SELECT count(*) AS n FROM papers WHERE owner_id = ?1", A)).toBe(5);
     // A 6th PDF is refused; B has its own quota.
     expect((await as(A, "POST", "/api/uploads", create(2))).status).toBe(409);
-    expect((await as(B, "POST", "/api/uploads", create(2))).status).toBe(201);
+    expect((await as(B, "POST", "/api/uploads", create(2, undefined, CHAT_B))).status).toBe(201);
   });
 
   it("counts pages across uploads, and expired uploads stop counting", async () => {
@@ -222,14 +243,15 @@ describe("uploads are private to their owner (T-7.4, SECURITY §13 #4)", () => {
   it("user A never finds user B's upload, by keyword or by meaning", async () => {
     const idB = await upload(B, "secret-B-token appears here");
     const idA = await upload(A, "my own passage");
-    expect(await keywordSearch(f.bindings, "secret-B-token", A)).toEqual([]);
-    expect(await keywordSearch(f.bindings, "secret-B-token", B)).toEqual([`${idB}:c0`]);
+    expect(await keywordSearch(f.bindings, "secret-B-token", A, 30, CHAT_A)).toEqual([]);
+    expect(await keywordSearch(f.bindings, "secret-B-token", A, 30, CHAT_B)).toEqual([]);
+    expect(await keywordSearch(f.bindings, "secret-B-token", B, 30, CHAT_B)).toEqual([`${idB}:c0`]);
     const vectorIdsForA = (
       await f.bindings.VECTORIZE.query([], { filter: ownerFilter(A) } as never)
     ).matches.map((m) => m.id);
     expect(vectorIdsForA).toEqual([`${idA}:c0`]);
     // Even if a vector hit leaked through, the D1 re-check drops it.
-    expect([...(await fetchChunks(f.bindings, [`${idB}:c0`, `${idA}:c0`], A)).keys()]).toEqual([`${idA}:c0`]);
+    expect([...(await fetchChunks(f.bindings, [`${idB}:c0`, `${idA}:c0`], A, CHAT_A)).keys()]).toEqual([`${idA}:c0`]);
     // The library lists it only for its owner, labelled as an upload.
     const listA = (
       (await (await as(A, "GET", "/api/papers")).json()) as { papers: { id: string; upload: boolean }[] }
@@ -242,20 +264,20 @@ describe("uploads are private to their owner (T-7.4, SECURITY §13 #4)", () => {
     const id = ((await (await as(A, "POST", "/api/uploads", create())).json()) as { paperId: string })
       .paperId;
     await as(A, "POST", `/api/uploads/${id}/chunks`, { chunks: [chunk(0)] });
-    expect((await fetchChunks(f.bindings, [`${id}:c0`], A)).size).toBe(0); // still processing
+    expect((await fetchChunks(f.bindings, [`${id}:c0`], A, CHAT_A)).size).toBe(0); // still processing
     await as(A, "POST", `/api/uploads/${id}/finish`);
-    expect((await fetchChunks(f.bindings, [`${id}:c0`], A)).size).toBe(1);
+    expect((await fetchChunks(f.bindings, [`${id}:c0`], A, CHAT_A)).size).toBe(1);
     await env.DB.prepare("UPDATE papers SET expires_at = 1 WHERE id = ?1").bind(id).run();
-    expect((await fetchChunks(f.bindings, [`${id}:c0`], A)).size).toBe(0);
+    expect((await fetchChunks(f.bindings, [`${id}:c0`], A, CHAT_A)).size).toBe(0);
   });
 });
 
 describe("deleting (T-7.5, SECURITY §12 #16)", () => {
   it("delete a paper, then search its unique text: gone from FTS, D1 and Vectorize (SECURITY §13 #23)", async () => {
     const id = await upload(A, "unique-zebra-token");
-    expect(await keywordSearch(f.bindings, "unique-zebra-token", A)).toHaveLength(1);
+    expect(await keywordSearch(f.bindings, "unique-zebra-token", A, 30, CHAT_A)).toHaveLength(1);
     expect((await as(A, "DELETE", `/api/uploads/${id}`)).status).toBe(204);
-    expect(await keywordSearch(f.bindings, "unique-zebra-token", A)).toEqual([]);
+    expect(await keywordSearch(f.bindings, "unique-zebra-token", A, 30, CHAT_A)).toEqual([]);
     expect(f.vectors.size).toBe(0);
     expect(await count("SELECT count(*) AS n FROM sections WHERE paper_id = ?1", id)).toBe(0);
     expect(await count("SELECT count(*) AS n FROM vector_tombstones")).toBe(0);
@@ -288,7 +310,7 @@ describe("deleting (T-7.5, SECURITY §12 #16)", () => {
     expect((await as(A, "POST", "/api/me/delete")).status).toBe(204);
     expect(await count("SELECT count(*) AS n FROM papers WHERE owner_id = ?1", A)).toBe(0);
     expect(await count("SELECT count(*) AS n FROM chats WHERE owner_id = ?1", A)).toBe(0);
-    expect(await count("SELECT count(*) AS n FROM chats WHERE owner_id = ?1", B)).toBe(1);
+    expect(await count("SELECT count(*) AS n FROM chats WHERE owner_id = ?1", B)).toBe(2);
     expect([...f.vectors.keys()]).toEqual([`${idB}:c0`]);
   });
 
@@ -298,7 +320,7 @@ describe("deleting (T-7.5, SECURITY §12 #16)", () => {
     expect((await as(A, "DELETE", `/api/uploads/${id}`)).status).toBe(500);
     expect(await count("SELECT count(*) AS n FROM chunks WHERE paper_id = ?1", id)).toBe(0);
     expect(await count("SELECT count(*) AS n FROM vector_tombstones")).toBe(1);
-    expect((await fetchChunks(f.bindings, [`${id}:c0`], A)).size).toBe(0); // never shown meanwhile
+    expect((await fetchChunks(f.bindings, [`${id}:c0`], A, CHAT_A)).size).toBe(0); // never shown meanwhile
     expect(await runCleanup(f.bindings)).toEqual({ papers: 0, vectors: 1 });
     expect(f.vectors.size).toBe(0);
     expect(await count("SELECT count(*) AS n FROM vector_tombstones")).toBe(0);
@@ -328,5 +350,67 @@ describe("daily cleanup cron, fixed clock (T-7.5)", () => {
     expect(left).toEqual([keep]);
     expect([...f.vectors.keys()]).toEqual([`${keep}:c0`]);
     expect(await keywordSearch(f.bindings, "old-token", B)).toEqual([]);
+  });
+});
+
+describe("chat-scoped PDFs (T-7.11) and the library switch (T-7.12)", () => {
+  const ids = async (owner: string, q: string, opts: { chatId?: string; library?: boolean }) =>
+    (await retrieve(f.bindings, q, owner, { mode: "hybrid", ...opts })).hits.map((h) => h.id);
+
+  it("a PDF uploaded in chat A is found in chat A only: not in chat B, not by another user", async () => {
+    const id = await upload(A, "orchid-scope-token", 3, CHAT_A);
+    expect(f.vectors.get(`${id}:c0`)!.metadata).toMatchObject({ owner_id: A, chat_id: CHAT_A });
+    expect(await ids(A, "orchid-scope-token", { chatId: CHAT_A })).toEqual([`${id}:c0`]);
+    expect(await ids(A, "orchid-scope-token", { chatId: CHAT_A2 })).toEqual([]);
+    expect(await ids(A, "orchid-scope-token", {})).toEqual([]); // a chat with no ID yet
+    expect(await ids(B, "orchid-scope-token", { chatId: CHAT_A })).toEqual([]);
+    // Each layer on its own: keyword list, Vectorize filter, D1 re-check.
+    expect(await keywordSearch(f.bindings, "orchid-scope-token", A, 30, CHAT_A2)).toEqual([]);
+    expect(await keywordSearch(f.bindings, "orchid-scope-token", A)).toEqual([]);
+    expect(await keywordSearch(f.bindings, "orchid-scope-token", B, 30, CHAT_A)).toEqual([]);
+    const q = (filter: object) => f.bindings.VECTORIZE.query([0], { topK: 30, filter } as never);
+    expect((await q(chatFilter(A, CHAT_A2))).matches).toEqual([]);
+    expect((await fetchChunks(f.bindings, [`${id}:c0`], A, CHAT_A2)).size).toBe(0);
+    expect((await fetchChunks(f.bindings, [`${id}:c0`], A, null)).size).toBe(0);
+    expect((await fetchChunks(f.bindings, [`${id}:c0`], B, CHAT_A)).size).toBe(0);
+    expect((await fetchChunks(f.bindings, [`${id}:c0`], A, CHAT_A, false)).size).toBe(1);
+  });
+
+  it("won't upload into another owner's chat, or without a chat", async () => {
+    expect((await as(A, "POST", "/api/uploads", create(2, undefined, CHAT_B))).status).toBe(404);
+    const noChat: Partial<ReturnType<typeof create>> = create(2);
+    delete noChat.chatId;
+    expect((await as(A, "POST", "/api/uploads", noChat)).status).toBe(400);
+  });
+
+  it("library off searches only the chat's PDFs; library uploads (not tied to a chat) need it on", async () => {
+    const own = await upload(A, "lotus-lib-token shared-word", 3, CHAT_A);
+    const lib = await upload(A, "lotus-lib-token shared-word", 3, CHAT_A2);
+    await env.DB.prepare("UPDATE papers SET chat_id = NULL WHERE id = ?1").bind(lib).run(); // kept from a deleted chat
+    expect((await ids(A, "shared-word", { chatId: CHAT_A, library: false })).sort()).toEqual([`${own}:c0`]);
+    expect((await ids(A, "shared-word", { chatId: CHAT_A, library: true })).sort()).toEqual([`${lib}:c0`, `${own}:c0`].sort());
+  });
+
+  it("deleting a chat deletes its PDFs only when asked; otherwise they move to the library", async () => {
+    const kept = await upload(A, "kept-token", 3, CHAT_A);
+    expect((await as(A, "DELETE", `/api/chats/${CHAT_A}`)).status).toBe(204);
+    expect(await env.DB.prepare("SELECT chat_id FROM papers WHERE id = ?1").bind(kept).first("chat_id")).toBeNull();
+    const gone = await upload(A, "gone-token", 3, CHAT_A2);
+    expect((await as(B, "DELETE", `/api/chats/${CHAT_A2}?pdfs=delete`)).status).toBe(404);
+    expect(await count("SELECT count(*) AS n FROM papers WHERE id = ?1", gone)).toBe(1);
+    expect((await as(A, "DELETE", `/api/chats/${CHAT_A2}?pdfs=delete`)).status).toBe(204);
+    expect(await count("SELECT count(*) AS n FROM papers WHERE id = ?1", gone)).toBe(0);
+    expect(f.vectors.has(`${gone}:c0`)).toBe(false);
+    expect(await count("SELECT count(*) AS n FROM papers WHERE id = ?1", kept)).toBe(1);
+  });
+
+  it("POST /api/chats makes an empty chat for the caller; GET reports its PDFs and library choice", async () => {
+    const res = await as(A, "POST", "/api/chats");
+    expect(res.status).toBe(201);
+    const { id } = (await res.json()) as { id: string };
+    await upload(A, "x", 3, id);
+    const got = (await (await as(A, "GET", `/api/chats/${id}`)).json()) as { chat: { pdfs: number; useLibrary: null } };
+    expect(got.chat).toMatchObject({ pdfs: 1, useLibrary: null });
+    expect((await as(B, "GET", `/api/chats/${id}`)).status).toBe(404);
   });
 });
