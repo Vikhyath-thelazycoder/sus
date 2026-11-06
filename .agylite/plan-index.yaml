@@ -1,9 +1,9 @@
 schema_version: 1
 plan_path: docs/IMPLEMENTATION_PLAN.md
-plan_sha256: a0472c99121313c62ffeec6c931af27af542e1be14619db18518a6e610fc856c
-plan_size: 30244
-plan_mtime_ns: 1793929020782914754
-built: '2026-11-06T01:37:00+00:00'
+plan_sha256: 7c2f8490e7fb3d7012ebe564631ed10a9cddcf5b4306fb4ea0fa1ef600bdbac3
+plan_size: 30633
+plan_mtime_ns: 1793929773905772489
+built: '2026-11-06T01:49:33+00:00'
 current_phase: P7
 phases:
 - phase_id: P1
@@ -287,27 +287,23 @@ phases:
   objective: Users upload their own PDFs (5 × 100 pages), parsed in the browser, re-validated on the server, private to them,
     deleted after 7 days.
   active_tasks:
-  - T-7.1
-  - T-7.2
-  - T-7.3
-  - T-7.4
   - T-7.5
   tasks:
   - id: T-7.1
     title: Browser parsing in a Web Worker with pdf.js (scripting off, magic-byte check, size/page caps, timeout) using the
       shared chunker
-    status: READY_FOR_VERIFICATION
+    status: VERIFIED
   - id: T-7.2
     title: '`POST /api/upload` in batches: zod re-validation, server IDs and embeddings, **atomic** quota check (5 PDFs /
       100 pages)'
-    status: READY_FOR_VERIFICATION
+    status: VERIFIED
   - id: T-7.3
     title: 'Upload UI: drag-and-drop, progress (Reading → Splitting → Indexing), limits and "don''t upload confidential documents"
       notice'
-    status: READY_FOR_VERIFICATION
+    status: VERIFIED
   - id: T-7.4
     title: Own uploads searchable only by their owner; "Your upload (unverified)" labels
-    status: READY_FOR_VERIFICATION
+    status: VERIFIED
   - id: T-7.5
     title: 'Cleanup as a **Cloudflare Worker cron** (free; data lives on Cloudflare; Render''s free tier has no cron): expire
       uploads after 7 days; orphan-vector cleanup; "delete my data" endpoint + button'
@@ -319,14 +315,16 @@ phases:
   - src/web/upload/**
   - src/worker/routes/upload.ts
   - src/worker/cron.ts
+  - src/shared/limits.ts
+  - migrations/0003_vector_tombstones.sql
   security_flags: true
   design_flags: true
   testing_flags: true
   last_updated: null
-  evidence_pointer: null
+  evidence_pointer: docs/evidence/P7.md
   section:
     start: 16566
-    end: 18479
+    end: 18502
 - phase_id: P8
   phase_name: Hardening and demo launch
   status: PLANNED
@@ -370,8 +368,8 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 18479
-    end: 21245
+    start: 18502
+    end: 21268
 - phase_id: P9
   phase_name: Paid MVP (after the deal)
   status: INTENTIONALLY_DEFERRED
@@ -409,5 +407,5 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 21245
-    end: 23062
+    start: 21268
+    end: 23085

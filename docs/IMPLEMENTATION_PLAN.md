@@ -108,10 +108,10 @@ Objective: Users upload their own PDFs (5 × 100 pages), parsed in the browser, 
 
 | ID | Task | Status | Depends | Capabilities | Security | Design | Testing | Acceptance |
 |---|---|---|---|---|---|---|---|---|
-| T-7.1 | Browser parsing in a Web Worker with pdf.js (scripting off, magic-byte check, size/page caps, timeout) using the shared chunker | READY_FOR_VERIFICATION | T-2.4 | engineering/frontend | SEC §9, §12 #15 | — | Fixture tests; malicious-PDF caps | A 30-page paper parses in the browser |
-| T-7.2 | `POST /api/upload` in batches: zod re-validation, server IDs and embeddings, **atomic** quota check (5 PDFs / 100 pages) | READY_FOR_VERIFICATION | T-7.1, T-2.6 | engineering/backend, engineering/security | SEC §5.1, §12 #3 | — | SEC §13 #13, #14, #19 | 10 parallel uploads at 4/5 → exactly 1 succeeds |
-| T-7.3 | Upload UI: drag-and-drop, progress (Reading → Splitting → Indexing), limits and "don't upload confidential documents" notice | READY_FOR_VERIFICATION | T-7.1, T-5.2 | design/frontend | SEC §12 #21 | DESIGN.md | Visual check on a phone | Upload works on desktop and mobile |
-| T-7.4 | Own uploads searchable only by their owner; "Your upload (unverified)" labels | READY_FOR_VERIFICATION | T-7.2, T-3.4 | engineering/ai-systems | SEC §12 #10 | DESIGN.md | SEC §13 #4 | User A never sees user B's upload |
+| T-7.1 | Browser parsing in a Web Worker with pdf.js (scripting off, magic-byte check, size/page caps, timeout) using the shared chunker | VERIFIED | T-2.4 | engineering/frontend | SEC §9, §12 #15 | — | Fixture tests; malicious-PDF caps | A 30-page paper parses in the browser |
+| T-7.2 | `POST /api/upload` in batches: zod re-validation, server IDs and embeddings, **atomic** quota check (5 PDFs / 100 pages) | VERIFIED | T-7.1, T-2.6 | engineering/backend, engineering/security | SEC §5.1, §12 #3 | — | SEC §13 #13, #14, #19 | 10 parallel uploads at 4/5 → exactly 1 succeeds |
+| T-7.3 | Upload UI: drag-and-drop, progress (Reading → Splitting → Indexing), limits and "don't upload confidential documents" notice | VERIFIED | T-7.1, T-5.2 | design/frontend | SEC §12 #21 | DESIGN.md | Visual check on a phone | Upload works on desktop and mobile |
+| T-7.4 | Own uploads searchable only by their owner; "Your upload (unverified)" labels | VERIFIED | T-7.2, T-3.4 | engineering/ai-systems | SEC §12 #10 | DESIGN.md | SEC §13 #4 | User A never sees user B's upload |
 | T-7.5 | Cleanup as a **Cloudflare Worker cron** (free; data lives on Cloudflare; Render's free tier has no cron): expire uploads after 7 days; orphan-vector cleanup; "delete my data" endpoint + button | READY_FOR_VERIFICATION | T-7.2 | engineering/backend | SEC §12 #16 | — | SEC §13 #23 | Deleted text is never found again |
 
 ## P8 · Hardening and demo launch
@@ -254,3 +254,7 @@ P1 ──► P2 ──► P3 ──► P4 ──┐
 | 2026-11-06 | T-7.5: PLANNED → IN_PROGRESS |
 | 2026-11-06 | T-7.5: IN_PROGRESS → READY_FOR_VERIFICATION (evidence: docs/evidence/P7.md) |
 | 2026-11-06 | P7: IN_PROGRESS → READY_FOR_VERIFICATION (evidence: docs/evidence/P7.md) |
+| 2026-11-06 | T-7.1: READY_FOR_VERIFICATION → VERIFIED (evidence: docs/evidence/P7.md) |
+| 2026-11-06 | T-7.2: READY_FOR_VERIFICATION → VERIFIED (evidence: docs/evidence/P7.md) |
+| 2026-11-06 | T-7.3: READY_FOR_VERIFICATION → VERIFIED (evidence: docs/evidence/P7.md) |
+| 2026-11-06 | T-7.4: READY_FOR_VERIFICATION → VERIFIED (evidence: docs/evidence/P7.md) |
