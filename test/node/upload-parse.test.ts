@@ -104,12 +104,13 @@ describe("browser PDF parsing (T-7.1)", () => {
     const ocrd: number[] = [];
     const ocr = async (page: { pageNumber: number }) => {
       ocrd.push(page.pageNumber);
-      // What the browser OCR returns: positioned words in PDF coordinates.
-      return Array.from({ length: 30 }, (_, i) =>
+      // What the browser OCR returns: positioned words in PDF coordinates, and the page's confidence.
+      const items = Array.from({ length: 30 }, (_, i) =>
         `Line ${i} of a scanned page about heart disease prediction with machine learning.`
           .split(" ")
           .map((str, j) => ({ str, x: 50 + j * 40, y: 760 - i * 22, width: 36, size: 10 })),
       ).flat();
+      return { items, confidence: page.pageNumber === 2 ? 41 : 91 };
     };
     const r = await parseUpload(
       makePdf(2, () => ""),
@@ -120,13 +121,14 @@ describe("browser PDF parsing (T-7.1)", () => {
     expect(ocrd).toEqual([1, 2]);
     expect(steps).toEqual(["reading", "ocr 0/2", "ocr 1/2", "ocr 2/2", "splitting"]);
     expect(r.chunks.map((c) => c.text).join(" ")).toContain("heart disease prediction");
+    expect(r.unclearPages).toEqual([2]); // T-7.10: page 2 read with low confidence
   });
 
   it("only OCRs the pages that have no text in a mixed PDF", async () => {
     const ocrd: number[] = [];
     const pdf = makePdf(3, (p, i) => (p === 2 ? "" : `Page ${p} line ${i}: text layer present here.`));
     await parseUpload(pdf, "mixed.pdf", getDocument, {
-      ocr: (async (page: { pageNumber: number }) => (ocrd.push(page.pageNumber), [])) as never,
+      ocr: (async (page: { pageNumber: number }) => (ocrd.push(page.pageNumber), { items: [], confidence: 90 })) as never,
     });
     expect(ocrd).toEqual([2]);
   });

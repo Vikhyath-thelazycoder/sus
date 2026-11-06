@@ -119,7 +119,15 @@ chats.get("/chats/:id", async (c) => {
     };
   });
   const useLibrary = chat.use_library === null ? null : chat.use_library === 1;
-  return c.json({ chat: { id: chat.id, title: chat.title, useLibrary, pdfs: chat.pdfs }, messages });
+  // The chat's own ready PDFs, listed above the question box (T-7.14).
+  const { results: files } = await db
+    .prepare("SELECT title FROM papers WHERE chat_id = ?1 AND owner_id = ?2 AND status = 'ready' ORDER BY created_at")
+    .bind(id, ownerId)
+    .all<{ title: string }>();
+  return c.json({
+    chat: { id: chat.id, title: chat.title, useLibrary, pdfs: chat.pdfs, files: files.map((f) => f.title) },
+    messages,
+  });
 });
 
 chats.patch("/chats/:id", async (c) => {

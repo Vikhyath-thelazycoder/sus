@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   deleteMyData,
   deleteUpload,
@@ -10,6 +10,11 @@ import {
 } from "../api";
 import { Badge, Icon, Skeleton } from "../ui";
 import { UPLOAD } from "../../shared/limits";
+import { AttachmentChip } from "../Conversation";
+import { useAttachments, type UploadDeps } from "../upload/useAttachments";
+
+/** Library uploads belong to no chat (T-7.13). */
+const NO_CHAT = async () => undefined;
 
 /** Library (T-6.2): curated papers and the viewer's own uploads, with search and topic filters, and a detail view. */
 
@@ -36,7 +41,7 @@ export function matches(p: Paper, query: string, topic: TopicId): boolean {
   return q.split(/\s+/).every((w) => hay.includes(w));
 }
 
-export function Library({ onOpen }: { onOpen: (id: string) => void }) {
+export function Library({ onOpen, uploadDeps }: { onOpen: (id: string) => void; uploadDeps?: UploadDeps }) {
   const [papers, setPapers] = useState<Paper[] | null>(null);
   const [failed, setFailed] = useState(false);
   const [query, setQuery] = useState("");
@@ -44,6 +49,15 @@ export function Library({ onOpen }: { onOpen: (id: string) => void }) {
 
   const load = () => listPapers().then(setPapers, () => setFailed(true));
   useEffect(() => void load(), []);
+  const uploads = useAttachments(NO_CHAT, uploadDeps);
+  const fileInput = useRef<HTMLInputElement>(null);
+  const anyReady = uploads.items.some((a) => a.state === "ready");
+  // A finished upload leaves the chips and shows up in the list as "Your upload".
+  useEffect(() => {
+    if (!anyReady) return;
+    uploads.take();
+    void load();
+  }, [anyReady]); // eslint-disable-line react-hooks/exhaustive-deps
   const retry = () => {
     setFailed(false);
     void load();
@@ -77,8 +91,37 @@ export function Library({ onOpen }: { onOpen: (id: string) => void }) {
           {used.pdfs
             ? `Your uploads: ${used.pdfs} of ${UPLOAD.maxPdfs} PDFs, ${used.pages} of ${UPLOAD.maxPages} pages. `
             : ""}
-          To add your own PDF, use + in the chat box.
+          PDFs uploaded here are used in every chat with "Use the library" on; a PDF added with + in a chat stays in
+          that chat. Only you can see them; they're deleted after 7 days. Don't upload confidential documents.
         </p>
+        <input
+          ref={fileInput}
+          type="file"
+          accept="application/pdf,.pdf"
+          multiple
+          className="sr-only"
+          tabIndex={-1}
+          aria-hidden="true"
+          onChange={(e) => {
+            for (const f of Array.from(e.target.files ?? [])) void uploads.add(f);
+            e.target.value = "";
+          }}
+        />
+        <button
+          type="button"
+          onClick={() => fileInput.current?.click()}
+          className="mt-3 inline-flex min-h-(--spacing-touch) items-center gap-2 rounded-control border border-control px-4 text-small font-medium hover:border-accent focus-visible:outline-2 focus-visible:outline-accent"
+        >
+          <Icon name="plus" className="size-4" />
+          Upload a PDF
+        </button>
+        {uploads.items.length > 0 && (
+          <ul aria-label="Uploading PDFs" aria-live="polite" className="mt-3 flex flex-wrap gap-2">
+            {uploads.items.map((a) => (
+              <AttachmentChip key={a.id} a={a} onRemove={() => uploads.remove(a)} />
+            ))}
+          </ul>
+        )}
 
         <label htmlFor="library-search" className="sr-only">
           Search papers

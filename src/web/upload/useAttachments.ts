@@ -5,8 +5,8 @@ import { parseInWorker, sendUpload, UploadFailed, type UploadFailure, type Uploa
 
 /** PDFs attached in the chat box (ChatGPT/Claude style): each one is parsed, indexed and then usable in answers. */
 export type Attachment = { id: string; name: string } & (
-  | { state: "working"; step: UploadStep; done: number; total: number }
-  | { state: "ready"; paperId: string; title: string; pages: number }
+  | { state: "working"; step: UploadStep | "waiting"; done: number; total: number }
+  | { state: "ready"; paperId: string; title: string; pages: number; unclearPages: number[] }
   | { state: "error"; reason: UploadFailure }
 );
 
@@ -17,10 +17,15 @@ export interface UploadDeps {
 }
 const DEFAULT_DEPS: UploadDeps = { parse: parseInWorker, send: sendUpload, remove: deleteUpload };
 
-/** `chatId` gives the chat the PDFs belong to, creating it on the first attachment (T-7.11). */
-export function useAttachments(chatId: () => Promise<string>, deps: UploadDeps = DEFAULT_DEPS) {
+/**
+ * `chatId` gives the chat the PDFs belong to, creating it on the first attachment (T-7.11); no chat ID = the
+ * personal library (T-7.13).
+ */
+export function useAttachments(chatId: () => Promise<string | undefined>, deps: UploadDeps = DEFAULT_DEPS) {
   const [items, setItems] = useState<Attachment[]>([]);
   const aborts = useRef(new Map<string, AbortController>());
+  // One PDF at a time: several pdf.js + OCR workers at once starve each other into the no-progress timeout (T-7.14).
+  const queue = useRef<Promise<void>>(Promise.resolve());
   const set = (id: string, next: Partial<Attachment> & Pick<Attachment, "state">) =>
     setItems((xs) => xs.map((x) => (x.id === id ? ({ ...x, ...next } as Attachment) : x)));
 
@@ -30,7 +35,7 @@ export function useAttachments(chatId: () => Promise<string>, deps: UploadDeps =
       const fail = (reason: UploadFailure) => set(id, { state: "error", reason });
       setItems((xs) => [
         ...xs,
-        { id, name: file.name, state: "working", step: "reading", done: 0, total: 0 },
+        { id, name: file.name, state: "working", step: "waiting", done: 0, total: 0 },
       ]);
       // Client-side checks first (SECURITY §9); the server checks everything again.
       if (file.type !== "application/pdf" && !/\.pdf$/i.test(file.name)) return fail("type");
@@ -40,17 +45,30 @@ export function useAttachments(chatId: () => Promise<string>, deps: UploadDeps =
       const progress = (step: UploadStep, done = 0, total = 0) => {
         if (!abort.signal.aborted) set(id, { state: "working", step, done, total });
       };
+      const turn = queue.current;
+      let release!: () => void;
+      queue.current = new Promise<void>((r) => (release = r));
       try {
+        await turn;
+        if (abort.signal.aborted) return;
+        progress("reading");
         const parsed = await deps.parse(file, progress, undefined, abort.signal);
         if (abort.signal.aborted) return;
         progress("indexing", 0, parsed.chunks.length);
         const paperId = await deps.send(parsed, (d, t) => progress("indexing", d, t), await chatId());
         // Removed while it was indexing: give the quota back.
         if (abort.signal.aborted) return void deps.remove(paperId).catch(() => {});
-        set(id, { state: "ready", paperId, title: parsed.title, pages: parsed.pages });
+        set(id, {
+          state: "ready",
+          paperId,
+          title: parsed.title,
+          pages: parsed.pages,
+          unclearPages: parsed.unclearPages ?? [],
+        });
       } catch (err) {
         if (!abort.signal.aborted) fail(err instanceof UploadFailed ? err.reason : "network");
       } finally {
+        release();
         aborts.current.delete(id);
       }
     },

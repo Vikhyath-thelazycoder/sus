@@ -81,8 +81,11 @@ const chunk = (idx: number, text = `Paper: x. Section: Results.\nchunk ${idx}`, 
   pageEnd: 2,
 });
 
-async function upload(owner: string, text: string, pages = 3, chatId = chatOf(owner)) {
-  const res = await as(owner, "POST", "/api/uploads", create(pages, undefined, chatId));
+/** `chatId: null` = a Library upload (T-7.13). */
+async function upload(owner: string, text: string, pages = 3, chatId: string | null = chatOf(owner)) {
+  const body: Partial<ReturnType<typeof create>> = create(pages, undefined, chatId ?? undefined);
+  if (!chatId) delete body.chatId;
+  const res = await as(owner, "POST", "/api/uploads", body);
   expect(res.status).toBe(201);
   const { paperId } = (await res.json()) as { paperId: string };
   expect(
@@ -376,11 +379,18 @@ describe("chat-scoped PDFs (T-7.11) and the library switch (T-7.12)", () => {
     expect((await fetchChunks(f.bindings, [`${id}:c0`], A, CHAT_A, false)).size).toBe(1);
   });
 
-  it("won't upload into another owner's chat, or without a chat", async () => {
+  it("won't upload into another owner's chat", async () => {
     expect((await as(A, "POST", "/api/uploads", create(2, undefined, CHAT_B))).status).toBe(404);
-    const noChat: Partial<ReturnType<typeof create>> = create(2);
-    delete noChat.chatId;
-    expect((await as(A, "POST", "/api/uploads", noChat)).status).toBe(400);
+  });
+
+  it("a PDF added from the Library (no chat) is used in any chat with the library on, never by another user (T-7.13)", async () => {
+    const id = await upload(A, "fern-library-token", 3, null);
+    expect(await count("SELECT count(*) AS n FROM papers WHERE id = ?1 AND chat_id IS NULL", id)).toBe(1);
+    expect(f.vectors.get(`${id}:c0`)!.metadata).not.toHaveProperty("chat_id");
+    expect(await ids(A, "fern-library-token", { chatId: CHAT_A, library: true })).toEqual([`${id}:c0`]);
+    expect(await ids(A, "fern-library-token", { chatId: CHAT_A2, library: true })).toEqual([`${id}:c0`]);
+    expect(await ids(A, "fern-library-token", { chatId: CHAT_A, library: false })).toEqual([]);
+    expect(await ids(B, "fern-library-token", { chatId: CHAT_B, library: true })).toEqual([]);
   });
 
   it("library off searches only the chat's PDFs; library uploads (not tied to a chat) need it on", async () => {
@@ -409,8 +419,9 @@ describe("chat-scoped PDFs (T-7.11) and the library switch (T-7.12)", () => {
     expect(res.status).toBe(201);
     const { id } = (await res.json()) as { id: string };
     await upload(A, "x", 3, id);
-    const got = (await (await as(A, "GET", `/api/chats/${id}`)).json()) as { chat: { pdfs: number; useLibrary: null } };
+    const got = (await (await as(A, "GET", `/api/chats/${id}`)).json()) as { chat: { pdfs: number; useLibrary: null; files: string[] } };
     expect(got.chat).toMatchObject({ pdfs: 1, useLibrary: null });
+    expect(got.chat.files).toHaveLength(1); // listed above the question box (T-7.14)
     expect((await as(B, "GET", `/api/chats/${id}`)).status).toBe(404);
   });
 });

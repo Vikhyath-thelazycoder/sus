@@ -152,7 +152,7 @@ async function json<T>(path: string, init: RequestInit = {}): Promise<T> {
 export const listChats = () => json<{ chats: ChatSummary[] }>("/api/chats").then((r) => r.chats);
 export const getChat = (id: string) =>
   json<{
-    chat: { id: string; title: string; useLibrary: boolean | null; pdfs: number };
+    chat: { id: string; title: string; useLibrary: boolean | null; pdfs: number; files: string[] };
     messages: StoredMessage[];
   }>(
     `/api/chats/${encodeURIComponent(id)}`,

@@ -24,8 +24,8 @@ interface Chat {
   chatId?: string;
   /** "Use the library" as the user set it; undefined = default (T-7.12). */
   useLibrary?: boolean;
-  /** PDFs uploaded in this chat so far. */
-  pdfs?: number;
+  /** Titles of the PDFs uploaded in this chat so far. */
+  files?: string[];
   title: string;
   turns: Turn[];
   loading?: boolean;
@@ -208,7 +208,7 @@ export function App() {
       ...c,
       title: c.turns.length ? c.title : question.slice(0, 80),
       turns: [...c.turns, turn],
-      pdfs: (c.pdfs ?? 0) + (attachments?.length ?? 0),
+      files: [...(c.files ?? []), ...(attachments ?? [])],
     }));
     const on = (e: ChatEvent) =>
       updateTurn(chat.localId, turn.id, (t) => {
@@ -301,7 +301,7 @@ export function App() {
           ...x,
           title: r.chat.title,
           useLibrary: r.chat.useLibrary ?? undefined,
-          pdfs: r.chat.pdfs,
+          files: r.chat.files,
           turns: turnsFromMessages(summary.id, r.messages),
           loading: false,
         })),
@@ -560,7 +560,7 @@ export function App() {
               onAsk={(q, files) => void ask(q, active, files)}
               chatId={() => ensureChat(active)}
               useLibrary={active.useLibrary}
-              pdfs={active.pdfs}
+              files={active.files}
               onUseLibrary={(on) => updateChat(active.localId, (c) => ({ ...c, useLibrary: on }))}
               onRetry={retry}
               onCite={openCitation}

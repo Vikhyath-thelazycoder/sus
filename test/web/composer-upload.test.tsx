@@ -18,6 +18,7 @@ const parsed: ParsedUpload = {
     pageStart: 1,
     pageEnd: 1,
   })),
+  unclearPages: [],
 };
 const pdf = (name = "scan.pdf", type = "application/pdf") => new File(["%PDF-1.7"], name, { type });
 
@@ -25,7 +26,7 @@ afterEach(cleanup);
 
 const CHAT = "c0c0c0c0-0000-4000-8000-000000000000";
 
-function setup(over: Partial<UploadDeps> = {}, useLibrary?: boolean) {
+function setup(over: Partial<UploadDeps> = {}, useLibrary?: boolean, files?: string[]) {
   const onAsk = vi.fn();
   const chatId = vi.fn(async () => CHAT);
   const onUseLibrary = vi.fn();
@@ -45,6 +46,7 @@ function setup(over: Partial<UploadDeps> = {}, useLibrary?: boolean) {
       onFeedback={vi.fn()}
       chatId={chatId}
       useLibrary={useLibrary}
+      files={files}
       onUseLibrary={onUseLibrary}
       uploadDeps={deps}
     />,
@@ -132,8 +134,71 @@ describe("upload from the chat box", () => {
     expect(onUseLibrary).toHaveBeenCalledWith(true);
   });
 
+  it("picking 3 PDFs at once attaches all 3, each with its own progress (T-7.14)", async () => {
+    const send = vi.fn(async (p: ParsedUpload) => "p_" + p.title.slice(-1).repeat(24));
+    const { user, input } = setup({
+      parse: async (f, step) => (step("reading", 0, 0), { ...parsed, title: `Paper ${f.name[0]}` }),
+      send,
+    });
+    await user.upload(input, [pdf("a.pdf"), pdf("b.pdf"), pdf("c.pdf")]);
+    const chips = await screen.findByRole("list", { name: "Attached PDFs" });
+    await within(chips).findByText("Paper c");
+    expect(within(chips).getAllByText("Ready · 4 pages")).toHaveLength(3);
+    expect(send).toHaveBeenCalledTimes(3);
+  });
+
+  it("reads several PDFs one at a time; the others wait (T-7.14)", async () => {
+    const started: string[] = [];
+    const gates: (() => void)[] = [];
+    const { user, input } = setup({
+      parse: (f) => {
+        started.push(f.name);
+        return new Promise((r) => gates.push(() => r(parsed)));
+      },
+    });
+    await user.upload(input, [pdf("a.pdf"), pdf("b.pdf")]);
+    expect(await screen.findAllByText("Waiting…")).toHaveLength(1);
+    expect(started).toEqual(["a.pdf"]);
+    gates[0]!();
+    await vi.waitFor(() => expect(started).toEqual(["a.pdf", "b.pdf"]));
+    gates[1]!();
+    await vi.waitFor(() => expect(screen.getAllByText("Ready · 4 pages")).toHaveLength(2));
+  });
+
+  it("lists the chat's PDFs above the question box (T-7.14)", () => {
+    setup({}, undefined, ["Paper one", "Paper two"]);
+    const list = screen.getByRole("list", { name: "PDFs in this chat" });
+    expect(within(list).getAllByRole("listitem")).toHaveLength(2);
+    expect(screen.getByRole("switch", { name: "Use the library" }).getAttribute("aria-checked")).toBe("false");
+  });
+
+  it("warns on the chip when OCR read a page badly (T-7.10)", async () => {
+    const { user, input } = setup({ parse: async () => ({ ...parsed, unclearPages: [2, 3] }) });
+    await user.upload(input, pdf());
+    await screen.findByText("Pages 2, 3 may be misread (unclear scan).");
+  });
+
   it("an explicit choice wins over the default", () => {
     setup({}, false);
     expect(screen.getByRole("switch", { name: "Use the library" }).getAttribute("aria-checked")).toBe("false");
+  });
+});
+
+describe("upload from the Library (T-7.13)", () => {
+  it("uploads with no chat, then refreshes the list so it shows as Your upload", async () => {
+    const { Library } = await import("../../src/web/pages/Library");
+    const mine = { id: "p_" + "a".repeat(24), title: "My PHA notes", authors: [], year: null, journal: null, topic: null, upload: true, pages: 4 };
+    let listed: unknown[] = [];
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ papers: listed }), { headers: { "Content-Type": "application/json" } }));
+    vi.stubGlobal("fetch", fetchMock);
+    const send = vi.fn(async () => ((listed = [mine]), mine.id));
+    render(<Library onOpen={vi.fn()} uploadDeps={{ parse: async () => parsed, send, remove: vi.fn(async () => {}) }} />);
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: "Upload a PDF" }));
+    await user.upload(document.querySelector('input[type="file"]') as HTMLInputElement, pdf());
+    await screen.findByText("My PHA notes");
+    expect(send).toHaveBeenCalledWith(parsed, expect.any(Function), undefined);
+    expect(screen.getByText("Your upload · unverified")).toBeTruthy();
+    vi.unstubAllGlobals();
   });
 });

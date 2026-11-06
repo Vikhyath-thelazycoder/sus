@@ -24,18 +24,26 @@ export interface ParsedUpload {
   pages: number;
   sections: { name: string; text: string; pageStart: number; pageEnd: number }[];
   chunks: Chunk[];
+  /** OCR'd pages tesseract read with low confidence: shown as a warning on the chip (T-7.10). */
+  unclearPages: number[];
 }
 
 export type ParseStep = "reading" | "ocr" | "splitting";
 
 /** Pages with less text than this are treated as images and sent to OCR (scans, or scanned pages in a mixed PDF). */
 export const OCR_MIN_CHARS = 20;
+/**
+ * Below this mean word confidence (tesseract, 0-100) an OCR'd page is flagged as possibly misread.
+ * shortcut: not measured on bad scans yet; tune on real examples if it warns too often or too rarely.
+ */
+export const OCR_UNCLEAR_CONFIDENCE = 60;
 
 export interface ParseOptions {
   onStep?: (step: ParseStep, done?: number, total?: number) => void;
   maxPages?: number;
   /** Reads the text out of a page image; without it, image-only PDFs are rejected as "scanned". */
-  ocr?: (page: PDFPageProxy) => Promise<RawItem[]>;
+  /** OCR one page: its words plus tesseract's mean confidence for the page (0-100). */
+  ocr?: (page: PDFPageProxy) => Promise<{ items: RawItem[]; confidence: number }>;
   /** Extra getDocument options (the browser worker passes an OffscreenCanvas factory for OCR rendering). */
   docOptions?: Record<string, unknown>;
 }
@@ -85,10 +93,13 @@ export async function parseUpload(
     if (doc.numPages > maxPages) throw new UploadError("too-many-pages");
     const raw = await readPages(doc, maxPages);
     const textless = raw.filter((p) => p.items.reduce((n, it) => n + it.str.length, 0) < OCR_MIN_CHARS);
+    const unclearPages: number[] = [];
     if (ocr && textless.length) {
       for (const [i, p] of textless.entries()) {
         onStep("ocr", i, textless.length);
-        p.items = await ocr(await doc.getPage(p.number));
+        const read = await ocr(await doc.getPage(p.number));
+        p.items = read.items;
+        if (read.confidence < OCR_UNCLEAR_CONFIDENCE) unclearPages.push(p.number);
       }
       onStep("ocr", textless.length, textless.length);
     }
@@ -116,6 +127,7 @@ export async function parseUpload(
         pageEnd: s.pageEnd,
       })),
       chunks,
+      unclearPages,
     };
   } finally {
     await task.destroy();

@@ -46,7 +46,7 @@ const ocr = () =>
   }));
 
 /** Render one page and read its words back as positioned text items in PDF coordinates, like pdf.js gives us. */
-async function ocrPage(page: PDFPageProxy): Promise<RawItem[]> {
+async function ocrPage(page: PDFPageProxy): Promise<{ items: RawItem[]; confidence: number }> {
   const base = page.getViewport({ scale: 1 });
   const scale = OCR_WIDTH_PX / base.width;
   const viewport = page.getViewport({ scale });
@@ -62,8 +62,9 @@ async function ocrPage(page: PDFPageProxy): Promise<RawItem[]> {
   page.cleanup();
   const items: RawItem[] = [];
   const covered: Box[] = [];
-  await readInto(canvas, scale, base.height, items, covered);
-  if (page.pageNumber !== 1) return items;
+  // The main pass's confidence is the page's quality; the title pass below only adds large text.
+  const confidence = await readInto(canvas, scale, base.height, items, covered);
+  if (page.pageNumber !== 1) return { items, confidence };
   // Tesseract's page layout misses very large text (titles), so on the first page (where the title is) a quick
   // half-size pass in "sparse text" mode adds whatever the first pass left out.
   const half = new OffscreenCanvas(Math.ceil(canvas.width / 2), Math.ceil(canvas.height / 2));
@@ -75,7 +76,7 @@ async function ocrPage(page: PDFPageProxy): Promise<RawItem[]> {
   } finally {
     await w.setParameters({ tessedit_pageseg_mode: PSM.AUTO });
   }
-  return items;
+  return { items, confidence };
 }
 
 type Box = { x0: number; y0: number; x1: number; y1: number };
@@ -123,6 +124,7 @@ async function readInto(
         }
       }
   covered.push(...fresh);
+  return data.confidence;
 }
 
 const reply = (m: object) => postMessage({ sustainiq: true, ...m });

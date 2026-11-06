@@ -17,8 +17,11 @@ import { chunkId, sectionId } from "./admin-papers";
 const PAPER_ID = /^p_[0-9a-f]{24}$/;
 const page = z.number().int().min(1).max(UPLOAD.maxPages);
 const createSchema = z.strictObject({
-  /** The chat it is added in (T-7.11): searched only there. The client creates the chat first (POST /api/chats). */
-  chatId: z.uuid(),
+  /**
+   * The chat it is added in (T-7.11): searched only there. The client creates the chat first (POST /api/chats).
+   * Absent = added from the Library (T-7.13): a personal-library PDF, used in any chat with the library on.
+   */
+  chatId: z.uuid().optional(),
   title: z.string().trim().min(1).max(300),
   pages: page,
   sections: z
@@ -77,7 +80,10 @@ uploads.post("/uploads", async (c) => {
 
   const ownerId = c.get("ownerId");
   const db = c.env.DB;
-  if (!(await db.prepare("SELECT 1 AS x FROM chats WHERE id = ?1 AND owner_id = ?2").bind(chatId, ownerId).first()))
+  if (
+    chatId &&
+    !(await db.prepare("SELECT 1 AS x FROM chats WHERE id = ?1 AND owner_id = ?2").bind(chatId, ownerId).first())
+  )
     throw notFound();
   const id = newPaperId();
   const now = Date.now();
@@ -90,7 +96,7 @@ uploads.post("/uploads", async (c) => {
        WHERE (SELECT count(*) FROM papers WHERE ${live}) < ?7
          AND (SELECT coalesce(sum(pages), 0) FROM papers WHERE ${live}) + ?4 <= ?8`,
     )
-    .bind(id, ownerId, cleanText(title), pages, now, now + UPLOAD.ttlMs, UPLOAD.maxPdfs, UPLOAD.maxPages, chatId)
+    .bind(id, ownerId, cleanText(title), pages, now, now + UPLOAD.ttlMs, UPLOAD.maxPdfs, UPLOAD.maxPages, chatId ?? null)
     .run();
   if (!taken.meta.changes) return c.json({ error: "Upload limit reached" }, 409);
 

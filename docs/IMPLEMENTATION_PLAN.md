@@ -23,18 +23,17 @@ INTENTIONALLY_DEFERRED. `agylite plan index` keeps a compact index in `.agylite/
 - **Fix:** the demo server sends `Cache-Control: no-cache` for the page, so a reload after a deploy gets the new code. An open tab with the old code had failed uploads with "The upload didn't finish".
 - Uploads made before migration `0004` have no chat, so they count as personal-library PDFs.
 
+**Done this evening (2026-11-06), checked locally, not deployed yet:** T-7.14 several PDFs per chat (queued one at a time, chat file list), T-7.13 Upload button in the Library, T-7.10 OCR "may be misread" warning. Local browser check at 1280/768/375 light and 375 dark passed ([evidence](evidence/P7.md)).
+
 **Next session, start here:**
-1. **Ask the owner which task is next.** Claude's suggestion: **T-7.14** (several PDFs per chat; the owner once saw only one of several attach).
-2. **Still to do in P7:**
-   - **T-7.13:** Upload button in the Library: personal PDFs (no chat), used in any chat with the library on. The backend already treats `chat_id = NULL` as library. It needs an upload path without a chat; today `POST /api/uploads` requires `chatId`.
-   - **T-7.14:** several PDFs per chat: attach many at once, progress for each, and a list of the chat's PDFs (`GET /api/chats/:id` already returns `pdfs`, a count).
-   - **T-7.10:** per-page OCR quality warning from tesseract confidence.
-   - **T-7.7:** the live UI check (1280/768/375 px) is still open.
+1. **Owner deploys to Render** (no migration, no Vectorize change this time), then the **live check** closes T-7.7, T-7.10, T-7.13, T-7.14 and P7: attach 3 PDFs at once in a new chat, ask, see "PDFs in this chat"; upload from the Library and ask in another chat with the library on; at 1280/768/375 px.
+2. **T-7.10 threshold** (confidence 60) is not measured on a bad scan; tune it if it warns too often or never.
 3. **Open decisions. Don't assume them:**
    - **"Use the library" default:** built as proposed (off when the chat has a PDF, on when it has none), **not yet confirmed by the owner**. Changing it is one rule each in `src/worker/routes/chat.ts` and `src/web/Conversation.tsx`.
    - **Upload limits:** to be discussed later. Don't change or extend the current 5 PDFs / 100 pages, and don't design new limits until the owner decides.
    - **Deleting a chat:** keep asking each time (done this way in T-7.11).
-4. **Deploys:** the owner runs the production commands; Claude prepares them (see memory: deploy flow). Order: Vectorize metadata index, then `npm run db:migrate:prod`, then the Render deploy. P8 hardening waits until after the demos.
+   - **Library lists chat PDFs too** (as "Your upload"), since they share the quota. Owner to say whether chat PDFs should be hidden or labelled with their chat.
+4. **Deploys:** the owner runs the production commands; Claude prepares them (see memory: deploy flow). P8 hardening waits until after the demos.
 
 **Definition of done for every task:** `agylite verify` passes (tests, types, lint, build), the acceptance column is met, and the SEC items it touches have their tests.
 
@@ -138,11 +137,11 @@ Objective: Users upload their own PDFs (5 × 100 pages), parsed in the browser, 
 | T-7.7 | Claude/ChatGPT-style chat: centred new-chat box, + to attach PDFs as chips in the question box (only upload point), question bubble, labelled back buttons | READY_FOR_VERIFICATION | T-7.3 | design/frontend | — | — | — | Upload works from the chat box at 1280/768/375 px; Library and paper pages have back buttons; Agylite design check and Taste lint pass |
 | T-7.8 | Tune OCR: extra title pass on page 1 only, 2000 px render | VERIFIED | T-7.6 | engineering/frontend | — | — | — | Measured: owner's 4-page scan 21.8 s -> 14.1 s, reference-word recall 98.0% -> 97.1%, same title and 18 passages |
 | T-7.9 | Ready without the Vectorize wait: owner-uploads keyword list added to fusion, finish no longer waits | VERIFIED | T-7.6 | engineering/ai-systems | — | — | — | A question asked 1 s after Ready is answered from the new upload (keyword finds it at 1 s; Vectorize at ~31 s) |
-| T-7.10 | Per-page OCR quality warning from tesseract confidence | PLANNED | T-7.6 | engineering/frontend | — | — | — | A badly read page shows a plain warning on the chip instead of failing silently |
+| T-7.10 | Per-page OCR quality warning from tesseract confidence | READY_FOR_VERIFICATION | T-7.6 | engineering/frontend | — | — | — | A badly read page shows a plain warning on the chip instead of failing silently |
 | T-7.11 | Chat-scoped uploads: a PDF added in a chat is searched only in that chat (papers.chat_id, Vectorize metadata index, owner+chat scope in search and D1 re-check, chat created on first upload). **Deleting a chat asks the user** whether to also delete the PDFs uploaded in it | VERIFIED | T-7.9 | engineering/backend | — | — | — | PDF uploaded in chat A is cited in chat A and never retrieved in chat B or by another user (keyword, vector and D1 re-check tests) |
 | T-7.12 | Use-the-library toggle per chat: PDFs only / library only / both; proposed default (not yet confirmed by the owner): library off when a PDF is attached, on when none | VERIFIED | T-7.11 | design/frontend | — | — | — | Toggle visible in the chat box; answers follow the chosen sources; setting saved with the chat |
-| T-7.13 | Upload button in the Library: personal library PDFs (not tied to a chat), used in any chat with the library on | PLANNED | T-7.11 | design/frontend | — | — | — | A PDF added from the Library appears there as Your upload and is cited in any chat with the library on |
-| T-7.14 | Several PDFs per chat: check and fix multi-file attach (owner saw only one) and per-chat file list | PLANNED | T-7.11 | engineering/frontend | — | — | — | Picking or dropping 3 PDFs at once attaches all 3; each shows its own progress and is used in that chat |
+| T-7.13 | Upload button in the Library: personal library PDFs (not tied to a chat), used in any chat with the library on | READY_FOR_VERIFICATION | T-7.11 | design/frontend | — | — | — | A PDF added from the Library appears there as Your upload and is cited in any chat with the library on |
+| T-7.14 | Several PDFs per chat: check and fix multi-file attach (owner saw only one) and per-chat file list | READY_FOR_VERIFICATION | T-7.11 | engineering/frontend | — | — | — | Picking or dropping 3 PDFs at once attaches all 3; each shows its own progress and is used in that chat |
 
 ## P8 · Hardening and demo launch
 Status: PLANNED · Depends: P4, P6, P7 · Paths: src/worker/security/**, test/security/** · Flags: security, testing · Evidence: —

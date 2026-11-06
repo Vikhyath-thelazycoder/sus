@@ -45,8 +45,8 @@ interface Props {
   chatId: () => Promise<string>;
   /** "Use the library" as the user set it; undefined = default (T-7.12). */
   useLibrary?: boolean;
-  /** PDFs already in this chat (sent with earlier questions or saved). */
-  pdfs?: number;
+  /** Titles of the PDFs already in this chat (sent with earlier questions or saved). */
+  files?: string[];
   onUseLibrary: (on: boolean) => void;
   /** Injected in tests. */
   uploadDeps?: UploadDeps;
@@ -61,14 +61,14 @@ export function Conversation({
   onFeedback,
   chatId,
   useLibrary,
-  pdfs = 0,
+  files = [],
   onUseLibrary,
   uploadDeps,
 }: Props) {
   const endRef = useRef<HTMLDivElement>(null);
   const attachments = useAttachments(chatId, uploadDeps);
   // Proposed default (not yet confirmed by the owner, same rule as the server): off when the chat has a PDF.
-  const library = useLibrary ?? !(pdfs || attachments.items.some((a) => a.state !== "error"));
+  const library = useLibrary ?? !(files.length || attachments.items.some((a) => a.state !== "error"));
   const last = turns.at(-1);
   useEffect(() => {
     endRef.current?.scrollIntoView?.({ block: "end" });
@@ -85,7 +85,14 @@ export function Conversation({
         : "Answer ready.";
 
   const composer = (
-    <Composer busy={busy} onAsk={onAsk} attachments={attachments} library={library} onLibrary={onUseLibrary} />
+    <Composer
+      busy={busy}
+      onAsk={onAsk}
+      attachments={attachments}
+      files={files}
+      library={library}
+      onLibrary={onUseLibrary}
+    />
   );
 
   // A new chat looks like Claude/ChatGPT: greeting and the question box in the middle, suggestions under it.
@@ -272,11 +279,16 @@ function Actions({ turn, onFeedback }: { turn: Turn; onFeedback: Props["onFeedba
 }
 
 const STEP_COPY: Record<string, string> = {
+  waiting: "Waiting",
   reading: "Reading",
   ocr: "Reading text from page images",
   splitting: "Splitting",
   indexing: "Indexing",
 };
+
+/** T-7.10: a badly read scan gets a plain warning instead of quietly giving worse answers. */
+export const unclearCopy = (pages: number[]) =>
+  `${pages.length === 1 ? "Page" : "Pages"} ${pages.join(", ")} may be misread (unclear scan).`;
 
 function chipStatus(a: Attachment): string {
   if (a.state === "ready") return `Ready · ${a.pages} ${a.pages === 1 ? "page" : "pages"}`;
@@ -286,7 +298,7 @@ function chipStatus(a: Attachment): string {
   return `${STEP_COPY[a.step]}${count}…`;
 }
 
-function AttachmentChip({ a, onRemove }: { a: Attachment; onRemove: () => void }) {
+export function AttachmentChip({ a, onRemove }: { a: Attachment; onRemove: () => void }) {
   const pct = a.state === "working" && a.total ? Math.round((100 * a.done) / a.total) : null;
   return (
     <li className="flex max-w-full min-w-0 items-center gap-2 rounded-control border border-border bg-bg py-1.5 pr-1 pl-2.5 sm:max-w-[20rem]">
@@ -302,6 +314,9 @@ function AttachmentChip({ a, onRemove }: { a: Attachment; onRemove: () => void }
         <span className={`block truncate text-caption ${a.state === "error" ? "text-danger" : "text-muted"}`}>
           {chipStatus(a)}
         </span>
+        {a.state === "ready" && a.unclearPages.length > 0 && (
+          <span className="block text-caption text-danger">{unclearCopy(a.unclearPages)}</span>
+        )}
         {pct !== null && (
           <span className="mt-1 block h-1 overflow-hidden rounded-full bg-border" aria-hidden="true">
             <span className="block h-full bg-accent transition-[width]" style={{ width: `${pct}%` }} />
@@ -324,12 +339,14 @@ function Composer({
   busy,
   onAsk,
   attachments,
+  files,
   library,
   onLibrary,
 }: {
   busy: boolean;
   onAsk: Props["onAsk"];
   attachments: ReturnType<typeof useAttachments>;
+  files: string[];
   library: boolean;
   onLibrary: (on: boolean) => void;
 }) {
@@ -367,6 +384,19 @@ function Composer({
       onDrop={onDrop}
       className="mx-auto w-full max-w-(--spacing-column)"
     >
+      {files.length > 0 && (
+        <ul aria-label="PDFs in this chat" className="mb-2 flex flex-wrap gap-1.5">
+          {files.map((t, i) => (
+            <li
+              key={i}
+              className="flex max-w-full items-center gap-1.5 rounded-control bg-accent-soft px-2 py-1 text-caption sm:max-w-[16rem]"
+            >
+              <Icon name="file" className="size-3.5 shrink-0 text-muted" />
+              <span className="truncate">{t}</span>
+            </li>
+          ))}
+        </ul>
+      )}
       <div
         className={`rounded-(--radius-card) border bg-surface transition-colors focus-within:border-accent ${over ? "border-accent bg-accent-soft" : "border-control"}`}
       >
@@ -390,7 +420,7 @@ function Composer({
             if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) submit(e);
           }}
           placeholder={
-            items.length
+            items.length || files.length
               ? library
                 ? "Ask about your PDF or the library…"
                 : "Ask about your PDF…"
