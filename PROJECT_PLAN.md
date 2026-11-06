@@ -194,11 +194,11 @@ Vectorize vector ID = `chunks.id` (`p_<hash>:c<idx>`); metadata `{ owner_id, pap
 | Curated papers | Everyone | When "Use the library" is on |
 
 - **Toggle:** each chat has a **Use the library** switch in the chat box.
-  - Proposed default: **off when the chat has a PDF** (answers only from your PDF), **on when it has none**.
+  - Proposed default, not yet confirmed: **off when the chat has a PDF** (answers only from your PDF), **on when it has none**.
   - The setting is saved with the chat.
 - **Several PDFs per chat:** each with its own chip and progress.
-- **Limits:** the per-user limit (5 PDFs, 100 pages in total, 7-day expiry) still covers chat and Library uploads together.
-- **Deleting a chat deletes its PDFs.**
+- **Limits: open, to be discussed with the owner later.** Today's code keeps 5 PDFs / 100 pages per user and the 7-day expiry. Don't change them until decided.
+- **Deleting a chat asks the user** whether to also delete the PDFs uploaded in that chat. Library uploads stay until deleted from the Library.
 - **How:** `papers.chat_id` (empty = personal library). The chat is created on the first upload. Search scope becomes owner + this chat (+ library if on), in keyword search, the Vectorize filter (new metadata index) and the D1 re-check.
 - **Order:** T-7.8 (faster OCR) and T-7.9 (no searchable wait) first, then T-7.11 → T-7.12 / T-7.13 / T-7.14.
 

@@ -15,6 +15,17 @@ INTENTIONALLY_DEFERRED. `agylite plan index` keeps a compact index in `.agylite/
 
 **Progress (2026-11-06, end of day):** P1–P6 ✅ verified · P7 uploads ✅ live (T-7.1–7.6 verified; scanned-PDF OCR live). T-7.7 (chat-style UI) is live, but its live UI check is still open. T-7.8–7.10 are planned demo tuning (faster OCR, no searchable wait, OCR quality warning) · P8 hardening **waits until after the client demos** (owner rule) · P9 after the deal, now including production OCR (T-9.8, D-018). Changes from the first draft: no LangGraph in the demo (D-010), Groq models updated (D-011), demo hosted on Render (D-012), gpt-oss-20b removed from the answer chain (D-013), browser OCR for the demo (D-016), topic guard relaxed for own uploads (D-017).
 
+**Next session, start here (owner, 2026-11-06):**
+1. **T-7.8, then T-7.9.** Approved to start. Both were measured locally, with the test changes reverted:
+   - T-7.8: OCR title pass on page 1 only, 2,000 px render. 21.8 s → 14.1 s; recall 98.0% → 97.1%.
+   - T-7.9: add an owner-uploads keyword list to RRF and drop the `/finish` wait. Keyword search finds a new upload at 1 s, Vectorize at ~31 s, but curated chunks currently win the fusion in that window.
+2. **Then T-7.11 → T-7.12 / T-7.13 / T-7.14** (chat-scoped PDFs, library toggle, Library upload, several PDFs). See PROJECT_PLAN §6.5b.
+3. **Open decisions. Don't assume them:**
+   - **Upload limits:** to be discussed later. Don't change or extend the current 5 PDFs / 100 pages, and don't design new limits until the owner decides.
+   - **Deleting a chat:** ask the user each time whether to also delete that chat's PDFs (a confirm with both choices).
+   - **"Use the library" default:** proposed (off with a PDF, on without), not yet confirmed.
+4. **Deploys:** the owner runs the production commands; Claude prepares them (see memory: deploy flow). P8 hardening waits until after the demos.
+
 **Definition of done for every task:** `agylite verify` passes (tests, types, lint, build), the acceptance column is met, and the SEC items it touches have their tests.
 
 ---
@@ -118,8 +129,8 @@ Objective: Users upload their own PDFs (5 × 100 pages), parsed in the browser, 
 | T-7.8 | Tune OCR: extra title pass on page 1 only, 2000 px render | PLANNED | T-7.6 | engineering/frontend | — | — | — | Measured: owner's 4-page scan 21.8 s -> 14.1 s, reference-word recall 98.0% -> 97.1%, same title and 18 passages |
 | T-7.9 | Ready without the Vectorize wait: owner-uploads keyword list added to fusion, finish no longer waits | PLANNED | T-7.6 | engineering/ai-systems | — | — | — | A question asked 1 s after Ready is answered from the new upload (keyword finds it at 1 s; Vectorize at ~31 s) |
 | T-7.10 | Per-page OCR quality warning from tesseract confidence | PLANNED | T-7.6 | engineering/frontend | — | — | — | A badly read page shows a plain warning on the chip instead of failing silently |
-| T-7.11 | Chat-scoped uploads: a PDF added in a chat is searched only in that chat (papers.chat_id, Vectorize metadata index, owner+chat scope in search and D1 re-check, chat created on first upload, deleted with the chat) | PLANNED | T-7.9 | engineering/backend | — | — | — | PDF uploaded in chat A is cited in chat A and never retrieved in chat B or by another user (keyword, vector and D1 re-check tests) |
-| T-7.12 | Use-the-library toggle per chat: PDFs only / library only / both; default: library off when a PDF is attached, on when none | PLANNED | T-7.11 | design/frontend | — | — | — | Toggle visible in the chat box; answers follow the chosen sources; setting saved with the chat |
+| T-7.11 | Chat-scoped uploads: a PDF added in a chat is searched only in that chat (papers.chat_id, Vectorize metadata index, owner+chat scope in search and D1 re-check, chat created on first upload). **Deleting a chat asks the user** whether to also delete the PDFs uploaded in it | PLANNED | T-7.9 | engineering/backend | — | — | — | PDF uploaded in chat A is cited in chat A and never retrieved in chat B or by another user (keyword, vector and D1 re-check tests) |
+| T-7.12 | Use-the-library toggle per chat: PDFs only / library only / both; proposed default (not yet confirmed by the owner): library off when a PDF is attached, on when none | PLANNED | T-7.11 | design/frontend | — | — | — | Toggle visible in the chat box; answers follow the chosen sources; setting saved with the chat |
 | T-7.13 | Upload button in the Library: personal library PDFs (not tied to a chat), used in any chat with the library on | PLANNED | T-7.11 | design/frontend | — | — | — | A PDF added from the Library appears there as Your upload and is cited in any chat with the library on |
 | T-7.14 | Several PDFs per chat: check and fix multi-file attach (owner saw only one) and per-chat file list | PLANNED | T-7.11 | engineering/frontend | — | — | — | Picking or dropping 3 PDFs at once attaches all 3; each shows its own progress and is used in that chat |
 
