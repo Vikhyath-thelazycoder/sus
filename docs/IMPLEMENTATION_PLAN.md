@@ -92,15 +92,15 @@ Objective: The calm, minimal, desktop-first and mobile-ready chat experience wit
 | T-5.6 | Accessibility pass: WCAG AA contrast, focus-visible, labels, reduced motion | VERIFIED | T-5.4 | design/accessibility | — | DESIGN.md accessibility | testing/accessibility checks | No AA failures |
 
 ## P6 · Library and chat history
-Status: READY_FOR_VERIFICATION · Depends: P4, P5 · Paths: src/worker/routes/papers.ts, src/worker/routes/chats.ts, src/web/pages/**, src/web/App.tsx, src/shared/pdf/structure.ts · Flags: security, testing · Evidence: docs/evidence/P6.md
+Status: VERIFIED · Depends: P4, P5 · Paths: src/worker/routes/papers.ts, src/worker/routes/chats.ts, src/web/pages/**, src/web/App.tsx, src/shared/pdf/structure.ts · Flags: security, testing · Evidence: docs/evidence/P6.md
 Objective: Browse the paper library and return to past conversations, each strictly scoped to its owner.
 
 | ID | Task | Status | Depends | Capabilities | Security | Design | Testing | Acceptance |
 |---|---|---|---|---|---|---|---|---|
 | T-6.1 | `GET /api/papers` (public + own), `GET /api/papers/:id` with sections | VERIFIED | T-2.6 | engineering/backend | Owner-scoped SQL, 404 for others (SEC §3.2) | — | SEC §13 #1 | Other owners' papers return 404 |
-| T-6.2 | Library page: search, topic filters, paper cards, paper detail | READY_FOR_VERIFICATION | T-6.1, T-5.2 | design/frontend | Titles rendered as text | DESIGN.md | Component tests | Filters and search work on mobile and desktop |
+| T-6.2 | Library page: search, topic filters, paper cards, paper detail | VERIFIED | T-6.1, T-5.2 | design/frontend | Titles rendered as text | DESIGN.md | Component tests | Filters and search work on mobile and desktop |
 | T-6.3 | Chat history API: list, open, rename, delete (D1, owner-scoped) | VERIFIED | T-4.7 | engineering/backend | SEC §3.2 | — | SEC §13 #1 | History survives reloads; others' chats return 404 |
-| T-6.4 | History sidebar wired to the API; new chat; grouping by date | READY_FOR_VERIFICATION | T-6.3, T-5.2 | design/frontend | — | DESIGN.md | Component tests | Past chats reopen with their citations |
+| T-6.4 | History sidebar wired to the API; new chat; grouping by date | VERIFIED | T-6.3, T-5.2 | design/frontend | — | DESIGN.md | Component tests | Past chats reopen with their citations |
 
 ## P7 · PDF uploads
 Status: PLANNED · Depends: P2, P6 · Paths: src/web/upload/**, src/worker/routes/upload.ts, src/worker/cron.ts · Flags: security, testing · Evidence: —
@@ -239,3 +239,6 @@ P1 ──► P2 ──► P3 ──► P4 ──┐
 | 2026-11-05 | T-2.8: IN_PROGRESS → READY_FOR_VERIFICATION |
 | 2026-11-05 | T-2.8: READY_FOR_VERIFICATION → VERIFIED (evidence: docs/evidence/P2.md) |
 | 2026-11-05 | P2: IN_PROGRESS → VERIFIED (roll-up from T-2.8) |
+| 2026-11-06 | T-6.2: READY_FOR_VERIFICATION → VERIFIED (evidence: docs/evidence/P6.md) |
+| 2026-11-06 | T-6.4: READY_FOR_VERIFICATION → VERIFIED (evidence: docs/evidence/P6.md) |
+| 2026-11-06 | P6: READY_FOR_VERIFICATION → VERIFIED (roll-up from T-6.4) |

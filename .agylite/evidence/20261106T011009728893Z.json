@@ -1,0 +1,145 @@
+{
+ "schema_version": 1,
+ "mode": "tests-and-browser",
+ "task": null,
+ "result": "PASSED",
+ "impact": null,
+ "checks": [
+  {
+   "command": [
+    "npm",
+    "run",
+    "test"
+   ],
+   "exit_code": 0,
+   "result": "PASSED",
+   "duration_ms": 7509,
+   "diagnosis": [],
+   "kind": "test",
+   "name": "test",
+   "reason": "full suite: full suite requested",
+   "tests": [],
+   "at": "2026-11-06T01:10:02Z"
+  },
+  {
+   "command": [
+    "npm",
+    "run",
+    "build"
+   ],
+   "exit_code": 0,
+   "result": "PASSED",
+   "duration_ms": 2376,
+   "diagnosis": [],
+   "kind": "typecheck",
+   "name": "build",
+   "reason": "typecheck check for the project",
+   "tests": [],
+   "at": "2026-11-06T01:10:04Z"
+  },
+  {
+   "command": [
+    "npm",
+    "run",
+    "typecheck"
+   ],
+   "exit_code": 0,
+   "result": "PASSED",
+   "duration_ms": 1551,
+   "diagnosis": [],
+   "kind": "typecheck",
+   "name": "typecheck",
+   "reason": "typecheck check for the project",
+   "tests": [],
+   "at": "2026-11-06T01:10:06Z"
+  },
+  {
+   "command": [
+    "npm",
+    "run",
+    "lint"
+   ],
+   "exit_code": 0,
+   "result": "PASSED",
+   "duration_ms": 1180,
+   "diagnosis": [],
+   "kind": "lint",
+   "name": "lint",
+   "reason": "lint check for the project",
+   "tests": [],
+   "at": "2026-11-06T01:10:07Z"
+  },
+  {
+   "command": [
+    "/Users/vikhyathmgowda007/.agylite/core/bin/python",
+    "-m",
+    "compileall",
+    "-q",
+    "-x",
+    "(^|/)(\\.|node_modules|venv)",
+    "."
+   ],
+   "exit_code": 0,
+   "result": "PASSED",
+   "duration_ms": 135,
+   "diagnosis": [],
+   "kind": "build",
+   "name": "compileall",
+   "reason": "build check for the project",
+   "tests": [],
+   "at": "2026-11-06T01:10:07Z"
+  },
+  {
+   "command": [
+    "/Users/vikhyathmgowda007/.agylite/core/bin/python",
+    "-m",
+    "agylite.cli",
+    "browser-check",
+    "--project",
+    "/Users/vikhyathmgowda007/Developer/sustainIQ",
+    "--url",
+    "https://sustainiq-demo.onrender.com/#/library"
+   ],
+   "exit_code": 0,
+   "result": "PASSED",
+   "duration_ms": 2322,
+   "diagnosis": [],
+   "defects": [],
+   "artifacts": [
+    {
+     "path": ".agylite/evidence/browser/20261106T011007Z/screenshot-1440.png",
+     "sha256": "22bb7b4f2a97ca62abdecaa216ed66bf568ff98c80a2c53081805914947d1052"
+    },
+    {
+     "path": ".agylite/evidence/browser/20261106T011007Z/screenshot-768.png",
+     "sha256": "910b9c0d6a1b627100f3784ff847193088fe28f6582ab65e2716722c749fc6fe"
+    },
+    {
+     "path": ".agylite/evidence/browser/20261106T011007Z/screenshot-390.png",
+     "sha256": "e5c820d7e1aa0f7e6c2a10d9fbb2992d55f5687579e708426132f517f27af017"
+    },
+    {
+     "path": ".agylite/evidence/browser/20261106T011007Z/console.json",
+     "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+     "path": ".agylite/evidence/browser/20261106T011007Z/network.json",
+     "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+     "path": ".agylite/evidence/browser/20261106T011007Z/flows.json",
+     "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+     "path": ".agylite/evidence/browser/20261106T011007Z/report.json"
+    }
+   ],
+   "kind": "browser",
+   "name": "browser check",
+   "reason": "browser check requested",
+   "tests": [],
+   "at": "2026-11-06T01:10:09Z"
+  }
+ ],
+ "at": "2026-11-06T01:10:09Z"
+}

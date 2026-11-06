@@ -1,10 +1,10 @@
 schema_version: 1
 plan_path: docs/IMPLEMENTATION_PLAN.md
-plan_sha256: 5582b254ef4126cdbd28b601857d11fa580b5f9bbb27fa6fbe8dd32b9fec67a2
-plan_size: 28194
-plan_mtime_ns: 1793910207589343382
-built: '2026-11-05T20:24:46+00:00'
-current_phase: P6
+plan_sha256: 7c862470b96e1da27a32eb9b4de4fa921c9815188434feaf2cdffd69110114d8
+plan_size: 29281
+plan_mtime_ns: 1793927445299918134
+built: '2026-11-06T01:10:45+00:00'
+current_phase: P7
 phases:
 - phase_id: P1
   phase_name: Foundations and platform check
@@ -56,8 +56,8 @@ phases:
   last_updated: null
   evidence_pointer: docs/evidence/P1.md
   section:
-    start: 1943
-    end: 5045
+    start: 2063
+    end: 5165
 - phase_id: P2
   phase_name: Paper ingestion
   status: VERIFIED
@@ -112,8 +112,8 @@ phases:
   last_updated: null
   evidence_pointer: docs/evidence/P2.md
   section:
-    start: 5045
-    end: 8068
+    start: 5165
+    end: 8188
 - phase_id: P3
   phase_name: Retrieval and evaluation
   status: VERIFIED
@@ -156,8 +156,8 @@ phases:
   last_updated: null
   evidence_pointer: docs/evidence/P3.md
   section:
-    start: 8068
-    end: 10378
+    start: 8188
+    end: 10498
 - phase_id: P4
   phase_name: Answer generation
   status: VERIFIED
@@ -204,8 +204,8 @@ phases:
   last_updated: null
   evidence_pointer: docs/evidence/P4.md
   section:
-    start: 10378
-    end: 13016
+    start: 10498
+    end: 13136
 - phase_id: P5
   phase_name: UI foundation and chat
   status: VERIFIED
@@ -244,26 +244,26 @@ phases:
   last_updated: null
   evidence_pointer: docs/evidence/P5.md
   section:
-    start: 13016
-    end: 15121
+    start: 13136
+    end: 15241
 - phase_id: P6
   phase_name: Library and chat history
-  status: PLANNED
+  status: VERIFIED
   objective: Browse the paper library and return to past conversations, each strictly scoped to its owner.
   active_tasks: []
   tasks:
   - id: T-6.1
     title: '`GET /api/papers` (public + own), `GET /api/papers/:id` with sections'
-    status: PLANNED
+    status: VERIFIED
   - id: T-6.2
     title: 'Library page: search, topic filters, paper cards, paper detail'
-    status: PLANNED
+    status: VERIFIED
   - id: T-6.3
     title: 'Chat history API: list, open, rename, delete (D1, owner-scoped)'
-    status: PLANNED
+    status: VERIFIED
   - id: T-6.4
     title: History sidebar wired to the API; new chat; grouping by date
-    status: PLANNED
+    status: VERIFIED
   dependencies:
   - P4
   - P5
@@ -271,14 +271,16 @@ phases:
   - src/worker/routes/papers.ts
   - src/worker/routes/chats.ts
   - src/web/pages/**
+  - src/web/App.tsx
+  - src/shared/pdf/structure.ts
   security_flags: true
   design_flags: true
   testing_flags: true
   last_updated: null
-  evidence_pointer: null
+  evidence_pointer: docs/evidence/P6.md
   section:
-    start: 15121
-    end: 16377
+    start: 15241
+    end: 16566
 - phase_id: P7
   phase_name: PDF uploads
   status: PLANNED
@@ -318,8 +320,8 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 16377
-    end: 18200
+    start: 16566
+    end: 18389
 - phase_id: P8
   phase_name: Hardening and demo launch
   status: PLANNED
@@ -363,8 +365,8 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 18200
-    end: 20336
+    start: 18389
+    end: 21155
 - phase_id: P9
   phase_name: Paid MVP (after the deal)
   status: INTENTIONALLY_DEFERRED
@@ -402,5 +404,5 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 20336
-    end: 22153
+    start: 21155
+    end: 22972
