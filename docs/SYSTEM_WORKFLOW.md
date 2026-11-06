@@ -125,8 +125,8 @@ SEC §13 #1, #23.
 
 ## 6. Scheduled jobs (cron, daily)
 
-- Delete uploads where `expires_at < now` (D1 rows + Vectorize IDs).
-- Find Vectorize IDs with no D1 chunk and delete them.
+- Delete uploads where `expires_at < now`, and unfinished uploads older than an hour (D1 rows + Vectorize IDs).
+- Retry `vector_tombstones`: vector IDs written in the same batch that deleted their D1 rows, cleared once Vectorize confirms. (Vectorize can't be listed cheaply, so orphans are tracked at delete time instead of searched for; search re-checks every hit against D1 anyway.)
 - Verification: SEC §13 #23; a cron test with a fixed clock.
 
 ## 7. Curated ingestion (developer, local)

@@ -1,6 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
-import { doiUrl, getPaper, listPapers, type Paper, type PaperDetail } from "../api";
+import {
+  deleteMyData,
+  deleteUpload,
+  doiUrl,
+  getPaper,
+  listPapers,
+  type Paper,
+  type PaperDetail,
+} from "../api";
 import { Badge, Icon, Skeleton } from "../ui";
+import { UploadPanel } from "../upload/UploadPanel";
 
 /** Library (T-6.2): curated papers and the viewer's own uploads, with search and topic filters, and a detail view. */
 
@@ -42,6 +51,19 @@ export function Library({ onOpen }: { onOpen: (id: string) => void }) {
 
   const shown = useMemo(() => (papers ?? []).filter((p) => matches(p, query, topic)), [papers, query, topic]);
   const hasUploads = papers?.some((p) => p.upload);
+  const mine = (papers ?? []).filter((p) => p.upload);
+  const used = { pdfs: mine.length, pages: mine.reduce((n, p) => n + (p.pages ?? 0), 0) };
+  const [wipe, setWipe] = useState<"idle" | "busy" | "failed">("idle");
+  async function wipeAll() {
+    if (!window.confirm("Delete all your uploads and chat history? This can't be undone.")) return;
+    setWipe("busy");
+    try {
+      await deleteMyData();
+      window.location.reload(); // the history sidebar and open chat go too
+    } catch {
+      setWipe("failed");
+    }
+  }
 
   return (
     <div className="min-h-0 flex-1 overflow-y-auto">
@@ -50,6 +72,8 @@ export function Library({ onOpen }: { onOpen: (id: string) => void }) {
         <p className="mt-1 text-muted">
           The open-access papers answers come from{hasUploads ? ", plus your uploads" : ""}.
         </p>
+
+        {papers && <UploadPanel used={used} onUploaded={() => void load()} onOpen={onOpen} />}
 
         <label htmlFor="library-search" className="sr-only">
           Search papers
@@ -121,6 +145,28 @@ export function Library({ onOpen }: { onOpen: (id: string) => void }) {
             ))}
           </ul>
         )}
+
+        <section aria-labelledby="your-data" className="mt-12 border-t border-border pt-6">
+          <h2 id="your-data" className="text-h3 font-semibold">
+            Your data
+          </h2>
+          <p className="mt-1 text-small text-muted">
+            Removes every PDF you uploaded and all your saved chats from this demo, straight away.
+          </p>
+          <button
+            type="button"
+            onClick={() => void wipeAll()}
+            disabled={wipe === "busy"}
+            className="mt-3 min-h-(--spacing-touch) rounded-control border border-control px-4 text-small font-medium text-danger hover:border-danger focus-visible:outline-2 focus-visible:outline-accent disabled:opacity-50"
+          >
+            {wipe === "busy" ? "Deleting…" : "Delete my uploads and history"}
+          </button>
+          {wipe === "failed" && (
+            <p role="alert" className="mt-2 text-small">
+              That didn't work. Please try again.
+            </p>
+          )}
+        </section>
       </div>
     </div>
   );
@@ -137,6 +183,17 @@ export function PaperView({
 }) {
   const [detail, setDetail] = useState<PaperDetail | null>(null);
   const [failed, setFailed] = useState(false);
+  const [deleting, setDeleting] = useState<"idle" | "busy" | "failed">("idle");
+  async function remove(title: string) {
+    if (!window.confirm(`Delete "${title}"? It will no longer be used in your answers.`)) return;
+    setDeleting("busy");
+    try {
+      await deleteUpload(id);
+      onBack();
+    } catch {
+      setDeleting("failed");
+    }
+  }
   // The parent keys this view by paper ID, so state starts fresh for each paper.
   useEffect(() => {
     getPaper(id).then(setDetail, () => setFailed(true));
@@ -200,14 +257,32 @@ export function PaperView({
                 </a>
               )}
             </div>
-            <button
-              type="button"
-              onClick={() => onAsk(`What are the main findings of "${p.title}"?`)}
-              className="mt-4 inline-flex min-h-(--spacing-touch) items-center gap-2 rounded-control border border-accent bg-accent-soft px-4 font-medium hover:bg-bg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-            >
-              <Icon name="chat" className="size-4" />
-              Ask about this paper
-            </button>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={() => onAsk(`What are the main findings of "${p.title}"?`)}
+                className="inline-flex min-h-(--spacing-touch) items-center gap-2 rounded-control border border-accent bg-accent-soft px-4 font-medium hover:bg-bg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+              >
+                <Icon name="chat" className="size-4" />
+                Ask about this paper
+              </button>
+              {p.upload && (
+                <button
+                  type="button"
+                  onClick={() => void remove(p.title)}
+                  disabled={deleting === "busy"}
+                  className="inline-flex min-h-(--spacing-touch) items-center gap-2 rounded-control border border-control px-4 text-small font-medium text-danger hover:border-danger focus-visible:outline-2 focus-visible:outline-accent disabled:opacity-50"
+                >
+                  <Icon name="trash" className="size-4" />
+                  {deleting === "busy" ? "Deleting…" : "Delete this upload"}
+                </button>
+              )}
+            </div>
+            {deleting === "failed" && (
+              <p role="alert" className="mt-2 text-small">
+                The upload couldn't be deleted. Please try again.
+              </p>
+            )}
 
             {detail.summary && (
               <section className="mt-8">

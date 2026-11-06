@@ -114,14 +114,15 @@ export function rrf(lists: string[][], k: number = RETRIEVAL.rrfK): { id: string
 /** Second owner layer (SECURITY §4.3): only rows that D1 says are public or the caller's own survive. */
 export async function fetchChunks(env: Env, ids: string[], ownerId: string): Promise<Map<string, ChunkRow>> {
   if (!ids.length) return new Map();
-  const marks = ids.map((_, i) => `?${i + 2}`).join(", ");
+  const marks = ids.map((_, i) => `?${i + 3}`).join(", ");
   const { results } = await env.DB.prepare(
     `SELECT c.id, c.paper_id, c.section_id, c.idx, c.text, c.page_start, c.page_end, c.owner_id,
             s.name AS section, p.title, p.year, p.doi, p.authors
      FROM chunks c JOIN sections s ON s.id = c.section_id JOIN papers p ON p.id = c.paper_id
-     WHERE c.id IN (${marks}) AND c.owner_id IN ('public', ?1) AND p.owner_id = c.owner_id AND p.status = 'ready'`,
+     WHERE c.id IN (${marks}) AND c.owner_id IN ('public', ?1) AND p.owner_id = c.owner_id AND p.status = 'ready'
+       AND (p.expires_at IS NULL OR p.expires_at > ?2)`,
   )
-    .bind(ownerId, ...ids)
+    .bind(ownerId, Date.now(), ...ids)
     .all<ChunkRow>();
   return new Map(results.map((r) => [r.id, r]));
 }

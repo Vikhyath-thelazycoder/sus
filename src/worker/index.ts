@@ -12,6 +12,8 @@ import { adminSearch } from "./routes/admin-search";
 import { chatRoutes } from "./routes/chat";
 import { chats } from "./routes/chats";
 import { papers } from "./routes/papers";
+import { uploads } from "./routes/upload";
+import { runCleanup } from "./cron";
 
 export const app = new Hono<AppEnv>();
 
@@ -35,6 +37,7 @@ app.get("/api/session", (c) => c.body(null, 204));
 app.route("/api", chatRoutes());
 app.route("/api", chats);
 app.route("/api", papers);
+app.route("/api", uploads);
 
 const admin = new Hono<AppEnv>();
 admin.use("*", requireAdmin);
@@ -70,4 +73,10 @@ app.route("/api/admin", admin);
 app.notFound((c) => c.json({ error: "Not found" }, 404));
 app.onError(errorHandler);
 
-export default { fetch: app.fetch } satisfies ExportedHandler<Env>;
+export default {
+  fetch: app.fetch,
+  /** Daily cleanup (T-7.5): expired uploads and leftover vectors. */
+  scheduled: async (_event, env, ctx) => {
+    ctx.waitUntil(runCleanup(env).then((r) => console.log(JSON.stringify({ level: "info", msg: "cleanup", ...r }))));
+  },
+} satisfies ExportedHandler<Env>;

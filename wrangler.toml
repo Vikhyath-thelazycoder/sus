@@ -12,6 +12,9 @@ run_worker_first = ["/api/*"]
 [observability]
 enabled = true
 
+[triggers]
+crons = ["17 3 * * *"] # daily upload cleanup (src/worker/cron.ts)
+
 [vars]
 LLM_BASE_URL = "https://api.groq.com/openai/v1"
 LLM_MODELS = "openai/gpt-oss-120b,qwen/qwen3.8-27b"
@@ -40,6 +43,12 @@ id = "b79a742bfa2847bca2aa5131c2ab6815"
 # ---------------------------------------------------------------- production
 [env.production]
 name = "sustainiq"
+# While the demo is served from Render (D-012), this Worker only runs the cleanup cron: no public workers.dev URL.
+workers_dev = false
+preview_urls = false
+
+[env.production.triggers]
+crons = ["17 3 * * *"]
 
 [env.production.vars]
 LLM_BASE_URL = "https://api.groq.com/openai/v1"
