@@ -24,7 +24,7 @@ Related docs: [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) (phases
 | P4 Answer generation | ✅ Verified | Streamed, cited answers; 35/35 faithful, declines and injection tests pass. [Evidence](docs/evidence/P4.md) |
 | P5 UI and chat | ✅ Verified | Calm sage design, citation panel / bottom sheet, WCAG AA. [Evidence](docs/evidence/P5.md) |
 | P6 Library and history | ✅ Verified (live) | Library search/filters, paper pages, saved chats (rename, delete). [Evidence](docs/evidence/P6.md) |
-| P7 PDF uploads | ✅ Live; tuning (T-7.8–7.10) and chat-scoped PDFs (T-7.11–7.14) planned | Upload from the chat box (+), parsed in the browser, **OCR for scanned PDFs**, private, 7-day expiry, cleanup cron, delete my data. [Evidence](docs/evidence/P7.md) |
+| P7 PDF uploads | ✅ Live. Done: T-7.1–7.6, T-7.8, T-7.9, T-7.11, T-7.12 (verified live 2026-11-06). To do: T-7.13 Library upload, T-7.14 several PDFs per chat, T-7.10 OCR quality warning, T-7.7 live UI check | Upload from the chat box (+), parsed in the browser, **OCR for scanned PDFs** (~19 s for a 4-page scan), **each PDF searched only in its chat**, "Use the library" switch per chat, Ready without waiting for Vectorize, private, 7-day expiry, cleanup cron, delete my data. [Evidence](docs/evidence/P7.md) |
 | P8 Hardening and demo launch | ⏸ After the client demos (owner rule) | Rate limits, Turnstile, logging, full security suite |
 | P9 Paid MVP | On hold until the deal | Includes production OCR (§6.6) |
 
@@ -32,7 +32,8 @@ Related docs: [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) (phases
 - **Demo:** https://sustainiq-demo.onrender.com (Render free, Singapore). Sleeps after 15 min idle; the first visit then takes 30–60 s. Deploys are started with the Render API (a push to `main` does not deploy).
 - **Cloudflare Worker `sustainiq`:** runs only the daily upload cleanup (cron 03:17 UTC). It has no public URL while the demo is on Render (`workers_dev = false`).
 - **Code:** https://github.com/Vikhyath-thelazycoder/sus (public; consider making it private, since this is client work).
-- **Quality gate:** `agylite verify` passes; 178 tests.
+- **Quality gate:** `agylite verify` passes; 191 tests.
+- **Next session:** start from "Next session, start here" in [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md).
 
 **Changes from the original plan (all recorded in the decision log):**
 1. **LangGraph is not in the demo** (D-010). It fit on size (502 KB) but used 14 ms median / 82 ms p90 CPU per request against the Workers free plan's 10 ms. The pipeline runs as plain functions; LangGraph returns in the MVP for agents.
@@ -151,15 +152,15 @@ Related docs: [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) (phases
 ### 6.4 Data model (D1, `migrations/0001_init.sql`)
 ```
 papers   (id, owner_id, title, authors, year, journal, doi, license, source_url, topic,
-          verified, pages, status, created_at, expires_at)     -- UNIQUE (owner_id, doi)
+          verified, pages, status, created_at, expires_at, chat_id)  -- UNIQUE (owner_id, doi); chat_id: 0004
 sections (id, paper_id, idx, name, text, page_start, page_end)  -- parents
 chunks   (seq, id, paper_id, section_id, owner_id, idx, text, page_start, page_end)
 chunks_fts (FTS5 over chunks.text; owner_id deliberately NOT indexed)   -- BM25
-chats    (id, owner_id, title, created_at, updated_at)
+chats    (id, owner_id, title, created_at, updated_at, use_library)  -- use_library: 0004, NULL = default
 messages (id, chat_id, owner_id, role, content, citations_json, status, model, created_at)
 usage    (owner_id, day, questions, uploads)
 ```
-Vectorize vector ID = `chunks.id` (`p_<hash>:c<idx>`); metadata `{ owner_id, paper_id }`.
+Vectorize vector ID = `chunks.id` (`p_<hash>:c<idx>`); metadata `{ owner_id, paper_id, chat_id? }` (metadata indexes on `owner_id` and `chat_id`).
 
 ---
 
@@ -185,7 +186,7 @@ Vectorize vector ID = `chunks.id` (`p_<hash>:c<idx>`); metadata `{ owner_id, pap
 - **OpenCV pre-processing:** about 10 MB more to download; it doesn't help clean scans.
 - **Supabase pgvector:** its one gain (no index lag) is solved by T-7.9 without a migration.
 
-### 6.5b Chat-scoped PDFs and the library toggle (planned, owner request 2026-11-06: T-7.11–T-7.14)
+### 6.5b Chat-scoped PDFs and the library toggle (owner request 2026-11-06; T-7.11 and T-7.12 done and live, T-7.13 and T-7.14 to do)
 
 | Where you upload | Who can use it | When it's searched |
 |---|---|---|
@@ -193,14 +194,15 @@ Vectorize vector ID = `chunks.id` (`p_<hash>:c<idx>`); metadata `{ owner_id, pap
 | **In the Library** (new Upload button) | Only you, in **any** chat | When that chat has "Use the library" on |
 | Curated papers | Everyone | When "Use the library" is on |
 
-- **Toggle:** each chat has a **Use the library** switch in the chat box.
-  - Proposed default, not yet confirmed: **off when the chat has a PDF** (answers only from your PDF), **on when it has none**.
+- **Toggle (done, T-7.12):** each chat has a **Use the library** switch in the chat box.
+  - Default as built, not yet confirmed by the owner: **off when the chat has a PDF** (answers only from your PDF), **on when it has none**.
   - The setting is saved with the chat.
-- **Several PDFs per chat:** each with its own chip and progress.
+- **Several PDFs per chat (to do, T-7.14):** each with its own chip and progress.
+- **Library upload (to do, T-7.13):** an Upload button in the Library; such PDFs have no chat (`chat_id` empty).
 - **Limits: open, to be discussed with the owner later.** Today's code keeps 5 PDFs / 100 pages per user and the 7-day expiry. Don't change them until decided.
 - **Deleting a chat asks the user** whether to also delete the PDFs uploaded in that chat. Library uploads stay until deleted from the Library.
-- **How:** `papers.chat_id` (empty = personal library). The chat is created on the first upload. Search scope becomes owner + this chat (+ library if on), in keyword search, the Vectorize filter (new metadata index) and the D1 re-check.
-- **Order:** T-7.8 (faster OCR) and T-7.9 (no searchable wait) first, then T-7.11 → T-7.12 / T-7.13 / T-7.14.
+- **How (done, T-7.11):** `papers.chat_id` (empty = personal library; uploads from before migration 0004 count as library). The chat is created on the first attached PDF (`POST /api/chats`). Search scope = this chat's PDFs (+ library if on), in keyword search, Vectorize (two queries: library filter and `{owner_id, chat_id}` with a `chat_id` metadata index) and the D1 re-check. A chat's PDFs count twice in fusion. Deleting a chat with `?pdfs=delete` removes its PDFs; otherwise they move to the library.
+- **Order:** T-7.8, T-7.9, T-7.11, T-7.12 done. Next: T-7.14 (suggested), T-7.13, T-7.10, then the T-7.7 live UI check.
 
 ### 6.6 OCR in production (proposed, decide with the client after the demos: D-018, T-9.8)
 

@@ -13,18 +13,28 @@ INTENTIONALLY_DEFERRED. `agylite plan index` keeps a compact index in `.agylite/
 
 **Scope:** P1–P8 build the **demo** (Render free web service at https://sustainiq-demo.onrender.com with data on Cloudflare, Groq, no login; D-012). P9 is the **paid MVP** on Cloudflare Workers Paid, deferred until the client accepts the deal.
 
-**Progress (2026-11-06, end of day):** P1–P6 ✅ verified · P7 uploads ✅ live (T-7.1–7.6 verified; scanned-PDF OCR live). T-7.7 (chat-style UI) is live, but its live UI check is still open. T-7.8–7.10 are planned demo tuning (faster OCR, no searchable wait, OCR quality warning) · P8 hardening **waits until after the client demos** (owner rule) · P9 after the deal, now including production OCR (T-9.8, D-018). Changes from the first draft: no LangGraph in the demo (D-010), Groq models updated (D-011), demo hosted on Render (D-012), gpt-oss-20b removed from the answer chain (D-013), browser OCR for the demo (D-016), topic guard relaxed for own uploads (D-017).
+**Progress (2026-11-06, afternoon):** P1–P6 ✅ verified · P7 uploads ✅ live: T-7.1–7.6 verified, and **T-7.8, T-7.9, T-7.11, T-7.12 verified live by the owner today** (deploy `70b279e`). T-7.7 (chat-style UI) is live but its live UI check is still open · P8 hardening **waits until after the client demos** (owner rule) · P9 after the deal, including production OCR (T-9.8, D-018). Changes from the first draft: no LangGraph in the demo (D-010), Groq models updated (D-011), demo hosted on Render (D-012), gpt-oss-20b removed from the answer chain (D-013), browser OCR for the demo (D-016), topic guard relaxed for own uploads (D-017).
 
-**Next session, start here (owner, 2026-11-06):**
-1. **T-7.8, then T-7.9.** Approved to start. Both were measured locally, with the test changes reverted:
-   - T-7.8: OCR title pass on page 1 only, 2,000 px render. 21.8 s → 14.1 s; recall 98.0% → 97.1%.
-   - T-7.9: add an owner-uploads keyword list to RRF and drop the `/finish` wait. Keyword search finds a new upload at 1 s, Vectorize at ~31 s, but curated chunks currently win the fusion in that window.
-2. **Then T-7.11 → T-7.12 / T-7.13 / T-7.14** (chat-scoped PDFs, library toggle, Library upload, several PDFs). See PROJECT_PLAN §6.5b.
+**Done today (2026-11-06), all live and checked by the owner:**
+- **T-7.8 Faster OCR:** 2,000 px render, title pass on page 1 only. The owner's 4-page scan reaches Ready in ~19 s on the live site.
+- **T-7.9 No Vectorize wait:** `/finish` no longer waits. The chat's own PDFs are a separate keyword list in fusion, counted twice, so a question right after Ready is answered from the new PDF.
+- **T-7.11 Chat-scoped PDFs:** migration `0004` (`papers.chat_id`, `chats.use_library`), `chat_id` vector metadata, and a `chat_id` metadata index on Vectorize (prod and dev). Scope is applied in keyword search, Vectorize (two queries: library + chat) and the D1 re-check. `POST /api/chats` creates the chat on the first attached PDF. Deleting a chat asks each time: delete its PDFs, or keep them in the library.
+- **T-7.12 "Use the library" switch** in the chat box, saved with the chat when changed. Answers with the library off are never cached.
+- **Fix:** the demo server sends `Cache-Control: no-cache` for the page, so a reload after a deploy gets the new code. An open tab with the old code had failed uploads with "The upload didn't finish".
+- Uploads made before migration `0004` have no chat, so they count as personal-library PDFs.
+
+**Next session, start here:**
+1. **Ask the owner which task is next.** Claude's suggestion: **T-7.14** (several PDFs per chat; the owner once saw only one of several attach).
+2. **Still to do in P7:**
+   - **T-7.13:** Upload button in the Library: personal PDFs (no chat), used in any chat with the library on. The backend already treats `chat_id = NULL` as library. It needs an upload path without a chat; today `POST /api/uploads` requires `chatId`.
+   - **T-7.14:** several PDFs per chat: attach many at once, progress for each, and a list of the chat's PDFs (`GET /api/chats/:id` already returns `pdfs`, a count).
+   - **T-7.10:** per-page OCR quality warning from tesseract confidence.
+   - **T-7.7:** the live UI check (1280/768/375 px) is still open.
 3. **Open decisions. Don't assume them:**
+   - **"Use the library" default:** built as proposed (off when the chat has a PDF, on when it has none), **not yet confirmed by the owner**. Changing it is one rule each in `src/worker/routes/chat.ts` and `src/web/Conversation.tsx`.
    - **Upload limits:** to be discussed later. Don't change or extend the current 5 PDFs / 100 pages, and don't design new limits until the owner decides.
-   - **Deleting a chat:** ask the user each time whether to also delete that chat's PDFs (a confirm with both choices).
-   - **"Use the library" default:** proposed (off with a PDF, on without), not yet confirmed.
-4. **Deploys:** the owner runs the production commands; Claude prepares them (see memory: deploy flow). P8 hardening waits until after the demos.
+   - **Deleting a chat:** keep asking each time (done this way in T-7.11).
+4. **Deploys:** the owner runs the production commands; Claude prepares them (see memory: deploy flow). Order: Vectorize metadata index, then `npm run db:migrate:prod`, then the Render deploy. P8 hardening waits until after the demos.
 
 **Definition of done for every task:** `agylite verify` passes (tests, types, lint, build), the acceptance column is met, and the SEC items it touches have their tests.
 
