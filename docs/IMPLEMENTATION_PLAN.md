@@ -118,6 +118,10 @@ Objective: Users upload their own PDFs (5 × 100 pages), parsed in the browser, 
 | T-7.8 | Tune OCR: extra title pass on page 1 only, 2000 px render | PLANNED | T-7.6 | engineering/frontend | — | — | — | Measured: owner's 4-page scan 21.8 s -> 14.1 s, reference-word recall 98.0% -> 97.1%, same title and 18 passages |
 | T-7.9 | Ready without the Vectorize wait: owner-uploads keyword list added to fusion, finish no longer waits | PLANNED | T-7.6 | engineering/ai-systems | — | — | — | A question asked 1 s after Ready is answered from the new upload (keyword finds it at 1 s; Vectorize at ~31 s) |
 | T-7.10 | Per-page OCR quality warning from tesseract confidence | PLANNED | T-7.6 | engineering/frontend | — | — | — | A badly read page shows a plain warning on the chip instead of failing silently |
+| T-7.11 | Chat-scoped uploads: a PDF added in a chat is searched only in that chat (papers.chat_id, Vectorize metadata index, owner+chat scope in search and D1 re-check, chat created on first upload, deleted with the chat) | PLANNED | T-7.9 | engineering/backend | — | — | — | PDF uploaded in chat A is cited in chat A and never retrieved in chat B or by another user (keyword, vector and D1 re-check tests) |
+| T-7.12 | Use-the-library toggle per chat: PDFs only / library only / both; default: library off when a PDF is attached, on when none | PLANNED | T-7.11 | design/frontend | — | — | — | Toggle visible in the chat box; answers follow the chosen sources; setting saved with the chat |
+| T-7.13 | Upload button in the Library: personal library PDFs (not tied to a chat), used in any chat with the library on | PLANNED | T-7.11 | design/frontend | — | — | — | A PDF added from the Library appears there as Your upload and is cited in any chat with the library on |
+| T-7.14 | Several PDFs per chat: check and fix multi-file attach (owner saw only one) and per-chat file list | PLANNED | T-7.11 | engineering/frontend | — | — | — | Picking or dropping 3 PDFs at once attaches all 3; each shows its own progress and is used in that chat |
 
 ## P8 · Hardening and demo launch
 Status: PLANNED · Depends: P4, P6, P7 · Paths: src/worker/security/**, test/security/** · Flags: security, testing · Evidence: —
@@ -278,3 +282,7 @@ P1 ──► P2 ──► P3 ──► P4 ──┐
 | 2026-11-06 | T-9.8 added to P9 Paid MVP (after the deal): Production OCR: self-hosted PaddleOCR or Google Document AI / Azure Read for scanned pages, tesseract.js fallback, background job (Queues/Workflows); benchmark first (D-018) |
 | 2026-11-06 | T-7.6: READY_FOR_VERIFICATION → VERIFIED (evidence: docs/evidence/P7.md) |
 | 2026-11-06 | T-9.8: PLANNED → INTENTIONALLY_DEFERRED |
+| 2026-11-06 | T-7.11 added to P7 PDF uploads: Chat-scoped uploads: a PDF added in a chat is searched only in that chat (papers.chat_id, Vectorize metadata index, owner+chat scope in search and D1 re-check, chat created on first upload, deleted with the chat) |
+| 2026-11-06 | T-7.12 added to P7 PDF uploads: Use-the-library toggle per chat: PDFs only / library only / both; default: library off when a PDF is attached, on when none |
+| 2026-11-06 | T-7.13 added to P7 PDF uploads: Upload button in the Library: personal library PDFs (not tied to a chat), used in any chat with the library on |
+| 2026-11-06 | T-7.14 added to P7 PDF uploads: Several PDFs per chat: check and fix multi-file attach (owner saw only one) and per-chat file list |

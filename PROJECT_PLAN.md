@@ -24,7 +24,7 @@ Related docs: [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) (phases
 | P4 Answer generation | ✅ Verified | Streamed, cited answers; 35/35 faithful, declines and injection tests pass. [Evidence](docs/evidence/P4.md) |
 | P5 UI and chat | ✅ Verified | Calm sage design, citation panel / bottom sheet, WCAG AA. [Evidence](docs/evidence/P5.md) |
 | P6 Library and history | ✅ Verified (live) | Library search/filters, paper pages, saved chats (rename, delete). [Evidence](docs/evidence/P6.md) |
-| P7 PDF uploads | ✅ Live; 3 small tuning tasks left | Upload from the chat box (+), parsed in the browser, **OCR for scanned PDFs**, private, 7-day expiry, cleanup cron, delete my data. [Evidence](docs/evidence/P7.md) |
+| P7 PDF uploads | ✅ Live; tuning (T-7.8–7.10) and chat-scoped PDFs (T-7.11–7.14) planned | Upload from the chat box (+), parsed in the browser, **OCR for scanned PDFs**, private, 7-day expiry, cleanup cron, delete my data. [Evidence](docs/evidence/P7.md) |
 | P8 Hardening and demo launch | ⏸ After the client demos (owner rule) | Rate limits, Turnstile, logging, full security suite |
 | P9 Paid MVP | On hold until the deal | Includes production OCR (§6.6) |
 
@@ -60,7 +60,7 @@ Related docs: [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) (phases
 | Uploads | Added with **+ in the chat box**. Parsed in the browser (pdf.js); scanned pages read with **OCR in the browser** (tesseract.js, self-hosted; D-016). 5 PDFs × 100 pages per user, private to the uploader, deleted after 7 days. Questions about your own upload are allowed whatever its subject (D-017). |
 | Look | Minimal, calm: **warm off-white + sage green**, dark mode. Desktop-first, fully mobile-friendly. |
 | Citations UI | Click `[n]` → **side panel** (desktop) / **bottom sheet** (mobile) with passage, title, authors, year, page, DOI. |
-| Screens | Chat with cited answers (Claude/ChatGPT style) · Paper library · Chat history sidebar. Upload lives in the chat box. |
+| Screens | Chat with cited answers (Claude/ChatGPT style) · Paper library · Chat history sidebar. Upload in the chat box (that chat only) and in the Library (personal library); "Use the library" toggle per chat (planned, §6.5b). |
 | Login | **None in the demo.** Signed anonymous cookie; chat history in D1. |
 | Off-topic | Polite decline with a suggested on-topic question. |
 
@@ -184,6 +184,23 @@ Vectorize vector ID = `chunks.id` (`p_<hash>:c<idx>`); metadata `{ owner_id, pap
 - **PyMuPDF:** pdf.js already does the same; PyMuPDF is Python and AGPL-licensed.
 - **OpenCV pre-processing:** about 10 MB more to download; it doesn't help clean scans.
 - **Supabase pgvector:** its one gain (no index lag) is solved by T-7.9 without a migration.
+
+### 6.5b Chat-scoped PDFs and the library toggle (planned, owner request 2026-11-06: T-7.11–T-7.14)
+
+| Where you upload | Who can use it | When it's searched |
+|---|---|---|
+| **In a chat** (+ in the chat box) | Only you, **only in that chat** | Every question in that chat |
+| **In the Library** (new Upload button) | Only you, in **any** chat | When that chat has "Use the library" on |
+| Curated papers | Everyone | When "Use the library" is on |
+
+- **Toggle:** each chat has a **Use the library** switch in the chat box.
+  - Proposed default: **off when the chat has a PDF** (answers only from your PDF), **on when it has none**.
+  - The setting is saved with the chat.
+- **Several PDFs per chat:** each with its own chip and progress.
+- **Limits:** the per-user limit (5 PDFs, 100 pages in total, 7-day expiry) still covers chat and Library uploads together.
+- **Deleting a chat deletes its PDFs.**
+- **How:** `papers.chat_id` (empty = personal library). The chat is created on the first upload. Search scope becomes owner + this chat (+ library if on), in keyword search, the Vectorize filter (new metadata index) and the D1 re-check.
+- **Order:** T-7.8 (faster OCR) and T-7.9 (no searchable wait) first, then T-7.11 → T-7.12 / T-7.13 / T-7.14.
 
 ### 6.6 OCR in production (proposed, decide with the client after the demos: D-018, T-9.8)
 
