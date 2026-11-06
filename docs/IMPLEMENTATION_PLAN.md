@@ -13,7 +13,7 @@ INTENTIONALLY_DEFERRED. `agylite plan index` keeps a compact index in `.agylite/
 
 **Scope:** P1–P8 build the **demo** (Render free web service at https://sustainiq-demo.onrender.com with data on Cloudflare, Groq, no login; D-012). P9 is the **paid MVP** on Cloudflare Workers Paid, deferred until the client accepts the deal.
 
-**Progress (2026-11-06, afternoon):** P1–P6 ✅ verified · P7 uploads ✅ live: T-7.1–7.6 verified, and **T-7.8, T-7.9, T-7.11, T-7.12 verified live by the owner today** (deploy `70b279e`). T-7.7 (chat-style UI) is live but its live UI check is still open · P8 hardening **waits until after the client demos** (owner rule) · P9 after the deal, including production OCR (T-9.8, D-018). Changes from the first draft: no LangGraph in the demo (D-010), Groq models updated (D-011), demo hosted on Render (D-012), gpt-oss-20b removed from the answer chain (D-013), browser OCR for the demo (D-016), topic guard relaxed for own uploads (D-017).
+**Progress (2026-11-06, night):** P1–P7 ✅ done (P7 closed by the owner today) · **P8 (hardening and demo launch) dropped by the owner: the project goes straight to production** · **P9 production is next**, scoped in a new session. Changes from the first draft: no LangGraph in the demo (D-010), Groq models updated (D-011), demo hosted on Render (D-012), gpt-oss-20b removed from the answer chain (D-013), browser OCR for the demo (D-016), topic guard relaxed for own uploads (D-017), P8 skipped for production (D-019).
 
 **Done today (2026-11-06), all live and checked by the owner:**
 - **T-7.8 Faster OCR:** 2,000 px render, title pass on page 1 only. The owner's 4-page scan reaches Ready in ~19 s on the live site.
@@ -23,17 +23,18 @@ INTENTIONALLY_DEFERRED. `agylite plan index` keeps a compact index in `.agylite/
 - **Fix:** the demo server sends `Cache-Control: no-cache` for the page, so a reload after a deploy gets the new code. An open tab with the old code had failed uploads with "The upload didn't finish".
 - Uploads made before migration `0004` have no chat, so they count as personal-library PDFs.
 
-**Done this evening (2026-11-06), deployed (`dcda18f`) and live-checked by Claude, waiting for the owner to confirm:** T-7.14 several PDFs per chat (queued one at a time, chat file list), T-7.13 Upload button in the Library, T-7.10 OCR "may be misread" warning. Local browser check at 1280/768/375 light and 375 dark passed ([evidence](evidence/P7.md)).
+**Done this evening (2026-11-06), deployed:** T-7.14 several PDFs per chat (queued one at a time, chat file list), T-7.13 Upload button in the Library, T-7.10 OCR "may be misread" warning, T-7.7 UI check (local 1280/768/375 + 375 dark, live on Render; [evidence](evidence/P7.md)).
+**Bug fixed (`30d1e8e`):** answers to the owner's biomaterials questions came back "I couldn't find this in the papers". Cause: gpt-oss sometimes cites as `[1†L1-L4]`; the validator only knew `[1]`/`【1】`, rejected both drafts as uncited and showed not-found. Now normalised to `[n]`; 8/8 answered, 0 rejections (local, owner's volumes 1–2).
 
-**Next session, start here:**
-1. **Owner's own live check** closes T-7.7, T-7.10, T-7.13, T-7.14 and P7 (Claude's Playwright run passed; one run right after the deploy failed once and didn't repeat, see evidence): attach 3 PDFs at once in a new chat, ask, see "PDFs in this chat"; upload from the Library and ask in another chat with the library on.
-2. **T-7.10 threshold** (confidence 60) is not measured on a bad scan; tune it if it warns too often or never.
-3. **Open decisions. Don't assume them:**
-   - **"Use the library" default:** built as proposed (off when the chat has a PDF, on when it has none), **not yet confirmed by the owner**. Changing it is one rule each in `src/worker/routes/chat.ts` and `src/web/Conversation.tsx`.
-   - **Upload limits:** to be discussed later. Don't change or extend the current 5 PDFs / 100 pages, and don't design new limits until the owner decides.
-   - **Deleting a chat:** keep asking each time (done this way in T-7.11).
-   - **Library lists chat PDFs too** (as "Your upload"), since they share the quota. Owner to say whether chat PDFs should be hidden or labelled with their chat.
-4. **Deploys:** the owner runs the production commands; Claude prepares them (see memory: deploy flow). P8 hardening waits until after the demos.
+**Next session, start here (owner's wish: talk about the future first, no code until agreed):**
+1. **Production scope (P9, re-plan it with the owner).** Owner's target: **5–10 GB of sources: PDFs, PPT and others**, no demo limits. What the demo can't do today and P9 must answer:
+   - Parsing runs in the browser (pdf.js + tesseract); PPT/DOCX not supported → server-side ingestion with a queue (T-9.4, T-9.5, T-9.8).
+   - Per-user limits 5 PDFs / 100 pages (the owner's 3 test volumes are 140 pages, so the 3rd is refused) and 7-day expiry → real limits, retention, storage (R2 for originals).
+   - Free tiers: Render, Workers free, D1 (size), Vectorize, Groq free quota (200k tokens/day/model) → paid hosting and LLM (T-9.1, T-9.2).
+   - Anonymous cookie identity → real login (T-9.3); hardening items from P8 fold into P9 (T-9.7).
+2. **Open decisions. Don't assume them:** "Use the library" default (off with a PDF, on without; not confirmed); deleting a chat asks each time; Library also lists chat PDFs as "Your upload" (hide, or label with the chat?); T-7.10 confidence threshold 60 not measured on a bad scan.
+3. **Known open items:** the first live run right after the `dcda18f` deploy failed once (404 on the new chat) and didn't repeat; 9 leftover test uploads on **dev** D1/Vectorize (owner to delete); the citation form `[1†…]` can flash while an answer streams (the final text is clean).
+4. **Deploys:** the owner runs the production commands; Claude prepares them (memory: deploy flow).
 
 **Definition of done for every task:** `agylite verify` passes (tests, types, lint, build), the acceptance column is met, and the SEC items it touches have their tests.
 
@@ -123,7 +124,7 @@ Objective: Browse the paper library and return to past conversations, each stric
 | T-6.4 | History sidebar wired to the API; new chat; grouping by date | VERIFIED | T-6.3, T-5.2 | design/frontend | — | DESIGN.md | Component tests | Past chats reopen with their citations |
 
 ## P7 · PDF uploads
-Status: IN_PROGRESS · Depends: P2, P6 · Paths: src/web/upload/**, src/worker/routes/upload.ts, src/worker/cron.ts, src/shared/limits.ts, migrations/0003_vector_tombstones.sql · Flags: security, testing · Evidence: docs/evidence/P7.md
+Status: VERIFIED · Depends: P2, P6 · Paths: src/web/upload/**, src/worker/routes/upload.ts, src/worker/cron.ts, src/shared/limits.ts, migrations/0003_vector_tombstones.sql · Flags: security, testing · Evidence: docs/evidence/P7.md
 Objective: Users upload their own PDFs (5 × 100 pages), parsed in the browser, re-validated on the server, private to them, deleted after 7 days.
 
 | ID | Task | Status | Depends | Capabilities | Security | Design | Testing | Acceptance |
@@ -134,17 +135,18 @@ Objective: Users upload their own PDFs (5 × 100 pages), parsed in the browser, 
 | T-7.4 | Own uploads searchable only by their owner; "Your upload (unverified)" labels | VERIFIED | T-7.2, T-3.4 | engineering/ai-systems | SEC §12 #10 | DESIGN.md | SEC §13 #4 | User A never sees user B's upload |
 | T-7.5 | Cleanup as a **Cloudflare Worker cron** (free; data lives on Cloudflare; Render's free tier has no cron): expire uploads after 7 days; orphan-vector cleanup; "delete my data" endpoint + button | VERIFIED | T-7.2 | engineering/backend | SEC §12 #16 | — | SEC §13 #23 | Deleted text is never found again |
 | T-7.6 | OCR for scanned PDFs in the browser (self-hosted tesseract.js; text-less pages only); Ready waits until the upload is searchable; topic guard allows questions about own uploads | VERIFIED | T-7.1 | engineering/frontend | — | — | — | The owner's 4-page image-only PDF uploads, gets its real title, and questions about it are answered with citations right after Ready |
-| T-7.7 | Claude/ChatGPT-style chat: centred new-chat box, + to attach PDFs as chips in the question box (only upload point), question bubble, labelled back buttons | READY_FOR_VERIFICATION | T-7.3 | design/frontend | — | — | — | Upload works from the chat box at 1280/768/375 px; Library and paper pages have back buttons; Agylite design check and Taste lint pass |
+| T-7.7 | Claude/ChatGPT-style chat: centred new-chat box, + to attach PDFs as chips in the question box (only upload point), question bubble, labelled back buttons | VERIFIED | T-7.3 | design/frontend | — | — | — | Upload works from the chat box at 1280/768/375 px; Library and paper pages have back buttons; Agylite design check and Taste lint pass |
 | T-7.8 | Tune OCR: extra title pass on page 1 only, 2000 px render | VERIFIED | T-7.6 | engineering/frontend | — | — | — | Measured: owner's 4-page scan 21.8 s -> 14.1 s, reference-word recall 98.0% -> 97.1%, same title and 18 passages |
 | T-7.9 | Ready without the Vectorize wait: owner-uploads keyword list added to fusion, finish no longer waits | VERIFIED | T-7.6 | engineering/ai-systems | — | — | — | A question asked 1 s after Ready is answered from the new upload (keyword finds it at 1 s; Vectorize at ~31 s) |
-| T-7.10 | Per-page OCR quality warning from tesseract confidence | READY_FOR_VERIFICATION | T-7.6 | engineering/frontend | — | — | — | A badly read page shows a plain warning on the chip instead of failing silently |
+| T-7.10 | Per-page OCR quality warning from tesseract confidence | VERIFIED | T-7.6 | engineering/frontend | — | — | — | A badly read page shows a plain warning on the chip instead of failing silently |
 | T-7.11 | Chat-scoped uploads: a PDF added in a chat is searched only in that chat (papers.chat_id, Vectorize metadata index, owner+chat scope in search and D1 re-check, chat created on first upload). **Deleting a chat asks the user** whether to also delete the PDFs uploaded in it | VERIFIED | T-7.9 | engineering/backend | — | — | — | PDF uploaded in chat A is cited in chat A and never retrieved in chat B or by another user (keyword, vector and D1 re-check tests) |
 | T-7.12 | Use-the-library toggle per chat: PDFs only / library only / both; proposed default (not yet confirmed by the owner): library off when a PDF is attached, on when none | VERIFIED | T-7.11 | design/frontend | — | — | — | Toggle visible in the chat box; answers follow the chosen sources; setting saved with the chat |
-| T-7.13 | Upload button in the Library: personal library PDFs (not tied to a chat), used in any chat with the library on | READY_FOR_VERIFICATION | T-7.11 | design/frontend | — | — | — | A PDF added from the Library appears there as Your upload and is cited in any chat with the library on |
-| T-7.14 | Several PDFs per chat: check and fix multi-file attach (owner saw only one) and per-chat file list | READY_FOR_VERIFICATION | T-7.11 | engineering/frontend | — | — | — | Picking or dropping 3 PDFs at once attaches all 3; each shows its own progress and is used in that chat |
+| T-7.13 | Upload button in the Library: personal library PDFs (not tied to a chat), used in any chat with the library on | VERIFIED | T-7.11 | design/frontend | — | — | — | A PDF added from the Library appears there as Your upload and is cited in any chat with the library on |
+| T-7.14 | Several PDFs per chat: check and fix multi-file attach (owner saw only one) and per-chat file list | VERIFIED | T-7.11 | engineering/frontend | — | — | — | Picking or dropping 3 PDFs at once attaches all 3; each shows its own progress and is used in that chat |
 
 ## P8 · Hardening and demo launch
-Status: PLANNED · Depends: P4, P6, P7 · Paths: src/worker/security/**, test/security/** · Flags: security, testing · Evidence: —
+Status: INTENTIONALLY_DEFERRED · Depends: P4, P6, P7 · Paths: src/worker/security/**, test/security/** · Flags: security, testing · Evidence: —
+**Dropped by the owner (2026-11-06, D-019): no separate hardening/demo-launch phase; the project goes straight to production and these items move into P9 (T-9.7).**
 Objective: Every [DEMO] item in SECURITY.md done, abuse limits on, full test suite green, live demo link ready for the client.
 
 **Carried in from P4–P6 (owner rule: nothing hard-coded in P8, every limit, key, ID and threshold comes from config/env):**
@@ -154,28 +156,28 @@ Objective: Every [DEMO] item in SECURITY.md done, abuse limits on, full test sui
 
 | ID | Task | Status | Depends | Capabilities | Security | Design | Testing | Acceptance |
 |---|---|---|---|---|---|---|---|---|
-| T-8.1 | Rate limits (questions, uploads, new IDs): demo on Render (single instance) uses in-memory per-minute limits + D1 daily counters; the production Worker uses the Rate Limiting binding / Durable Objects; global LLM and Workers AI budget guard | PLANNED | T-4.7, T-7.2 | engineering/security | SEC §8, §12 #4 | — | SEC §13 #12 | 21st question in a minute → 429 |
-| T-8.2 | Cloudflare Turnstile on the first question and on uploads (server-side token check) | PLANNED | T-8.1 | engineering/security | SEC §8 | Fits DESIGN.md | Token-missing test | Bots without a token are blocked |
-| T-8.3 | Structured JSON logging (no secrets or raw IPs), alerts, `/.well-known/security.txt` | PLANNED | T-1.4 | engineering/security | SEC §11, §12 #13, incident response | — | Log-format test | Logs contain no secrets or PII |
-| T-8.4 | Full security test suite (SEC §13 #1–23) green in CI | PLANNED | T-8.1–T-8.3 | testing/security | All of SEC §13 | — | `agylite verify` | 23/23 pass |
-| T-8.5 | Final eval run on production (retrieval + answers) | PLANNED | T-8.4 | testing/regression | — | — | `npm run eval -- --remote` | Scores ≥ P3/P4 baselines; recorded |
-| T-8.6 | Demo deploy to Render (Render CLI) + smoke test, waking the free instance first (5 golden questions, citations open the right page, upload from a phone, headers, 429) | PLANNED | T-8.5 | engineering/release, testing/release-verification | SEC §14 demo checklist | — | Smoke checklist | Every [DEMO] item ticked |
-| T-8.7 | Demo hand-off: short walkthrough video and a one-page "how it works" for the client | PLANNED | T-8.6 | media/demo | No private data in the video | DESIGN.md | Review by the owner | Link + video sent before the Google Meet |
+| T-8.1 | Rate limits (questions, uploads, new IDs): demo on Render (single instance) uses in-memory per-minute limits + D1 daily counters; the production Worker uses the Rate Limiting binding / Durable Objects; global LLM and Workers AI budget guard | INTENTIONALLY_DEFERRED | T-4.7, T-7.2 | engineering/security | SEC §8, §12 #4 | — | SEC §13 #12 | 21st question in a minute → 429 |
+| T-8.2 | Cloudflare Turnstile on the first question and on uploads (server-side token check) | INTENTIONALLY_DEFERRED | T-8.1 | engineering/security | SEC §8 | Fits DESIGN.md | Token-missing test | Bots without a token are blocked |
+| T-8.3 | Structured JSON logging (no secrets or raw IPs), alerts, `/.well-known/security.txt` | INTENTIONALLY_DEFERRED | T-1.4 | engineering/security | SEC §11, §12 #13, incident response | — | Log-format test | Logs contain no secrets or PII |
+| T-8.4 | Full security test suite (SEC §13 #1–23) green in CI | INTENTIONALLY_DEFERRED | T-8.1–T-8.3 | testing/security | All of SEC §13 | — | `agylite verify` | 23/23 pass |
+| T-8.5 | Final eval run on production (retrieval + answers) | INTENTIONALLY_DEFERRED | T-8.4 | testing/regression | — | — | `npm run eval -- --remote` | Scores ≥ P3/P4 baselines; recorded |
+| T-8.6 | Demo deploy to Render (Render CLI) + smoke test, waking the free instance first (5 golden questions, citations open the right page, upload from a phone, headers, 429) | INTENTIONALLY_DEFERRED | T-8.5 | engineering/release, testing/release-verification | SEC §14 demo checklist | — | Smoke checklist | Every [DEMO] item ticked |
+| T-8.7 | Demo hand-off: short walkthrough video and a one-page "how it works" for the client | INTENTIONALLY_DEFERRED | T-8.6 | media/demo | No private data in the video | DESIGN.md | Review by the owner | Link + video sent before the Google Meet |
 
-## P9 · Paid MVP (after the deal)
-Status: INTENTIONALLY_DEFERRED · Depends: P8 · Paths: — · Flags: security, design, testing · Evidence: —
-Objective: Turn the demo into the client's production MVP on Cloudflare Workers Paid. Re-planned in detail after the client call; tasks below are the known scope.
+## P9 · Production
+Status: PLANNED · Depends: P7 · Paths: — · Flags: security, design, testing · Evidence: —
+Objective: Turn the demo into the production product: 5–10 GB of sources (PDFs, PPT and more), no demo limits, paid hosting, real login, and the P8 hardening items. **Re-plan in the next session with the owner before any code**; tasks below are the known scope.
 
 | ID | Task | Status | Depends | Capabilities | Security | Design | Testing | Acceptance |
 |---|---|---|---|---|---|---|---|---|
-| T-9.1 | Move to Cloudflare Workers Paid ($5); custom domain; WAF; D1 backups | INTENTIONALLY_DEFERRED | — | engineering/release | SEC §2 [MVP] | — | — | Client decision |
-| T-9.2 | Switch the LLM to OpenAI (first in the fallback chain); re-run all evals | INTENTIONALLY_DEFERRED | — | engineering/ai-systems | Provider data-use check (SEC §11) | — | Eval vs demo baseline | Client decision |
-| T-9.3 | Real login (magic link / Google) replacing the anonymous ID | INTENTIONALLY_DEFERRED | — | engineering/security | SEC §10 | DESIGN.md | Login security tests | Client decision |
-| T-9.4 | Server-side processing of big PDFs (300–400 pages) with Cloudflare Queues | INTENTIONALLY_DEFERRED | — | engineering/backend | SEC §5.1 | — | Large-PDF tests | Client decision |
-| T-9.5 | Optional Python parsing service (Docling/GROBID) if T-2.5 found table problems | INTENTIONALLY_DEFERRED | T-2.5 | engineering/ai-systems | SEC §12 #7 | — | Table fixtures | Only if needed |
-| T-9.6 | Reintroduce LangGraph (paid plan) and build an agent for multi-paper research questions | INTENTIONALLY_DEFERRED | — | engineering/ai-systems | Tool allowlist, budgets (RAG §7) | — | Agent evals | Client decision |
-| T-9.7 | Tracing (Langfuse), privacy notice, dependency scanning, SEC §14 MVP checklist | INTENTIONALLY_DEFERRED | — | engineering/security | SEC §14 [MVP] | — | — | Client decision |
-| T-9.8 | Production OCR: self-hosted PaddleOCR or Google Document AI / Azure Read for scanned pages, tesseract.js fallback, background job (Queues/Workflows); benchmark first (D-018) | INTENTIONALLY_DEFERRED | — | engineering/backend | — | — | — | Client chooses provider; benchmark on the owner's scan recorded; SECURITY.md and privacy notice updated |
+| T-9.1 | Move to Cloudflare Workers Paid ($5); custom domain; WAF; D1 backups | PLANNED | — | engineering/release | SEC §2 [MVP] | — | — | Client decision |
+| T-9.2 | Switch the LLM to OpenAI (first in the fallback chain); re-run all evals | PLANNED | — | engineering/ai-systems | Provider data-use check (SEC §11) | — | Eval vs demo baseline | Client decision |
+| T-9.3 | Real login (magic link / Google) replacing the anonymous ID | PLANNED | — | engineering/security | SEC §10 | DESIGN.md | Login security tests | Client decision |
+| T-9.4 | Server-side processing of big PDFs (300–400 pages) with Cloudflare Queues | PLANNED | — | engineering/backend | SEC §5.1 | — | Large-PDF tests | Client decision |
+| T-9.5 | Optional Python parsing service (Docling/GROBID) if T-2.5 found table problems | PLANNED | T-2.5 | engineering/ai-systems | SEC §12 #7 | — | Table fixtures | Only if needed |
+| T-9.6 | Reintroduce LangGraph (paid plan) and build an agent for multi-paper research questions | PLANNED | — | engineering/ai-systems | Tool allowlist, budgets (RAG §7) | — | Agent evals | Client decision |
+| T-9.7 | Tracing (Langfuse), privacy notice, dependency scanning, SEC §14 MVP checklist | PLANNED | — | engineering/security | SEC §14 [MVP] | — | — | Client decision |
+| T-9.8 | Production OCR: self-hosted PaddleOCR or Google Document AI / Azure Read for scanned pages, tesseract.js fallback, background job (Queues/Workflows); benchmark first (D-018) | PLANNED | — | engineering/backend | — | — | — | Client chooses provider; benchmark on the owner's scan recorded; SECURITY.md and privacy notice updated |
 
 ---
 

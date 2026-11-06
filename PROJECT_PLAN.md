@@ -24,15 +24,15 @@ Related docs: [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) (phases
 | P4 Answer generation | ✅ Verified | Streamed, cited answers; 35/35 faithful, declines and injection tests pass. [Evidence](docs/evidence/P4.md) |
 | P5 UI and chat | ✅ Verified | Calm sage design, citation panel / bottom sheet, WCAG AA. [Evidence](docs/evidence/P5.md) |
 | P6 Library and history | ✅ Verified (live) | Library search/filters, paper pages, saved chats (rename, delete). [Evidence](docs/evidence/P6.md) |
-| P7 PDF uploads | ✅ Live. Done: T-7.1–7.6, T-7.8, T-7.9, T-7.11, T-7.12 (verified live 2026-11-06). To do: T-7.13 Library upload, T-7.14 several PDFs per chat, T-7.10 OCR quality warning, T-7.7 live UI check | Upload from the chat box (+), parsed in the browser, **OCR for scanned PDFs** (~19 s for a 4-page scan), **each PDF searched only in its chat**, "Use the library" switch per chat, Ready without waiting for Vectorize, private, 7-day expiry, cleanup cron, delete my data. [Evidence](docs/evidence/P7.md) |
-| P8 Hardening and demo launch | ⏸ After the client demos (owner rule) | Rate limits, Turnstile, logging, full security suite |
-| P9 Paid MVP | On hold until the deal | Includes production OCR (§6.6) |
+| P7 PDF uploads | ✅ Verified (live). Multi-PDF chats, Library upload, OCR warning, citation fix (2026-11-06) | Upload from the chat box (+), parsed in the browser, **OCR for scanned PDFs** (~19 s for a 4-page scan), **each PDF searched only in its chat**, "Use the library" switch per chat, Ready without waiting for Vectorize, private, 7-day expiry, cleanup cron, delete my data. [Evidence](docs/evidence/P7.md) |
+| P8 Hardening and demo launch | ✖ Dropped (owner, 2026-11-06): straight to production; items move into P9 | Rate limits, Turnstile, logging, full security suite |
+| P9 Production | ▶ Next: scope with the owner in a new session | 5–10 GB of PDFs/PPT, no demo limits, paid hosting, login, production OCR (§6.6), P8 hardening |
 
 **Live:**
 - **Demo:** https://sustainiq-demo.onrender.com (Render free, Singapore). Sleeps after 15 min idle; the first visit then takes 30–60 s. Deploys are started with the Render API (a push to `main` does not deploy).
 - **Cloudflare Worker `sustainiq`:** runs only the daily upload cleanup (cron 03:17 UTC). It has no public URL while the demo is on Render (`workers_dev = false`).
 - **Code:** https://github.com/Vikhyath-thelazycoder/sus (public; consider making it private, since this is client work).
-- **Quality gate:** `agylite verify` passes; 191 tests.
+- **Quality gate:** `agylite verify` passes; 197 tests.
 - **Next session:** start from "Next session, start here" in [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md).
 
 **Changes from the original plan (all recorded in the decision log):**

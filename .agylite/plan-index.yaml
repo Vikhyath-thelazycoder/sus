@@ -1,10 +1,10 @@
 schema_version: 1
 plan_path: docs/IMPLEMENTATION_PLAN.md
-plan_sha256: 43d2331a93bcd94a6e35d3c23aea654d44dbc615788b557a26583f39edf6ae5a
-plan_size: 39918
-plan_mtime_ns: 1793977989681833189
-built: '2026-11-06T15:13:09+00:00'
-current_phase: P7
+plan_sha256: 721e043e47784bc55a576ad770609eccca57a36b80813b522dd8bb858993a15b
+plan_size: 40491
+plan_mtime_ns: 1793980167286027231
+built: '2026-11-06T15:49:43+00:00'
+current_phase: P9
 phases:
 - phase_id: P1
   phase_name: Foundations and platform check
@@ -56,8 +56,8 @@ phases:
   last_updated: null
   evidence_pointer: docs/evidence/P1.md
   section:
-    start: 4892
-    end: 7994
+    start: 5271
+    end: 8373
 - phase_id: P2
   phase_name: Paper ingestion
   status: VERIFIED
@@ -112,8 +112,8 @@ phases:
   last_updated: null
   evidence_pointer: docs/evidence/P2.md
   section:
-    start: 7994
-    end: 11017
+    start: 8373
+    end: 11396
 - phase_id: P3
   phase_name: Retrieval and evaluation
   status: VERIFIED
@@ -156,8 +156,8 @@ phases:
   last_updated: null
   evidence_pointer: docs/evidence/P3.md
   section:
-    start: 11017
-    end: 13327
+    start: 11396
+    end: 13706
 - phase_id: P4
   phase_name: Answer generation
   status: VERIFIED
@@ -204,8 +204,8 @@ phases:
   last_updated: null
   evidence_pointer: docs/evidence/P4.md
   section:
-    start: 13327
-    end: 15965
+    start: 13706
+    end: 16344
 - phase_id: P5
   phase_name: UI foundation and chat
   status: VERIFIED
@@ -244,8 +244,8 @@ phases:
   last_updated: null
   evidence_pointer: docs/evidence/P5.md
   section:
-    start: 15965
-    end: 18070
+    start: 16344
+    end: 18449
 - phase_id: P6
   phase_name: Library and chat history
   status: VERIFIED
@@ -279,18 +279,14 @@ phases:
   last_updated: null
   evidence_pointer: docs/evidence/P6.md
   section:
-    start: 18070
-    end: 19395
+    start: 18449
+    end: 19774
 - phase_id: P7
   phase_name: PDF uploads
-  status: IN_PROGRESS
+  status: VERIFIED
   objective: Users upload their own PDFs (5 × 100 pages), parsed in the browser, re-validated on the server, private to them,
     deleted after 7 days.
-  active_tasks:
-  - T-7.7
-  - T-7.10
-  - T-7.13
-  - T-7.14
+  active_tasks: []
   tasks:
   - id: T-7.1
     title: Browser parsing in a Web Worker with pdf.js (scripting off, magic-byte check, size/page caps, timeout) using the
@@ -318,7 +314,7 @@ phases:
   - id: T-7.7
     title: 'Claude/ChatGPT-style chat: centred new-chat box, + to attach PDFs as chips in the question box (only upload point),
       question bubble, labelled back buttons'
-    status: READY_FOR_VERIFICATION
+    status: VERIFIED
   - id: T-7.8
     title: 'Tune OCR: extra title pass on page 1 only, 2000 px render'
     status: VERIFIED
@@ -327,7 +323,7 @@ phases:
     status: VERIFIED
   - id: T-7.10
     title: Per-page OCR quality warning from tesseract confidence
-    status: READY_FOR_VERIFICATION
+    status: VERIFIED
   - id: T-7.11
     title: 'Chat-scoped uploads: a PDF added in a chat is searched only in that chat (papers.chat_id, Vectorize metadata index,
       owner+chat scope in search and D1 re-check, chat created on first upload). **Deleting a chat asks the user** whether
@@ -339,10 +335,10 @@ phases:
     status: VERIFIED
   - id: T-7.13
     title: 'Upload button in the Library: personal library PDFs (not tied to a chat), used in any chat with the library on'
-    status: READY_FOR_VERIFICATION
+    status: VERIFIED
   - id: T-7.14
     title: 'Several PDFs per chat: check and fix multi-file attach (owner saw only one) and per-chat file list'
-    status: READY_FOR_VERIFICATION
+    status: VERIFIED
   dependencies:
   - P2
   - P6
@@ -358,11 +354,11 @@ phases:
   last_updated: null
   evidence_pointer: docs/evidence/P7.md
   section:
-    start: 19395
-    end: 24167
+    start: 19774
+    end: 24487
 - phase_id: P8
   phase_name: Hardening and demo launch
-  status: PLANNED
+  status: INTENTIONALLY_DEFERRED
   objective: Every [DEMO] item in SECURITY.md done, abuse limits on, full test suite green, live demo link ready for the client.
   active_tasks: []
   tasks:
@@ -370,26 +366,26 @@ phases:
     title: 'Rate limits (questions, uploads, new IDs): demo on Render (single instance) uses in-memory per-minute limits +
       D1 daily counters; the production Worker uses the Rate Limiting binding / Durable Objects; global LLM and Workers AI
       budget guard'
-    status: PLANNED
+    status: INTENTIONALLY_DEFERRED
   - id: T-8.2
     title: Cloudflare Turnstile on the first question and on uploads (server-side token check)
-    status: PLANNED
+    status: INTENTIONALLY_DEFERRED
   - id: T-8.3
     title: Structured JSON logging (no secrets or raw IPs), alerts, `/.well-known/security.txt`
-    status: PLANNED
+    status: INTENTIONALLY_DEFERRED
   - id: T-8.4
     title: 'Full security test suite (SEC §13 #1–23) green in CI'
-    status: PLANNED
+    status: INTENTIONALLY_DEFERRED
   - id: T-8.5
     title: Final eval run on production (retrieval + answers)
-    status: PLANNED
+    status: INTENTIONALLY_DEFERRED
   - id: T-8.6
     title: Demo deploy to Render (Render CLI) + smoke test, waking the free instance first (5 golden questions, citations
       open the right page, upload from a phone, headers, 429)
-    status: PLANNED
+    status: INTENTIONALLY_DEFERRED
   - id: T-8.7
     title: 'Demo hand-off: short walkthrough video and a one-page "how it works" for the client'
-    status: PLANNED
+    status: INTENTIONALLY_DEFERRED
   dependencies:
   - P4
   - P6
@@ -403,42 +399,43 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 24167
-    end: 26933
+    start: 24487
+    end: 27538
 - phase_id: P9
-  phase_name: Paid MVP (after the deal)
-  status: INTENTIONALLY_DEFERRED
-  objective: Turn the demo into the client's production MVP on Cloudflare Workers Paid. Re-planned in detail after the client
-    call; tasks below are the known scope.
+  phase_name: Production
+  status: PLANNED
+  objective: 'Turn the demo into the production product: 5–10 GB of sources (PDFs, PPT and more), no demo limits, paid hosting,
+    real login, and the P8 hardening items. **Re-plan in the next session with the owner before any code**; tasks below are
+    the known scope.'
   active_tasks: []
   tasks:
   - id: T-9.1
     title: Move to Cloudflare Workers Paid ($5); custom domain; WAF; D1 backups
-    status: INTENTIONALLY_DEFERRED
+    status: PLANNED
   - id: T-9.2
     title: Switch the LLM to OpenAI (first in the fallback chain); re-run all evals
-    status: INTENTIONALLY_DEFERRED
+    status: PLANNED
   - id: T-9.3
     title: Real login (magic link / Google) replacing the anonymous ID
-    status: INTENTIONALLY_DEFERRED
+    status: PLANNED
   - id: T-9.4
     title: Server-side processing of big PDFs (300–400 pages) with Cloudflare Queues
-    status: INTENTIONALLY_DEFERRED
+    status: PLANNED
   - id: T-9.5
     title: Optional Python parsing service (Docling/GROBID) if T-2.5 found table problems
-    status: INTENTIONALLY_DEFERRED
+    status: PLANNED
   - id: T-9.6
     title: Reintroduce LangGraph (paid plan) and build an agent for multi-paper research questions
-    status: INTENTIONALLY_DEFERRED
+    status: PLANNED
   - id: T-9.7
     title: Tracing (Langfuse), privacy notice, dependency scanning, SEC §14 MVP checklist
-    status: INTENTIONALLY_DEFERRED
+    status: PLANNED
   - id: T-9.8
     title: 'Production OCR: self-hosted PaddleOCR or Google Document AI / Azure Read for scanned pages, tesseract.js fallback,
       background job (Queues/Workflows); benchmark first (D-018)'
-    status: INTENTIONALLY_DEFERRED
+    status: PLANNED
   dependencies:
-  - P8
+  - P7
   affected_paths: []
   security_flags: true
   design_flags: true
@@ -446,5 +443,5 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 26933
-    end: 29105
+    start: 27538
+    end: 29659
