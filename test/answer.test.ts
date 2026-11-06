@@ -8,6 +8,7 @@ import {
   answer,
   buildPrompt,
   checkAnswer,
+  normalizeCites,
   citedNumbers,
   escapeTags,
   guard,
@@ -71,6 +72,11 @@ describe("citation validation (T-4.5, SECURITY §13 #10)", () => {
     expect(checkAnswer("Yes, it does.", 5, "C").reason).toBe("no_citations");
     expect(checkAnswer(NOT_FOUND, 5, "C")).toEqual({ ok: true });
     expect(checkAnswer("Here: SIQ-abc [1]", 5, "SIQ-abc").reason).toBe("canary");
+    // gpt-oss's line-reference style (seen live on the biomaterials PDFs): was rejected as uncited → "couldn't find".
+    const dagger = normalizeCites("explicit[1†L1-L4][2†L1-L4]. Interface【3†L5-L9】 and [4†L9-L12].");
+    expect(dagger).toBe("explicit[1][2]. Interface[3] and [4].");
+    expect(checkAnswer(dagger, 5, "C")).toEqual({ ok: true });
+    expect(checkAnswer(normalizeCites("Bad [9†L1-L2]."), 5, "C").reason).toBe("bogus_citation");
   });
 });
 

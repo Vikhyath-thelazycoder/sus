@@ -138,8 +138,12 @@ Answer the question using ONLY the numbered sources inside <sources>.
 
 // ---------------------------------------------------------------- validate (RAG §5.10, SECURITY §7.2)
 
-/** gpt-oss writes citations as 【1】; the app and the validator use [1]. */
-export const normalizeCites = (s: string) => s.replaceAll("【", "[").replaceAll("】", "]");
+/**
+ * gpt-oss writes citations as 【1】, and sometimes with line references as [1†L1-L4] or 【1†L5-L9】; the app and the
+ * validator use [1]. Without this, answers in the † style were rejected as uncited and shown as "couldn't find".
+ */
+export const normalizeCites = (s: string) =>
+  s.replaceAll("【", "[").replaceAll("】", "]").replace(/\[(\d{1,3})†[^\]\n]{0,40}\]/g, "[$1]");
 
 const CITE = /\[(\d{1,3}(?:\s*[,;–-]\s*\d{1,3})*)\]/g;
 
