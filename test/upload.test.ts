@@ -219,28 +219,19 @@ describe("uploads: server re-validation (T-7.2, SECURITY §5.1)", () => {
   });
 });
 
-describe("uploads: quota (SECURITY §12 #3)", () => {
-  it("10 parallel uploads with 4 PDFs already stored → exactly 1 succeeds (SECURITY §13 #19)", async () => {
-    for (let i = 0; i < 4; i++) await upload(A, `paper ${i}`, 2);
-    const results = await Promise.all(
-      Array.from({ length: 10 }, () => as(A, "POST", "/api/uploads", create(2))),
-    );
-    expect(results.filter((r) => r.status === 201)).toHaveLength(1);
-    expect(results.filter((r) => r.status === 409)).toHaveLength(9);
-    expect(await count("SELECT count(*) AS n FROM papers WHERE owner_id = ?1", A)).toBe(5);
-    // A 6th PDF is refused; B has its own quota.
-    expect((await as(A, "POST", "/api/uploads", create(2))).status).toBe(409);
-    expect((await as(B, "POST", "/api/uploads", create(2, undefined, CHAT_B))).status).toBe(201);
+describe("uploads: no per-user limit (owner, 2026-11-06)", () => {
+  it("a user can keep adding PDFs past the old 5 PDFs / 100 pages, in parallel too", async () => {
+    for (let i = 0; i < 6; i++) await upload(A, `paper ${i}`, 50);
+    const results = await Promise.all(Array.from({ length: 4 }, () => as(A, "POST", "/api/uploads", create(100))));
+    expect(results.map((r) => r.status)).toEqual([201, 201, 201, 201]);
+    expect(await count("SELECT count(*) AS n FROM papers WHERE owner_id = ?1", A)).toBe(10);
   });
 
-  it("counts pages across uploads, and expired uploads stop counting", async () => {
-    await upload(A, "big", 95);
-    expect((await as(A, "POST", "/api/uploads", create(6))).status).toBe(409);
-    expect((await as(A, "POST", "/api/uploads", create(5))).status).toBe(201);
-    await env.DB.prepare("UPDATE papers SET expires_at = 1 WHERE owner_id = ?1").bind(A).run();
-    expect((await as(A, "POST", "/api/uploads", create(100))).status).toBe(201);
+  it("still refuses a single PDF over the per-file page cap", async () => {
+    expect((await as(A, "POST", "/api/uploads", create(101))).status).toBe(400);
   });
 });
+
 
 describe("uploads are private to their owner (T-7.4, SECURITY §13 #4)", () => {
   it("user A never finds user B's upload, by keyword or by meaning", async () => {

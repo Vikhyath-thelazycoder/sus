@@ -102,16 +102,16 @@ describe("upload from the chat box", () => {
     expect(screen.queryByRole("list", { name: "Attached PDFs" })).toBeNull();
   });
 
-  it("explains failures in plain words: not a PDF, no text, quota", async () => {
+  it("explains failures in plain words: not a PDF, no text, paused", async () => {
     const { user, input } = setup({ parse: async () => Promise.reject(new UploadFailed("scanned")) });
     await user.upload(input, pdf("notes.txt", "text/plain"));
     await screen.findByText("That file isn't a PDF.");
     await user.upload(input, pdf());
     await screen.findByText(/No readable text was found/);
     cleanup();
-    const s = setup({ send: async () => Promise.reject(new UploadFailed("quota")) });
+    const s = setup({ send: async () => Promise.reject(new UploadFailed("paused")) });
     await s.user.upload(s.input, pdf());
-    await screen.findByText(/demo limit/);
+    await screen.findByText(/Uploads are paused/);
   });
 
   it("uploads into this chat (T-7.11)", async () => {

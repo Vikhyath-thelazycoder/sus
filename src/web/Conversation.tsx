@@ -473,8 +473,8 @@ function Composer({
       </div>
       {items.length > 0 && (
         <p className="mt-2 text-center text-caption text-muted">
-          Only you can see your PDFs, and only in this chat; they're deleted after 7 days (up to {UPLOAD.maxPdfs} PDFs,{" "}
-          {UPLOAD.maxPages} pages). Don't upload confidential documents.
+          Only you can see your PDFs, and only in this chat; they're deleted after 7 days (up to {UPLOAD.maxPages} pages
+          per PDF). Don't upload confidential documents.
         </p>
       )}
     </form>

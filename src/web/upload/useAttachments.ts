@@ -56,7 +56,7 @@ export function useAttachments(chatId: () => Promise<string | undefined>, deps: 
         if (abort.signal.aborted) return;
         progress("indexing", 0, parsed.chunks.length);
         const paperId = await deps.send(parsed, (d, t) => progress("indexing", d, t), await chatId());
-        // Removed while it was indexing: give the quota back.
+        // Removed while it was indexing: remove the upload.
         if (abort.signal.aborted) return void deps.remove(paperId).catch(() => {});
         set(id, {
           state: "ready",

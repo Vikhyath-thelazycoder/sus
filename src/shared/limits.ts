@@ -3,8 +3,7 @@
  * never drift. One place to change them.
  */
 export const UPLOAD = {
-  maxPdfs: 5,
-  /** Pages across all of one owner's live uploads. */
+  /** Pages per PDF (browser parsing safety). No per-user cap on PDFs or total pages (owner, 2026-11-06). */
   maxPages: 100,
   maxFileBytes: 25 * 1024 * 1024,
   /** ≈100 pages of chunks (SECURITY §3.1). */

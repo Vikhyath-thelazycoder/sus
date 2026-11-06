@@ -2,10 +2,10 @@ import { UPLOAD } from "../../shared/limits";
 import { deleteUpload } from "../api";
 import type { ParsedUpload, ParseStep, UploadErrorCode } from "./parse";
 
-/** Upload flow (T-7.3): parse in a Web Worker → create (quota) → chunk batches (server embeds) → finish. */
+/** Upload flow (T-7.3): parse in a Web Worker → create → chunk batches (server embeds) → finish. */
 export type UploadStep = ParseStep | "indexing";
 export type UploadFailure =
-  UploadErrorCode | "type" | "quota" | "paused" | "timeout" | "network" | "rate-limited" | "cancelled";
+  UploadErrorCode | "type" | "paused" | "timeout" | "network" | "rate-limited" | "cancelled";
 
 export class UploadFailed extends Error {
   constructor(readonly reason: UploadFailure) {
@@ -22,7 +22,6 @@ export const FAILURE_COPY: Record<UploadFailure, string> = {
   "too-much-text": "This PDF has more text than the demo can index.",
   unreadable: "This PDF couldn't be read. Try another file.",
   timeout: "Reading this PDF took too long. Try a smaller file.",
-  quota: `You've reached the demo limit (${UPLOAD.maxPdfs} PDFs, ${UPLOAD.maxPages} pages in total). Delete an upload to add another.`,
   paused: "Uploads are paused right now. Please try again later.",
   "rate-limited": "That was a lot of uploading at once. Try again in a minute.",
   network: "The upload didn't finish. Check your connection and try again.",
@@ -97,7 +96,7 @@ async function send(path: string, body?: unknown): Promise<Response> {
 }
 
 const failureFor = (status: number): UploadFailure =>
-  status === 409 ? "quota" : status === 503 ? "paused" : status === 429 ? "rate-limited" : "network";
+  status === 503 ? "paused" : status === 429 ? "rate-limited" : "network";
 
 export async function sendUpload(
   parsed: ParsedUpload,
@@ -126,7 +125,7 @@ export async function sendUpload(
     if (!fin.ok) throw new UploadFailed(failureFor(fin.status));
     return paperId;
   } catch (err) {
-    // Give the quota back; if this fails too, the daily cleanup removes the unfinished upload.
+    // Remove the partial upload; if this fails too, the daily cleanup removes the unfinished upload.
     void deleteUpload(paperId).catch(() => {});
     throw err;
   }

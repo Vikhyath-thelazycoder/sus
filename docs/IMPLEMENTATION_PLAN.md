@@ -29,7 +29,7 @@ INTENTIONALLY_DEFERRED. `agylite plan index` keeps a compact index in `.agylite/
 **Next session, start here (owner's wish: talk about the future first, no code until agreed):**
 1. **Production scope (P9, re-plan it with the owner).** Owner's target: **5–10 GB of sources: PDFs, PPT and others**, no demo limits. What the demo can't do today and P9 must answer:
    - Parsing runs in the browser (pdf.js + tesseract); PPT/DOCX not supported → server-side ingestion with a queue (T-9.4, T-9.5, T-9.8).
-   - Per-user limits 5 PDFs / 100 pages (the owner's 3 test volumes are 140 pages, so the 3rd is refused) and 7-day expiry → real limits, retention, storage (R2 for originals).
+   - **Per-user limit removed** (owner, 2026-11-06): no cap on PDFs or total pages per user. Still in place: 100 pages / 25 MB per PDF (browser parsing) and 7-day expiry → retention, storage (R2 for originals), server-side parsing for bigger files.
    - Free tiers: Render, Workers free, D1 (size), Vectorize, Groq free quota (200k tokens/day/model) → paid hosting and LLM (T-9.1, T-9.2).
    - Anonymous cookie identity → real login (T-9.3); hardening items from P8 fold into P9 (T-9.7).
 2. **Open decisions. Don't assume them:** "Use the library" default (off with a PDF, on without; not confirmed); deleting a chat asks each time; Library also lists chat PDFs as "Your upload" (hide, or label with the chat?); T-7.10 confidence threshold 60 not measured on a bad scan.

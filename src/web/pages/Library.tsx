@@ -9,7 +9,6 @@ import {
   type PaperDetail,
 } from "../api";
 import { Badge, Icon, Skeleton } from "../ui";
-import { UPLOAD } from "../../shared/limits";
 import { AttachmentChip } from "../Conversation";
 import { useAttachments, type UploadDeps } from "../upload/useAttachments";
 
@@ -89,7 +88,7 @@ export function Library({ onOpen, uploadDeps }: { onOpen: (id: string) => void; 
 
         <p className="mt-3 text-small text-muted">
           {used.pdfs
-            ? `Your uploads: ${used.pdfs} of ${UPLOAD.maxPdfs} PDFs, ${used.pages} of ${UPLOAD.maxPages} pages. `
+            ? `Your uploads: ${used.pdfs} PDFs, ${used.pages} pages. `
             : ""}
           PDFs uploaded here are used in every chat with "Use the library" on; a PDF added with + in a chat stays in
           that chat. Only you can see them; they're deleted after 7 days. Don't upload confidential documents.

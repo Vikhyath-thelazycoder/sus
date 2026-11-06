@@ -12,7 +12,7 @@ import { chunkId, sectionId } from "./admin-papers";
 /**
  * User uploads (T-7.2, SECURITY §5.1). The browser parses the PDF and sends text; nothing it sends is trusted:
  * every field is re-validated here, the server picks all IDs and timestamps and computes the embeddings, and the
- * quota is checked and taken in one SQL statement. Same three steps as curated ingestion: create → chunks → finish.
+ * there is no per-user cap on PDFs or pages (owner, 2026-11-06). Same three steps as curated ingestion: create → chunks → finish.
  */
 const PAPER_ID = /^p_[0-9a-f]{24}$/;
 const page = z.number().int().min(1).max(UPLOAD.maxPages);
@@ -87,18 +87,13 @@ uploads.post("/uploads", async (c) => {
     throw notFound();
   const id = newPaperId();
   const now = Date.now();
-  const live = "owner_id = ?2 AND expires_at > ?5";
-  // Check and take the quota in ONE statement (SECURITY §12 #3): parallel requests can't all pass a separate count.
-  const taken = await db
+  await db
     .prepare(
       `INSERT INTO papers (id, owner_id, title, authors, verified, pages, status, created_at, expires_at, chat_id)
-       SELECT ?1, ?2, ?3, '[]', 0, ?4, 'processing', ?5, ?6, ?9
-       WHERE (SELECT count(*) FROM papers WHERE ${live}) < ?7
-         AND (SELECT coalesce(sum(pages), 0) FROM papers WHERE ${live}) + ?4 <= ?8`,
+       VALUES (?1, ?2, ?3, '[]', 0, ?4, 'processing', ?5, ?6, ?7)`,
     )
-    .bind(id, ownerId, cleanText(title), pages, now, now + UPLOAD.ttlMs, UPLOAD.maxPdfs, UPLOAD.maxPages, chatId ?? null)
+    .bind(id, ownerId, cleanText(title), pages, now, now + UPLOAD.ttlMs, chatId ?? null)
     .run();
-  if (!taken.meta.changes) return c.json({ error: "Upload limit reached" }, 409);
 
   await db.batch(
     sections.map((s, i) =>
