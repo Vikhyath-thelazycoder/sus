@@ -30,8 +30,8 @@ class OffscreenCanvasFactory {
   }
 }
 
-/** OCR width ≈ 300 dpi for an A4/Letter page: enough for body text, small enough for phones. */
-const OCR_WIDTH_PX = 2400;
+/** OCR width ≈ 240 dpi for an A4/Letter page: measured on the owner's scan, 2400 px read only ~1% more words, much slower. */
+const OCR_WIDTH_PX = 2000;
 const MIN_LINE_CONFIDENCE = 40;
 const MIN_WORD_CONFIDENCE = 30;
 
@@ -63,8 +63,9 @@ async function ocrPage(page: PDFPageProxy): Promise<RawItem[]> {
   const items: RawItem[] = [];
   const covered: Box[] = [];
   await readInto(canvas, scale, base.height, items, covered);
-  // Tesseract's page layout misses very large text (titles), so a quick half-size pass in "sparse text" mode adds
-  // whatever the first pass left out.
+  if (page.pageNumber !== 1) return items;
+  // Tesseract's page layout misses very large text (titles), so on the first page (where the title is) a quick
+  // half-size pass in "sparse text" mode adds whatever the first pass left out.
   const half = new OffscreenCanvas(Math.ceil(canvas.width / 2), Math.ceil(canvas.height / 2));
   half.getContext("2d")!.drawImage(canvas, 0, 0, half.width, half.height);
   const w = await ocr();

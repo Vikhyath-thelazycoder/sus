@@ -1,0 +1,133 @@
+{
+ "schema_version": 1,
+ "mode": "tests-and-browser",
+ "task": "T-7.9",
+ "result": "PASSED",
+ "impact": {
+  "method": "structural",
+  "changed": [
+   "1793015628-7d8b946f.pdf",
+   "docs/IMPLEMENTATION_PLAN.md",
+   "docs/evidence/P7.md",
+   "src/shared/limits.ts",
+   "src/web/upload/parse.worker.ts",
+   "src/worker/platform.ts",
+   "src/worker/rag/search.ts",
+   "src/worker/routes/upload.ts",
+   "test/rag.test.ts",
+   "test/upload.test.ts"
+  ],
+  "notice": "graph-based analysis unavailable; limited structural analysis used (graph-based analysis unavailable: graphify runtime not installed (`agylite runtime install graphify`))"
+ },
+ "checks": [
+  {
+   "command": [
+    "npm",
+    "run",
+    "test",
+    "--",
+    "test/rag.test.ts",
+    "test/upload.test.ts",
+    "test/admin-papers.test.ts",
+    "test/answer.test.ts",
+    "test/chat.test.ts",
+    "test/node/upload-parse.test.ts",
+    "test/helpers.ts",
+    "test/web/composer-upload.test.tsx",
+    "test/web/helpers.test.ts",
+    "test/library.test.ts",
+    "test/web/app.test.tsx"
+   ],
+   "exit_code": 0,
+   "result": "PASSED",
+   "duration_ms": 3960,
+   "diagnosis": [],
+   "kind": "test",
+   "name": "test",
+   "reason": "11 tests affected by the change",
+   "tests": [
+    "test/rag.test.ts",
+    "test/upload.test.ts",
+    "test/admin-papers.test.ts",
+    "test/answer.test.ts",
+    "test/chat.test.ts",
+    "test/node/upload-parse.test.ts",
+    "test/helpers.ts",
+    "test/web/composer-upload.test.tsx",
+    "test/web/helpers.test.ts",
+    "test/library.test.ts",
+    "test/web/app.test.tsx"
+   ],
+   "at": "2026-11-06T04:09:36Z"
+  },
+  {
+   "command": [
+    "npm",
+    "run",
+    "typecheck"
+   ],
+   "exit_code": 0,
+   "result": "PASSED",
+   "duration_ms": 1856,
+   "diagnosis": [],
+   "kind": "typecheck",
+   "name": "typecheck",
+   "reason": "typecheck check for the project",
+   "tests": [],
+   "at": "2026-11-06T04:09:38Z"
+  },
+  {
+   "command": [
+    "npm",
+    "run",
+    "lint"
+   ],
+   "exit_code": 0,
+   "result": "PASSED",
+   "duration_ms": 1296,
+   "diagnosis": [],
+   "kind": "lint",
+   "name": "lint",
+   "reason": "lint check for the project",
+   "tests": [],
+   "at": "2026-11-06T04:09:39Z"
+  },
+  {
+   "command": [
+    "/Users/vikhyathmgowda007/.agylite/core/bin/python",
+    "-m",
+    "compileall",
+    "-q",
+    "-x",
+    "(^|/)(\\.|node_modules|venv)",
+    "."
+   ],
+   "exit_code": 0,
+   "result": "PASSED",
+   "duration_ms": 120,
+   "diagnosis": [],
+   "kind": "build",
+   "name": "compileall",
+   "reason": "build check for the project",
+   "tests": [],
+   "at": "2026-11-06T04:09:40Z"
+  },
+  {
+   "command": [
+    "npm",
+    "run",
+    "build"
+   ],
+   "exit_code": 0,
+   "result": "PASSED",
+   "duration_ms": 2566,
+   "diagnosis": [],
+   "kind": "build",
+   "name": "build",
+   "reason": "build check for the project",
+   "tests": [],
+   "at": "2026-11-06T04:09:42Z"
+  }
+ ],
+ "at": "2026-11-06T04:09:42Z"
+}

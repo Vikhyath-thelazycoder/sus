@@ -18,7 +18,4 @@ export const UPLOAD = {
   /** An upload that never finished is cleaned up after this long. */
   staleMs: 60 * 60 * 1000,
   parseTimeoutMs: 60_000,
-  /** "Ready" waits until Vectorize has applied the upload's vectors, polling this often, for at most this long. */
-  searchablePollMs: 1500,
-  searchableWaitMs: 45_000,
 } as const;

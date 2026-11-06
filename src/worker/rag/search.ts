@@ -73,13 +73,21 @@ export function toFtsQuery(q: string): string {
     .join(" OR ");
 }
 
-export async function keywordSearch(env: Env, query: string, ownerId: string, k: number = RETRIEVAL.searchK): Promise<string[]> {
+/** `ownOnly`: just the caller's uploads (no curated papers), so a fresh upload can't be crowded out in fusion. */
+export async function keywordSearch(
+  env: Env,
+  query: string,
+  ownerId: string,
+  k: number = RETRIEVAL.searchK,
+  ownOnly = false,
+): Promise<string[]> {
   const match = toFtsQuery(query);
   if (!match) return [];
+  const owners = ownOnly ? "c.owner_id = ?2" : "c.owner_id IN ('public', ?2)";
   try {
     const { results } = await env.DB.prepare(
       `SELECT c.id FROM chunks_fts JOIN chunks c ON c.seq = chunks_fts.rowid
-       WHERE chunks_fts MATCH ?1 AND c.owner_id IN ('public', ?2)
+       WHERE chunks_fts MATCH ?1 AND ${owners}
        ORDER BY bm25(chunks_fts) LIMIT ?3`,
     )
       .bind(match, ownerId, k)
@@ -235,11 +243,15 @@ export async function retrieve(env: Env, query: string, ownerId: string, opts: R
 
   const wantVector = mode !== "keyword";
   const wantKeyword = mode !== "vector";
-  const [vector, keyword] = await Promise.all([
+  const [vector, keyword, ownKeyword] = await Promise.all([
     wantVector
       ? timed("vector", embed(env, [query]).then(([v]) => vectorSearch(env, v!, ownerId, searchK)))
       : Promise.resolve([]),
     wantKeyword ? timed("keyword", keywordSearch(env, query, ownerId, searchK)) : Promise.resolve([]),
+    // The caller's own uploads as a third list: keyword search sees a new upload at once, Vectorize ~30 s later (T-7.9).
+    mode === "hybrid" || mode === "rerank"
+      ? timed("ownKeyword", keywordSearch(env, query, ownerId, searchK, true))
+      : Promise.resolve([]),
   ]);
 
   const fused =
@@ -247,7 +259,7 @@ export async function retrieve(env: Env, query: string, ownerId: string, opts: R
       ? vector.slice(0, fuseTop)
       : mode === "keyword"
         ? keyword.slice(0, fuseTop).map((id, i) => ({ id, score: 1 / (i + 1) }))
-        : rrf([vector.map((v) => v.id), keyword]).slice(0, fuseTop);
+        : rrf([vector.map((v) => v.id), keyword, ownKeyword]).slice(0, fuseTop);
 
   const rows = await timed("d1", fetchChunks(env, fused.map((f) => f.id), ownerId));
   let hits: Hit[] = fused.flatMap((f) => {

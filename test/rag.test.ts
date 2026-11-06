@@ -118,6 +118,16 @@ describe("fusion (T-3.4)", () => {
   it("deduplicates ids present in both lists", () => {
     expect(rrf([["A", "B"], ["B", "A"]])).toHaveLength(2);
   });
+  it("an own upload Vectorize hasn't applied yet still beats curated chunks (T-7.9)", async () => {
+    expect((await keywordSearch(env, "PLA", B))[0]).not.toBe("p_userb:c0"); // curated chunks rank first alone
+    expect(await keywordSearch(env, "PLA", B, 30, true)).toEqual(["p_userb:c0"]);
+    const AI = { run: async () => ({ data: [Array(EMBED_DIMS).fill(0.01)] }) };
+    // Vectorize lags: it returns only curated text. (A curated chunk top of both other lists can still tie the upload.)
+    const VECTORIZE = { query: async () => ({ matches: [{ id: "p_pub2:c0", score: 0.9 }] }) };
+    const bindings = { ...env, AI, VECTORIZE } as unknown as Env;
+    const r = await retrieve(bindings, "PLA", B, { mode: "hybrid", fuseTop: 1 });
+    expect(r.hits.map((h) => h.id)).toEqual(["p_userb:c0"]);
+  });
 });
 
 describe("passages (T-3.5)", () => {

@@ -1,9 +1,9 @@
 schema_version: 1
 plan_path: docs/IMPLEMENTATION_PLAN.md
-plan_sha256: 11e35e83b8be9b49150a7001dfbb53344eba0f929564fc6457836f0c338164fb
-plan_size: 36115
-plan_mtime_ns: 1793937602016388162
-built: '2026-11-06T04:00:02+00:00'
+plan_sha256: 5bf9447f982ed1ed692f4b8bd7114d810291eb6f8dd809f8cbaeab39fe0e09e2
+plan_size: 37627
+plan_mtime_ns: 1793938189188115974
+built: '2026-11-06T04:09:49+00:00'
 current_phase: P7
 phases:
 - phase_id: P1
@@ -56,8 +56,8 @@ phases:
   last_updated: null
   evidence_pointer: docs/evidence/P1.md
   section:
-    start: 2055
-    end: 5157
+    start: 3207
+    end: 6309
 - phase_id: P2
   phase_name: Paper ingestion
   status: VERIFIED
@@ -112,8 +112,8 @@ phases:
   last_updated: null
   evidence_pointer: docs/evidence/P2.md
   section:
-    start: 5157
-    end: 8180
+    start: 6309
+    end: 9332
 - phase_id: P3
   phase_name: Retrieval and evaluation
   status: VERIFIED
@@ -156,8 +156,8 @@ phases:
   last_updated: null
   evidence_pointer: docs/evidence/P3.md
   section:
-    start: 8180
-    end: 10490
+    start: 9332
+    end: 11642
 - phase_id: P4
   phase_name: Answer generation
   status: VERIFIED
@@ -204,8 +204,8 @@ phases:
   last_updated: null
   evidence_pointer: docs/evidence/P4.md
   section:
-    start: 10490
-    end: 13128
+    start: 11642
+    end: 14280
 - phase_id: P5
   phase_name: UI foundation and chat
   status: VERIFIED
@@ -244,8 +244,8 @@ phases:
   last_updated: null
   evidence_pointer: docs/evidence/P5.md
   section:
-    start: 13128
-    end: 15233
+    start: 14280
+    end: 16385
 - phase_id: P6
   phase_name: Library and chat history
   status: VERIFIED
@@ -279,8 +279,8 @@ phases:
   last_updated: null
   evidence_pointer: docs/evidence/P6.md
   section:
-    start: 15233
-    end: 16558
+    start: 16385
+    end: 17710
 - phase_id: P7
   phase_name: PDF uploads
   status: IN_PROGRESS
@@ -288,6 +288,8 @@ phases:
     deleted after 7 days.
   active_tasks:
   - T-7.7
+  - T-7.8
+  - T-7.9
   tasks:
   - id: T-7.1
     title: Browser parsing in a Web Worker with pdf.js (scripting off, magic-byte check, size/page caps, timeout) using the
@@ -318,20 +320,21 @@ phases:
     status: READY_FOR_VERIFICATION
   - id: T-7.8
     title: 'Tune OCR: extra title pass on page 1 only, 2000 px render'
-    status: PLANNED
+    status: READY_FOR_VERIFICATION
   - id: T-7.9
     title: 'Ready without the Vectorize wait: owner-uploads keyword list added to fusion, finish no longer waits'
-    status: PLANNED
+    status: READY_FOR_VERIFICATION
   - id: T-7.10
     title: Per-page OCR quality warning from tesseract confidence
     status: PLANNED
   - id: T-7.11
     title: 'Chat-scoped uploads: a PDF added in a chat is searched only in that chat (papers.chat_id, Vectorize metadata index,
-      owner+chat scope in search and D1 re-check, chat created on first upload, deleted with the chat)'
+      owner+chat scope in search and D1 re-check, chat created on first upload). **Deleting a chat asks the user** whether
+      to also delete the PDFs uploaded in it'
     status: PLANNED
   - id: T-7.12
-    title: 'Use-the-library toggle per chat: PDFs only / library only / both; default: library off when a PDF is attached,
-      on when none'
+    title: 'Use-the-library toggle per chat: PDFs only / library only / both; proposed default (not yet confirmed by the owner):
+      library off when a PDF is attached, on when none'
     status: PLANNED
   - id: T-7.13
     title: 'Upload button in the Library: personal library PDFs (not tied to a chat), used in any chat with the library on'
@@ -354,8 +357,8 @@ phases:
   last_updated: null
   evidence_pointer: docs/evidence/P7.md
   section:
-    start: 16558
-    end: 21180
+    start: 17710
+    end: 22463
 - phase_id: P8
   phase_name: Hardening and demo launch
   status: PLANNED
@@ -399,8 +402,8 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 21180
-    end: 23946
+    start: 22463
+    end: 25229
 - phase_id: P9
   phase_name: Paid MVP (after the deal)
   status: INTENTIONALLY_DEFERRED
@@ -442,5 +445,5 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 23946
-    end: 26118
+    start: 25229
+    end: 27401
