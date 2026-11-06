@@ -66,6 +66,9 @@ export function createSite(env: Env, clientDir = "./dist/client") {
     await next();
     for (const [name, value] of Object.entries(SECURITY_HEADERS)) c.res.headers.set(name, value);
     if (c.req.path.startsWith("/assets/")) c.res.headers.set("Cache-Control", "public, max-age=31536000, immutable");
+    // The page itself is always re-checked, so a reload after a deploy loads the new code (an old upload client
+    // without a chat ID failed after the T-7.11 deploy).
+    else if (c.res.headers.get("Content-Type")?.startsWith("text/html")) c.res.headers.set("Cache-Control", "no-cache");
   });
   site.all("/api/*", (c) => app.fetch(c.req.raw, env));
   site.use("*", serveStatic({ root: clientDir }));

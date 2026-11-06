@@ -1,0 +1,106 @@
+{
+ "schema_version": 1,
+ "mode": "tests-and-browser",
+ "task": null,
+ "result": "PASSED",
+ "impact": {
+  "method": "structural",
+  "changed": [
+   "1793015628-7d8b946f.pdf",
+   "src/server/node.ts",
+   "test/node/server.test.ts"
+  ],
+  "notice": "graph-based analysis unavailable; limited structural analysis used (graph-based analysis unavailable: graphify runtime not installed (`agylite runtime install graphify`))"
+ },
+ "checks": [
+  {
+   "command": [
+    "npm",
+    "run",
+    "test",
+    "--",
+    "test/node/server.test.ts"
+   ],
+   "exit_code": 0,
+   "result": "PASSED",
+   "duration_ms": 534,
+   "diagnosis": [],
+   "kind": "test",
+   "name": "test",
+   "reason": "1 tests affected by the change",
+   "tests": [
+    "test/node/server.test.ts"
+   ],
+   "at": "2026-11-06T04:59:10Z"
+  },
+  {
+   "command": [
+    "npm",
+    "run",
+    "typecheck"
+   ],
+   "exit_code": 0,
+   "result": "PASSED",
+   "duration_ms": 1883,
+   "diagnosis": [],
+   "kind": "typecheck",
+   "name": "typecheck",
+   "reason": "typecheck check for the project",
+   "tests": [],
+   "at": "2026-11-06T04:59:12Z"
+  },
+  {
+   "command": [
+    "npm",
+    "run",
+    "lint"
+   ],
+   "exit_code": 0,
+   "result": "PASSED",
+   "duration_ms": 1369,
+   "diagnosis": [],
+   "kind": "lint",
+   "name": "lint",
+   "reason": "lint check for the project",
+   "tests": [],
+   "at": "2026-11-06T04:59:13Z"
+  },
+  {
+   "command": [
+    "/Users/vikhyathmgowda007/.agylite/core/bin/python",
+    "-m",
+    "compileall",
+    "-q",
+    "-x",
+    "(^|/)(\\.|node_modules|venv)",
+    "."
+   ],
+   "exit_code": 0,
+   "result": "PASSED",
+   "duration_ms": 127,
+   "diagnosis": [],
+   "kind": "build",
+   "name": "compileall",
+   "reason": "build check for the project",
+   "tests": [],
+   "at": "2026-11-06T04:59:13Z"
+  },
+  {
+   "command": [
+    "npm",
+    "run",
+    "build"
+   ],
+   "exit_code": 0,
+   "result": "PASSED",
+   "duration_ms": 2598,
+   "diagnosis": [],
+   "kind": "build",
+   "name": "build",
+   "reason": "build check for the project",
+   "tests": [],
+   "at": "2026-11-06T04:59:16Z"
+  }
+ ],
+ "at": "2026-11-06T04:59:16Z"
+}

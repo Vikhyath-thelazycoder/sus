@@ -75,6 +75,7 @@ describe("Render demo server (D-012)", () => {
     expect(page.status).toBe(200);
     expect(await page.text()).toContain("<title>SustainIQ</title>");
     expect(page.headers.get("X-Frame-Options")).toBe("DENY");
+    expect(page.headers.get("Cache-Control")).toBe("no-cache"); // a reload after a deploy gets the new code
     const asset = await site.fetch(new Request("https://demo.onrender.com/assets/app-abc.js"));
     expect(asset.headers.get("Cache-Control")).toContain("immutable");
     expect(asset.headers.get("Content-Security-Policy")).toBeTruthy();
