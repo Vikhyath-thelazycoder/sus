@@ -26,7 +26,8 @@ Related docs: [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) (phases
 | P6 Library and history | ✅ Verified (live) | Library search/filters, paper pages, saved chats (rename, delete). [Evidence](docs/evidence/P6.md) |
 | P7 PDF uploads | ✅ Verified (live). Multi-PDF chats, Library upload, OCR warning, citation fix (2026-11-06) | Upload from the chat box (+), parsed in the browser, **OCR for scanned PDFs** (~19 s for a 4-page scan), **each PDF searched only in its chat**, "Use the library" switch per chat, Ready without waiting for Vectorize, private, 7-day expiry, cleanup cron, delete my data. [Evidence](docs/evidence/P7.md) |
 | P8 Hardening and demo launch | ✖ Dropped (owner, 2026-11-06): straight to production; items move into P9 | Rate limits, Turnstile, logging, full security suite |
-| P9 Production | ▶ Next: scope with the owner in a new session | 5–10 GB of PDFs/PPT, no demo limits, paid hosting, login, production OCR (§6.6), P8 hardening |
+| P9 Production | ▶ Next: scope with the owner in a new session | 5–10 GB of PDFs/PPT to start with no upper limit (D-028), no demo limits, paid hosting, login, production OCR (§6.6), P8 hardening |
+| Security review (2026-11-15) | ⚠ One gap in the live demo | Checked against 20 common web attacks (SECURITY §12b): every one that applies today is covered. **Missing: rate limiting** (T-10.5). Login and Office-file risks planned as T-11.8, T-12.10, T-15.10 |
 
 **Live:**
 - **Demo:** https://sustainiq-demo.onrender.com (Render free, Singapore). Sleeps after 15 min idle; the first visit then takes 30–60 s. Deploys are started with the Render API (a push to `main` does not deploy).
@@ -313,13 +314,15 @@ npm run deploy                      # build + wrangler deploy → sustainiq.sust
 ---
 
 ## 11. After the deal: MVP changes
-- **Cloudflare Workers Paid ($5)**; the same app with direct bindings; custom domain, WAF, backups.
-- **OpenAI** first in the fallback chain (optionally OpenAI embeddings, which means re-embedding everything).
+- **Cloudflare Workers Paid ($5) and our own domain from the start** (owner, 2026-11-15, D-021): everything on Cloudflare, with the same app on direct bindings, plus R2, WAF, rate limits, Turnstile and backups. Render retires.
+- **Full production stack:** see "Production stack" in [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md). **No storage limit** (D-028): a D1 database caps at 10 GB, so we add more D1 databases when needed, staying 100% on Cloudflare (T-9.15, D-030). Always on hosting we rent, never the college's server (D-029).
+- **Any LLM provider** (D-022): Groq, OpenAI, Claude, Gemini or Workers AI, chosen in config and mixable in the fallback chain. The cheapest model that passes the quality bar wins (T-9.11).
 - **Login** (magic link / Google) replaces the anonymous ID (SECURITY §10).
 - **Big PDFs** (300–400 pages) processed server-side with **Cloudflare Queues**.
 - **Production OCR** for scanned PDFs (§6.6): self-hosted PaddleOCR or Google Document AI / Azure Read, tesseract.js as fallback.
 - **Better tables:** Docling/GROBID or `toMarkdown`, tested on the table-heavy papers.
 - **LangGraph agents** for multi-paper research questions.
+- **Security for the new surfaces** (review of 2026-11-15, SECURITY §12b): users keyed by the provider's subject ID, not email; canonical emails; single-use codes; pinned JWT algorithm or opaque sessions (T-11.8). Office files parsed with XXE off, zip-bomb caps and no external fetches (T-12.10). Rate limits on a trusted client IP (T-15.1). If hosted on a VM: Cloudflare in front, with the origin locked (T-15.10).
 - Tracing (Langfuse), privacy notice; extras only if asked: paper comparison, property-table extraction, BibTeX export, live OpenAlex / Semantic Scholar search.
 
 ---
@@ -342,4 +345,5 @@ npm run deploy                      # build + wrangler deploy → sustainiq.sust
 | Vague questions about an upload sometimes get "couldn't find" | Ask specific questions in the demo; answers only come from the sources by design |
 | Poor scans (photos, crooked pages) read badly | T-7.10 warning; production OCR handles skew and rotation |
 | ~~LangGraph over the free limits~~ | Resolved: not in the demo (D-010) |
-| ~~Rate-limiting binding not on the free plan~~ | Demo on Render uses in-memory + D1 counters |
+| **No rate limiting on the live demo** (found 2026-11-15; this row used to say Render had in-memory + D1 counters, but none were ever built) | A script can drain the Groq quota and Workers AI for everyone. T-10.5 adds a basic per-ID and per-IP limit (owner to confirm); T-15.1 adds the full one for production (SECURITY §8) |
+| Logins and Office files (PPTX/DOCX/XLSX) bring new attack types in production | Planned before any code: T-11.8 account rules, T-12.10 Office parsing safety, T-15.10 edge hardening on a VM (SECURITY §10, §12b) |

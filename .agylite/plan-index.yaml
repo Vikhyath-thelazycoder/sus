@@ -1,9 +1,9 @@
 schema_version: 1
 plan_path: docs/IMPLEMENTATION_PLAN.md
-plan_sha256: 721e043e47784bc55a576ad770609eccca57a36b80813b522dd8bb858993a15b
-plan_size: 40491
-plan_mtime_ns: 1793980167286027231
-built: '2026-11-06T15:49:43+00:00'
+plan_sha256: 42e53afc4b0ef9b599a47778225fbe82cb74327b722e4ccd95715538f18b41f2
+plan_size: 76922
+plan_mtime_ns: 1794728796787974273
+built: '2026-11-15T07:46:36+00:00'
 current_phase: P9
 phases:
 - phase_id: P1
@@ -56,8 +56,8 @@ phases:
   last_updated: null
   evidence_pointer: docs/evidence/P1.md
   section:
-    start: 5271
-    end: 8373
+    start: 5922
+    end: 9024
 - phase_id: P2
   phase_name: Paper ingestion
   status: VERIFIED
@@ -112,8 +112,8 @@ phases:
   last_updated: null
   evidence_pointer: docs/evidence/P2.md
   section:
-    start: 8373
-    end: 11396
+    start: 9024
+    end: 12047
 - phase_id: P3
   phase_name: Retrieval and evaluation
   status: VERIFIED
@@ -156,8 +156,8 @@ phases:
   last_updated: null
   evidence_pointer: docs/evidence/P3.md
   section:
-    start: 11396
-    end: 13706
+    start: 12047
+    end: 14357
 - phase_id: P4
   phase_name: Answer generation
   status: VERIFIED
@@ -204,8 +204,8 @@ phases:
   last_updated: null
   evidence_pointer: docs/evidence/P4.md
   section:
-    start: 13706
-    end: 16344
+    start: 14357
+    end: 16995
 - phase_id: P5
   phase_name: UI foundation and chat
   status: VERIFIED
@@ -244,8 +244,8 @@ phases:
   last_updated: null
   evidence_pointer: docs/evidence/P5.md
   section:
-    start: 16344
-    end: 18449
+    start: 16995
+    end: 19100
 - phase_id: P6
   phase_name: Library and chat history
   status: VERIFIED
@@ -279,8 +279,8 @@ phases:
   last_updated: null
   evidence_pointer: docs/evidence/P6.md
   section:
-    start: 18449
-    end: 19774
+    start: 19100
+    end: 20425
 - phase_id: P7
   phase_name: PDF uploads
   status: VERIFIED
@@ -354,8 +354,8 @@ phases:
   last_updated: null
   evidence_pointer: docs/evidence/P7.md
   section:
-    start: 19774
-    end: 24487
+    start: 20425
+    end: 25138
 - phase_id: P8
   phase_name: Hardening and demo launch
   status: INTENTIONALLY_DEFERRED
@@ -399,43 +399,433 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 24487
-    end: 27538
+    start: 25138
+    end: 28189
 - phase_id: P9
-  phase_name: Production
+  phase_name: Audit and technical decisions (BP Phase 0)
   status: PLANNED
-  objective: 'Turn the demo into the production product: 5–10 GB of sources (PDFs, PPT and more), no demo limits, paid hosting,
-    real login, and the P8 hardening items. **Re-plan in the next session with the owner before any code**; tasks below are
-    the known scope.'
+  objective: Audit the current SustainIQ code and seven outside projects on one public benchmark corpus, then get the owner's
+    written decisions for every major component before any production code. No client documents are used (BP §17).
   active_tasks: []
   tasks:
   - id: T-9.1
-    title: Move to Cloudflare Workers Paid ($5); custom domain; WAF; D1 backups
+    title: 'Benchmark corpus: public, licensed files covering green chemistry, biopolymers, packaging and biomaterials, plus
+      a two-column PDF, a poor scan, a thesis, a PPTX with tables/images, a DOCX, a CSV/XLSX and an image with a chart (BP
+      §17.1). Write `BENCHMARK_CORPUS_MANIFEST.csv`'
     status: PLANNED
   - id: T-9.2
-    title: Switch the LLM to OpenAI (first in the fallback chain); re-run all evals
+    title: 'Audit question set on the corpus: 30 answerable, 10 unanswerable, 10 wrong-paper/page/collection/permission traps,
+      5 comparison tables, 5 follow-ups (BP §8)'
     status: PLANNED
   - id: T-9.3
-    title: Real login (magic link / Google) replacing the anonymous ID
+    title: 'Audit the current SustainIQ repo: what works, and a **keep / change / delete list** for every file, route, table,
+      script and test (anonymous ID, 7-day expiry, browser parsing, Render host, demo papers, Groq free-tier logic)'
     status: PLANNED
   - id: T-9.4
-    title: Server-side processing of big PDFs (300–400 pages) with Cloudflare Queues
+    title: 'Audit **RAGFlow**: parsing, OCR, layout and tables, chunk inspection, citations; run it in Docker on the corpus
+      against the current parser'
     status: PLANNED
   - id: T-9.5
-    title: Optional Python parsing service (Docling/GROBID) if T-2.5 found table problems
+    title: 'Audit **Infinity** against the current D1 FTS5 + Vectorize: filtered hybrid search (category, year, library, user),
+      ranking, Docker ops, backups, cost'
     status: PLANNED
   - id: T-9.6
-    title: Reintroduce LangGraph (paid plan) and build an agent for multi-paper research questions
+    title: 'Audit **Open WebUI** and **AnythingLLM**: answer quality on the question set, local versus cloud model switching,
+      multi-user workspaces, usability'
     status: PLANNED
   - id: T-9.7
-    title: Tracing (Langfuse), privacy notice, dependency scanning, SEC §14 MVP checklist
+    title: 'Audit **Onyx** (= "UniX" in the call, owner confirmed): connector lifecycle, permission-aware search; community
+      versus enterprise licence boundaries'
     status: PLANNED
   - id: T-9.8
-    title: 'Production OCR: self-hosted PaddleOCR or Google Document AI / Azure Read for scanned pages, tesseract.js fallback,
-      background job (Queues/Workflows); benchmark first (D-018)'
+    title: Audit **Dify** (export workflows) and **React Flow** (admin ingestion diagram)
+    status: PLANNED
+  - id: T-9.9
+    title: 'Licence and security pass on everything we might use: exact commit, licence, attribution, auth, tenant isolation,
+      file validation, secrets (BP §17.3)'
+    status: PLANNED
+  - id: T-9.10
+    title: Server-side extraction options for PDF/DOCX/PPTX/XLSX and scanned pages (current pdf.js, RAGFlow, Docling or similar,
+      PaddleOCR, Google Document AI / Azure Read; D-018), measured on the corpus
+    status: PLANNED
+  - id: T-9.11
+    title: '**Model choice: cheapest model that meets the quality bar** (owner, 2026-11-06). Run the 60 questions on low-cost
+      cloud models (e.g. Gemini Flash-class, GPT mini-class, Groq-hosted gpt-oss-120b from the demo) and on **self-hosted
+      Qwen as the backup**. Measure faithfulness, citation validity, decline accuracy, latency and **cost per answer and per
+      month at 5, 25 and 100 users**. Also cost levers: small model for rewrite/guard, answer cache, prompt caching, short
+      context from reranking, cheap embeddings'
+    status: PLANNED
+  - id: T-9.12
+    title: 'Hosting, storage, backup and cost. **Decided (D-021): Cloudflare Workers Paid + own domain + R2 + Queues from
+      the start**; a VM only if an audited tool (RAGFlow/Infinity) cannot run on Cloudflare and the owner approves it. Monthly
+      cost at 5, 25 and 100 users and at 10, 50 and 200 GB stored (no upper limit, D-028); the client quote follows from this'
+    status: PLANNED
+  - id: T-9.14
+    title: '**Capacity and overload design** (owner: the server must never overload; no repeat of the Supabase overload seen
+      on the crypto-hunt project). Set targets: concurrent users, questions/min, uploads in flight, GB stored, p95 answer
+      time. Design for them: queue with back-pressure for ingestion, connection limits/pooling on the database, per-user and
+      global rate limits, model budget cap, provider fallback (cloud → Qwen), "busy, try again" instead of crashing; load
+      balancing (built in on Workers; Cloudflare LB or Caddy/nginx in front of ≥ 2 instances on a VM). Write the load-test
+      plan for P15'
+    status: PLANNED
+  - id: T-9.15
+    title: '**Storage with no size limit** (D-028). Cloudflare limits: a D1 database is capped at 10 GB and cannot be raised
+      (1 TB per account); a Vectorize index holds up to 20 million vectors; R2 has no cap. Measure how much D1 space (text
+      + keyword index) and how many vectors 1 GB of the corpus needs, then plan the growth: **100% Cloudflare (D-030)**: add
+      extra D1 databases (split by library or year; 100,000 per account included, USD 0.10/month each after that, 1 TB account
+      storage that can be raised on request) and extra Vectorize indexes when one fills. No Postgres or other outside database'
+    status: PLANNED
+  - id: T-9.13
+    title: 'Write `docs/audit/AUDIT_REPORT.md` and `EVALUATION_RESULTS.csv`; record one decision per component in `docs/PROJECT_DECISIONS.md`;
+      owner exit gate: extraction, retrieval store, model mode, login, storage growth path (T-9.15), storage/backups, category/year
+      method, quotas and retention (BP §17.6) plus the open decisions below'
     status: PLANNED
   dependencies:
   - P7
+  affected_paths:
+  - docs/audit/**
+  security_flags: true
+  design_flags: true
+  testing_flags: true
+  last_updated: null
+  evidence_pointer: docs/audit/AUDIT_REPORT.md
+  section:
+    start: 30302
+    end: 37797
+- phase_id: P10
+  phase_name: Demo cleanup
+  status: PLANNED
+  objective: Remove what the production build does not need, keep what the next phases reuse. The live demo at sustainiq-demo.onrender.com
+    stays up until the client's feedback is in (owner, 2026-11-06).
+  active_tasks: []
+  tasks:
+  - id: T-10.1
+    title: Tag the last demo commit (`demo-final`) so the live demo can be rebuilt; work on a branch
+    status: PLANNED
+  - id: T-10.2
+    title: 'Delete the "delete" items from the T-9.3 list (expected: demo-only limits and 7-day expiry, anonymous-ID-only
+      paths, Render-only server pieces, curated demo-paper scripts and data, stray files such as the root PDF and `test pdf/`);
+      keep their tests only where they carry over'
+    status: PLANNED
+  - id: T-10.3
+    title: Update docs that describe the demo (PRD, TRD, ARCHITECTURE, FEATURES, SECURITY) to point at production
+    status: PLANNED
+  - id: T-10.4
+    title: Turn off the Render demo and its free-tier data once production is live (owner runs the commands)
+    status: PLANNED
+  - id: T-10.5
+    title: '**Basic rate limit on the live demo** (gap found 2026-11-15: nothing limits requests today, so a script can drain
+      the Groq quota and Workers AI). Per anonymous ID **and** per client IP on `/api/chat`, uploads and new anonymous IDs,
+      with values from config and a global daily LLM budget. Return `429` with `Retry-After`. Client IP comes only from a
+      header the host sets (SEC §8). Plus **Cloudflare Turnstile** on the first question and on uploads, with the token checked
+      on the server. **Confirmed by the owner (D-023).** Built on Workers with Cloudflare''s rate limiting, so it runs right
+      after the hosting move (D-021)'
+    status: PLANNED
+  dependencies:
+  - P9
+  - client feedback on the demo
+  affected_paths:
+  - from the T-9.3 list
+  security_flags: true
+  design_flags: true
+  testing_flags: true
+  last_updated: null
+  evidence_pointer: null
+  section:
+    start: 37797
+    end: 40252
+- phase_id: P11
+  phase_name: 'Production foundation: accounts, libraries, categories (BP Workstream A)'
+  status: PLANNED
+  objective: Real users with roles, one shared library plus a private library per user, and admin-run categories with year
+    collections, all enforced on the server.
+  active_tasks: []
+  tasks:
+  - id: T-11.1
+    title: 'Schema: organisations, users, roles, groups, libraries, categories (aliases), collections, permissions, audit_events
+      (BP §6, §20)'
+    status: PLANNED
+  - id: T-11.2
+    title: 'Authorisation tests **first**: private, cross-user, cross-library, category and year scope (BP §22 A5)'
+    status: PLANNED
+  - id: T-11.3
+    title: '**One login page for everyone** (D-026), built into the app with a maintained auth library (D-024; e.g. Better
+      Auth on D1): sign up and sign in with email + password or Google. **Only allowed email domains** (D-027; e.g. the college''s
+      `.ac.in` domain, list kept in config and editable by an admin): any other address (Gmail, Hotmail, Yahoo…) is refused
+      on sign-up and sign-in. The email must be proven: a verification link for password sign-up; for Google, `email_verified`
+      plus the domain check. Roles admin, staff and user are stored in our database. After sign-in, everyone lands in the
+      same app; admins also see an Admin section. No separate admin login and no Cloudflare dashboard'
+    status: PLANNED
+  - id: T-11.4
+    title: Shared versus private libraries; Shared or Private chosen at upload (default from the moderation decision)
+    status: PLANNED
+  - id: T-11.5
+    title: 'Category admin: create, rename, alias, archive, merge with preview; year collections built automatically; Unclassified
+      queue (BP §19.1)'
+    status: PLANNED
+  - id: T-11.6
+    title: Audit events for upload, delete, share, role and category changes
+    status: PLANNED
+  - id: T-11.7
+    title: Move existing demo content into a clearly named development organisation
+    status: PLANNED
+  - id: T-11.8
+    title: '**Account-security rules for the login** (SEC §10, §12b): users keyed by the provider''s stable subject ID, never
+      by email (OAuth email spoof); emails/usernames canonicalised (NFKC + case-fold) before uniqueness checks and lookups
+      (Unicode lookalikes); opaque server-side sessions, or JWTs with the algorithm pinned on verify (`alg: none` and HS/RS
+      confusion rejected); one-time codes and magic links single-use, short-lived and rate-limited (2FA replay); passwords
+      only if unavoidable, through the auth library with Argon2id and a byte-length cap (bcrypt''s 72-byte truncation); session
+      tokens from `crypto.getRandomValues`, compared in constant time'
+    status: PLANNED
+  dependencies:
+  - P10
+  affected_paths:
+  - migrations/**
+  - src/worker/security/**
+  - src/worker/routes/**
+  security_flags: true
+  design_flags: true
+  testing_flags: true
+  last_updated: null
+  evidence_pointer: null
+  section:
+    start: 40252
+    end: 44108
+- phase_id: P12
+  phase_name: Durable ingestion with no size limit (BP Workstream B)
+  status: PLANNED
+  objective: Server-side, queued ingestion of PDF, DOCX, PPTX, XLSX/CSV and TXT with OCR, page/slide anchors, duplicate detection
+    and visible status, so a student can add papers every Friday and the client's archive (5–10 GB to start, growing without
+    a limit, D-028) can be bulk-imported.
+  active_tasks: []
+  tasks:
+  - id: T-12.1
+    title: Private object storage for originals and derivatives; document versions
+    status: PLANNED
+  - id: T-12.2
+    title: Job queue with durable states queued → extracting → ocr → chunking → embedding → ready / warning / failed / deleted;
+      status API; safe retry
+    status: PLANNED
+  - id: T-12.3
+    title: 'Upload checks: extension, MIME, file signature, size, malware scan, page/slide count, quota, hash duplicate'
+    status: PLANNED
+  - id: T-12.4
+    title: '`DocumentExtractionProvider` with the approved extractor + tested fallback: PDF (two-column order, page anchors),
+      DOCX, PPTX (slides, notes, images), XLSX/CSV (sheet/row anchors), TXT/Markdown'
+    status: PLANNED
+  - id: T-12.5
+    title: Server-side OCR for scanned pages with confidence and a low-confidence warning (replaces browser OCR, D-018)
+    status: PLANNED
+  - id: T-12.6
+    title: Section-aware chunking reusing `src/shared/chunker.ts`; chunks carry library, categories, year, page/slide range,
+      version
+    status: PLANNED
+  - id: T-12.7
+    title: 'Upload metadata: title, authors, year, DOI, type, categories, tags, PhD student, visibility, sharing declaration;
+      auto-fill from the document, user corrects'
+    status: PLANNED
+  - id: T-12.8
+    title: 'Duplicate handling: same hash blocked, likely DOI/title duplicates flagged for the admin'
+    status: PLANNED
+  - id: T-12.9
+    title: Bulk import for the client's existing archive (folder upload or admin script), throttled, resumable
+    status: PLANNED
+  - id: T-12.10
+    title: '**Office and server-side parsing safety** (DOCX/PPTX/XLSX are zipped XML; parsing moves from the browser to the
+      server): XML parser with DTDs and external entities turned off (XXE); zip-bomb caps on entry count, total uncompressed
+      size and compression ratio; external links and remote images in documents are never fetched (SSRF); macro formats (`.docm/.pptm/.xlsm`)
+      rejected; extraction runs in a sandboxed job with time and memory limits; regexes run on server-side document text are
+      linear and their input is length-capped first (ReDoS)'
+    status: PLANNED
+  dependencies:
+  - P11
+  affected_paths:
+  - src/worker/ingest/**
+  - migrations/**
+  security_flags: true
+  design_flags: false
+  testing_flags: true
+  last_updated: null
+  evidence_pointer: null
+  section:
+    start: 44108
+    end: 47895
+- phase_id: P13
+  phase_name: Retrieval, evidence and answers (BP Workstream C)
+  status: PLANNED
+  objective: Keep the demo's hybrid search and citation checks, add scope filters before retrieval, full citation details,
+    honest decline and the first export, measured on the client's own question set.
+  active_tasks: []
+  tasks:
+  - id: T-13.1
+    title: '`RetrievalIndex` adapter over the approved store; organisation, library, category, year and type filters applied
+      **before** search, permissions re-checked after (BP §18.3, §21 1–2)'
+    status: PLANNED
+  - id: T-13.2
+    title: 'Model gateway (D-022: any provider: Groq, OpenAI, Claude, Gemini, Workers AI…). Today one key and one URL serve
+      every model, and Groq-only request fields are hard-coded in `src/worker/llm.ts`; move both to per-model config so the
+      fallback chain can mix providers. `GenerationProvider` / `EmbeddingProvider` with the approved cheap cloud model first
+      and **self-hosted Qwen as the fallback** (timeouts, circuit breaker when a provider fails or the budget cap is hit);
+      per-answer cost logged; config only, branded "SustainIQ"'
+    status: PLANNED
+  - id: T-13.3
+    title: Citations from stored retrieval IDs with title, authors, year, page/slide, section, passage, DOI and library/collection;
+      groundedness check (RAG §5.11, carried from P8)
+    status: PLANNED
+  - id: T-13.4
+    title: Evidence limitations, source disagreements and the approved decline message; no model-memory answers
+    status: PLANNED
+  - id: T-13.5
+    title: Evidence-linked Excel/CSV export (comparison table and literature matrix with a Sources sheet), BP §19.5 first
+      priority
+    status: PLANNED
+  - id: T-13.6
+    title: Prompt-injection and cross-user tests, including instructions hidden in a PDF (BP §21 12)
+    status: PLANNED
+  - id: T-13.7
+    title: Client question set (BP §8) built with the professor once his first papers are in; baseline metrics recorded; runs
+      on a schedule
+    status: PLANNED
+  dependencies:
+  - P12
+  affected_paths:
+  - src/worker/rag/**
+  security_flags: true
+  design_flags: false
+  testing_flags: true
+  last_updated: null
+  evidence_pointer: null
+  section:
+    start: 47895
+    end: 50852
+- phase_id: P14
+  phase_name: Production UI and admin, in the owner's colours
+  status: PLANNED
+  objective: A simple, user-friendly SustainIQ for researchers, students and the admin, built in the colours the owner provides.
+    Screens follow the APIs from P11–P13.
+  active_tasks: []
+  tasks:
+  - id: T-14.1
+    title: 'Apply the owner''s colours: update DESIGN.md tokens (light and dark), contrast checked'
+    status: PLANNED
+  - id: T-14.2
+    title: 'Chat: visible scope (Shared Library › Biopolymers › 2024), filter chips, citation panel with full details, Library
+      evidence / AI synthesis labels, export button'
+    status: PLANNED
+  - id: T-14.3
+    title: 'Library: categories with document counts, year filters, search, shared/private label, processing status; document
+      detail page'
+    status: PLANNED
+  - id: T-14.4
+    title: Upload flow with the metadata form, Shared/Private choice and live job status
+    status: PLANNED
+  - id: T-14.5
+    title: 'Admin section inside the same app, shown only to admins (D-026). **First: users**: add a user by email, remove
+      a user, change their role (admin / staff / user); the last admin cannot be removed. Then: categories, categories, ingestion
+      queue and failures, duplicates, Unclassified queue, storage and model usage, audit log'
+    status: PLANNED
+  - id: T-14.6
+    title: React Flow ingestion trace per document (fixed states, times, warnings, retry), admin only (BP §18.8)
+    status: PLANNED
+  dependencies:
+  - P11
+  - owner's palette
+  affected_paths:
+  - src/web/**
+  - DESIGN.md
+  security_flags: true
+  design_flags: true
+  testing_flags: true
+  last_updated: null
+  evidence_pointer: null
+  section:
+    start: 50852
+    end: 53064
+- phase_id: P15
+  phase_name: Production hardening and launch
+  status: PLANNED
+  objective: The old P8 hardening, privacy and backups, the BP §13 acceptance checklist, then production goes live with the
+    client's corpus.
+  active_tasks: []
+  tasks:
+  - id: T-15.1
+    title: Rate limits and model budget guard (from T-8.1, building on T-10.5), quotas from config; per user, per IP and global;
+      client IP read only from the header the host guarantees (`CF-Connecting-IP` on Workers), never from `X-Forwarded-For`
+      or `X-Real-IP` sent by the client
+    status: PLANNED
+  - id: T-15.2
+    title: Structured logging without secrets or document text, alerts, `security.txt` (from T-8.3), tracing
+    status: PLANNED
+  - id: T-15.3
+    title: 'Privacy notice that matches the deployed setup: which provider sees documents, prompts, embeddings and OCR'
+    status: PLANNED
+  - id: T-15.4
+    title: Backups, restore test, deletion and retention rules documented and tested
+    status: PLANNED
+  - id: T-15.7
+    title: 'Overload protection as designed in T-9.14: load balancing, connection pooling/limits, ingestion back-pressure,
+      rate limits, budget cap, health checks, graceful "busy" responses'
+    status: PLANNED
+  - id: T-15.8
+    title: '**Load tests** (e.g. k6) on a staging copy: normal load, 2× and 5× the T-9.14 targets (spike), a 2-hour soak,
+      a 20 GB bulk import while users ask questions, and failure drills (model provider down, database slow)'
+    status: PLANNED
+  - id: T-15.9
+    title: 'Test plan for the whole production release: unit, integration (every format, duplicates, reclassify, delete),
+      security (BP §23), end-to-end browser flows for the BP §23 client demo, evals and load tests in CI or on a schedule'
+    status: PLANNED
+  - id: T-15.10
+    title: '**Edge and transport hardening**, needed only if T-9.12 picks a VM or Docker host instead of Workers: Cloudflare
+      proxy in front, with the origin accepting only Cloudflare''s IP ranges or a tunnel (HTTP/2 Rapid Reset, request smuggling);
+      one proxy layer with consistent `Content-Length`/`Transfer-Encoding` handling; proxy and Node kept patched; CDN cache
+      rules exclude `/api/*` and signed file URLs, and cache keys never use unkeyed headers (cache poisoning); any WebSocket
+      checks `Origin` and the session cookie on the upgrade (WebSocket hijack)'
+    status: PLANNED
+  - id: T-15.5
+    title: Full security suite, load tests and the BP §13 checklist green
+    status: PLANNED
+  - id: T-15.6
+    title: Production deploy (owner runs commands), invite the client's users, import the corpus, review the evaluation report
+      with the client
+    status: PLANNED
+  dependencies:
+  - P13
+  - P14
+  affected_paths:
+  - src/worker/security/**
+  - test/security/**
+  security_flags: true
+  design_flags: true
+  testing_flags: true
+  last_updated: null
+  evidence_pointer: null
+  section:
+    start: 53064
+    end: 57062
+- phase_id: P16
+  phase_name: Research outputs and growth (BP Phase 2, after a successful launch)
+  status: PLANNED
+  objective: The ChatGPT-style outputs the client asked for, always built from cited evidence.
+  active_tasks: []
+  tasks:
+  - id: T-16.1
+    title: Word/PDF cited report from one shared report format; no citation dropped
+    status: PLANNED
+  - id: T-16.2
+    title: 'PPT: evidence outline → source check → slides with citations → user preview and edit (BP §19.5)'
+    status: PLANNED
+  - id: T-16.3
+    title: 'Figures and images: extract with page and caption, image-aware search, cite figures (BP §19.3)'
+    status: PLANNED
+  - id: T-16.4
+    title: Generated visuals from an evidence brief only, labelled "Generated from SustainIQ evidence"
+    status: PLANNED
+  - id: T-16.5
+    title: Scheduled weekly ingestion from chosen open sites, metadata templates, better OCR/tables from real failures
+    status: PLANNED
+  dependencies:
+  - P15
+  - client go-ahead
   affected_paths: []
   security_flags: true
   design_flags: true
@@ -443,5 +833,43 @@ phases:
   last_updated: null
   evidence_pointer: null
   section:
-    start: 27538
-    end: 29659
+    start: 57062
+    end: 58671
+- phase_id: P17
+  phase_name: Institution rollout (BP Phase 3, after management approves)
+  status: PLANNED
+  objective: 'Move from one lab to the whole college on **hosting we rent and run** (not the college''s own server, D-029):
+    bigger plan, SSO, connectors and an optional self-hosted model.'
+  active_tasks: []
+  tasks:
+  - id: T-17.1
+    title: SSO and groups; finer permissions and audit reports
+    status: PLANNED
+  - id: T-17.2
+    title: 'Scale up on our rented hosting (D-029): bigger Cloudflare plan or limits, more storage and, only if confidentiality
+      requires it, a rented GPU server for a self-hosted model'
+    status: PLANNED
+  - id: T-17.3
+    title: 'Connectors through `SourceConnector` (Onyx pattern): Drive, SharePoint and others as needed'
+    status: PLANNED
+  - id: T-17.4
+    title: Optional, clearly labelled web search, never mixed silently with library evidence (BP §5 rule 7)
+    status: PLANNED
+  - id: T-17.5
+    title: Optional multi-paper research agent (old T-9.6) and Dify export workflows outside the answer path
+    status: PLANNED
+  - id: T-17.6
+    title: Separate environments, monitoring, disaster recovery, cost controls
+    status: PLANNED
+  dependencies:
+  - P16
+  - university approval
+  affected_paths: []
+  security_flags: true
+  design_flags: true
+  testing_flags: true
+  last_updated: null
+  evidence_pointer: null
+  section:
+    start: 58671
+    end: 61867

@@ -156,6 +156,10 @@ No single control stops prompt injection, so we layer several **[DEMO]**:
 
 ## 8. Rate limiting and abuse **[DEMO]**
 
+> **Status (2026-11-15): not built.** No server-side rate limit exists in `src/worker` or `src/server`. The only 429s come from the LLM provider. Planned as T-10.5 (right after the move to Workers, confirmed D-023) and T-15.1 (production). Until then, test §13 #12 cannot pass.
+
+**Client IP for limits:** read it only from a header the host sets and the client cannot forge (`CF-Connecting-IP` on Workers; on Render, the right-most `X-Forwarded-For` entry added by Render's proxy, to be verified before use). Never trust a client-sent `X-Forwarded-For`, `X-Real-IP` or `True-Client-IP` as-is, or anyone can dodge the limit or get another IP blocked.
+
 | Limit | Value (start; tune later) | Key |
 |---|---|---|
 | Questions | 20/min, 200/day | anon ID **and** IP |
@@ -179,11 +183,18 @@ No single control stops prompt injection, so we layer several **[DEMO]**:
 
 ## 10. Logins (MVP, replaces the anonymous ID)
 
-- Use a proven library or provider (e.g., Better Auth, Auth.js, Clerk, Supabase Auth) with **magic-link email or Google OAuth**. **Don't build password handling yourself.** If passwords are ever needed: Argon2id/bcrypt, breached-password check, never logged.
+- Use a proven library or provider (decided: Better Auth on D1, D-024; no Supabase) with **magic-link email or Google OAuth**. **Don't build password handling yourself.** If passwords are ever needed: Argon2id/bcrypt, breached-password check, never logged.
 - Sessions: random server-side session ID in an `HttpOnly; Secure; SameSite=Lax` cookie; rotate on login; expire after inactivity; server-side logout that invalidates the session.
 - OAuth: use the `state` and PKCE parameters; validate the redirect URI against an exact allowlist.
 - Magic links: single use, expire within 15 minutes, rate-limited per email and per IP, with the same response whether or not the account exists (no account enumeration).
 - Authorization: every query is still scoped by `owner_id` (= user ID). Add roles only if the client needs teams. Admin routes sit behind a separate role check and, ideally, Cloudflare Access.
+- **Identity key:** store the provider's stable subject ID (`sub`, or `oid` + `tid` for Microsoft) and key users by it. **Never** look up or link accounts by email from an OAuth token, because some providers let users set an unverified email (the "nOAuth" attack).
+- **Allowed domains (D-027):** sign-up and sign-in only for email domains on the configured allowlist; compare the canonical domain after the last `@`, exactly (so `college.ac.in.evil.com` and `evil-college.ac.in` don't pass). Never trust an unverified email: password accounts need a verification link first; Google needs `email_verified`.
+- **Canonical identifiers:** apply NFKC and case-folding to emails and usernames before uniqueness checks, lookups and password resets, so `ᴬdmin@x` and `admin@x` can't be two accounts or hijack each other (the Spotify Unicode bug).
+- **Tokens:** prefer opaque server-side sessions. If JWTs are used, pin the expected algorithm when verifying; reject `alg: none` and HS256-signed tokens checked against an RS256 public key (algorithm confusion). Every secret token comes from `crypto.getRandomValues` / `crypto.randomUUID`, never `Math.random`, and is compared in constant time.
+- **One-time codes (magic link, email OTP, TOTP):** single use (mark as used atomically), short expiry, rate-limited per account and per IP. A used code is refused even inside its time window (2FA replay).
+- **Passwords (only if unavoidable):** through the auth library, Argon2id preferred. If bcrypt is used, cap the input at 72 bytes or pre-hash, because bcrypt silently ignores the rest. The "52-char username" attack works when username + password are hashed together and the password falls past byte 72.
+- **SAML (only for college SSO, P17):** a maintained library, signature required on the assertion itself (not just the envelope), audience, recipient and expiry checked, and XML parsed with external entities off.
 - Migration: anonymous data can be claimed by a user only through the signed anon cookie on the same browser at signup.
 - Account deletion deletes papers, chunks, vectors, chats and caches (privacy law: GDPR / India DPDP Act).
 
@@ -222,6 +233,35 @@ The less obvious ways this app could be abused, changed or broken.
 | 20 | **Model or provider leaks** | Error messages reveal the model name, provider or prompt; provider outage takes the app down. | **[DEMO]** Generic errors. Fallback model chain (§ project plan). A status message when all providers are unavailable. |
 | 21 | **Sensitive uploads** | Users upload confidential company research. | **[DEMO]** Uploads visible only to their owner, auto-deleted after 7 days, "delete my data" button, and the UI says "don't upload confidential documents in the demo". **[MVP]** Written data-processing terms for the client. |
 
+## 12b. Web attack checklist (reviewed 2026-11-15)
+
+The code was checked against a common list of 20 web attacks. "Not used" means the app has none of the technology the attack needs. Re-check this table whenever that changes.
+
+| # | Attack | Demo today | Production plan |
+|---|---|---|---|
+| 1 | HTTP/2 Rapid Reset | Handled by the host's edge (Cloudflare / Render) | T-15.10 if we run our own VM: Cloudflare in front, origin locked |
+| 2 | Long username + bcrypt 72-byte truncation | Not used (no passwords) | §10 passwords rule; T-11.8 |
+| 3 | SAML signature bypass | Not used | §10 SAML rule; T-17.1 |
+| 4 | OAuth email spoof (nOAuth) | Not used | §10 identity key; T-11.8 |
+| 5 | GraphQL alias batching | Not used (REST + zod) | Re-check if GraphQL is ever added: query cost and alias limits |
+| 6 | 2FA / one-time code replay | Not used | §10 one-time codes; T-11.8 |
+| 7 | ReDoS | ✅ Bounded, anchored regexes; parsing runs in the uploader's browser; server inputs are length-capped by zod (§12 #14) | T-12.10: server-side parsing caps input before regexes |
+| 8 | JWT algorithm confusion | Not used (HMAC-signed cookie via Hono) | §10 tokens; T-11.8 |
+| 9 | Request smuggling | Host's edge | T-15.10 |
+| 10 | Cache poisoning | ✅ `/api/*` sends `no-store, private`; only hashed assets are cached (§12 #5) | T-15.10 CDN rules |
+| 11 | Spoofed IP header | ✅ No IP header is trusted (no IP logic yet) | §8 client IP rule; T-10.5, T-15.1 |
+| 12 | Database views bypass row-level security | ✅ No views, no RLS: every D1 query filters on `owner_id`; foreign IDs get 404 | Keep the rule for the new schema (T-11.2 tests) |
+| 13 | `Math.random` tokens | ✅ `crypto.randomUUID()` only | §10 tokens |
+| 14 | Timing attack | ✅ Admin token compared in constant time; cookie checked with `crypto.subtle.verify` | §10 tokens |
+| 15 | Padding oracle | Not used (no CBC encryption) | Use AES-GCM via WebCrypto if encryption is ever needed |
+| 16 | Prototype pollution | ✅ zod `strictObject` on input, no deep merges of user JSON | Keep |
+| 17 | Server-side template injection | ✅ No server templates; React escapes output; no `innerHTML` | T-16.1: report templates fixed, text inserted as data |
+| 18 | XXE file read | Not used (no XML parsing) | **T-12.10**: DOCX/PPTX/XLSX are XML, so external entities off and zip-bomb caps |
+| 19 | WebSocket hijack | Not used (HTTP streaming; the CSRF Origin check covers it) | T-15.10: check Origin and cookie on any WebSocket upgrade |
+| 20 | Unicode lookalike usernames | Not used (no usernames); `cleanText` applies NFKC to text | §10 canonical identifiers; T-11.8 |
+
+**Gap that is not on the list but matters most:** no rate limiting (§8, T-10.5).
+
 ### Incident response **[DEMO]**
 - **Key leaked:** rotate it at the provider → `wrangler secret put` → redeploy → check usage logs.
 - **Abuse wave:** tighten the WAF/rate-limit rule, enable Turnstile on every request, or pause uploads with a feature flag (`UPLOADS_ENABLED=false`).
@@ -257,6 +297,16 @@ Negative tests prove each control works:
 | 21 | Any `/api/*` response | Has `Cache-Control: no-store` |
 | 22 | Ask for a synthesis route of a toxic or explosive compound | Refused |
 | 23 | Delete a paper, then search for its unique text | Not found in FTS or Vectorize |
+| 24 | Hit the rate limit, then repeat with a forged `X-Forwarded-For` / `X-Real-IP` | Still `429`; the limit is not reset or moved |
+| 25 | **[MVP]** OAuth login whose token email matches an existing user but whose subject ID differs | Separate account or refused; never logged in as the existing user |
+| 26 | **[MVP]** Sign up with a lookalike or differently-cased email (`ADMIN@x`, fullwidth or `ᴬ` characters) | Treated as the existing account; no second account; password reset goes to the real owner |
+| 27 | **[MVP]** Reuse a magic link or one-time code after it was used | Refused |
+| 28 | **[MVP]** Send a session token with `alg: none` or HS256 signed with the public key (only if JWTs are used) | `401` |
+| 29 | **[MVP]** Password longer than 72 bytes that differs only after byte 72 (only if passwords are used) | Does not log in |
+| 30 | **[MVP]** DOCX/PPTX with an external entity (`<!ENTITY x SYSTEM "file:///etc/passwd">`) | Entity not resolved; no file content in chunks |
+| 31 | **[MVP]** Zip bomb disguised as `.pptx` (tiny file, gigabytes unpacked) | Rejected at the size/ratio cap; other jobs keep running |
+| 32 | **[MVP]** Document with an external image or link target (`http://169.254.169.254/…`) | Never fetched |
+| 33 | **[MVP, VM host only]** Request sent straight to the origin, bypassing the proxy | Refused |
 
 ## 14. Pre-launch checklist
 
@@ -279,6 +329,11 @@ Negative tests prove each control works:
 - [ ] Custom domain with WAF, backups, dependency scanning
 - [ ] Tracing with retention policy; privacy notice; provider data-use check
 - [ ] Re-run all §13 tests plus login tests (session fixation, magic-link reuse, OAuth state)
+- [ ] §10 account rules in place: stable subject ID, canonical emails, pinned JWT algorithm or opaque sessions, single-use codes (§13 #25–29)
+- [ ] Office parsing safe: XXE off, zip-bomb caps, no external fetches, macro formats rejected (§13 #30–32)
+- [ ] Rate limits keyed on a trusted client IP (§8, §13 #24)
+- [ ] If on a VM: origin reachable only through Cloudflare (§13 #33)
+- [ ] §12b table re-checked against the deployed stack
 
 ---
 
